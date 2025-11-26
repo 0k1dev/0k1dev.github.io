@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
     <title>Những video hay - HuyTKing</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+    
     <style>
         * {
             margin: 0;
@@ -20,7 +23,7 @@
         }
         
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
@@ -42,15 +45,93 @@
             font-size: 1.2em;
         }
         
+        /* Menu tabs */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .tab-btn {
+            background: #f0f0f0;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .tab-btn:hover {
+            background: #e0e0e0;
+            transform: translateY(-2px);
+        }
+        
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        /* Video sections */
+        .video-section {
+            display: none;
+        }
+        
+        .video-section.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .section-title {
+            font-size: 2em;
+            color: #333;
+            margin: 30px 0 20px 0;
+            text-align: center;
+        }
+        
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 20px 0;
+        }
+        
+        .video-item {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+        
+        .video-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        
         .video-container {
             position: relative;
             padding-bottom: 56.25%;
             height: 0;
             overflow: hidden;
             background: #000;
-            margin: 20px 0;
             border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
         
         .video-container iframe {
@@ -63,17 +144,16 @@
         }
         
         .video-title {
-            font-size: 1.3em;
+            font-size: 1.1em;
             color: #333;
-            margin: 20px 0 10px 0;
+            margin-top: 15px;
             font-weight: bold;
         }
         
-        .description {
-            text-align: center;
+        .video-desc {
             color: #666;
-            margin: 20px 0;
-            line-height: 1.8;
+            margin-top: 5px;
+            font-size: 0.9em;
         }
         
         .btn {
@@ -83,7 +163,7 @@
             padding: 15px 30px;
             text-decoration: none;
             border-radius: 50px;
-            margin: 20px 10px;
+            margin: 30px 10px;
             transition: all 0.3s;
             font-weight: bold;
         }
@@ -96,7 +176,7 @@
         
         .social-links {
             text-align: center;
-            margin-top: 30px;
+            margin-top: 40px;
         }
         
         footer {
@@ -112,34 +192,153 @@
         <h1>🎬 HuyTKing</h1>
         <p class="subtitle">Kênh YouTube của tôi</p>
         
-        <p class="description">
-            Chào mừng bạn đến với kênh của tôi! 
-            Đây là nơi chia sẻ những video thú vị và bổ ích.
-        </p>
-        
-        <!-- Video chính -->
-        <h2 class="video-title">📺 Video nổi bật</h2>
-        <div class="video-container">
-            <iframe 
-                src="https://www.youtube.com/embed/euufohRsmr0"
-                frameborder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowfullscreen>
-            </iframe>
+        <!-- Menu tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showSection('japanese')">
+                🇯🇵 Tiếng Nhật
+            </button>
+            <button class="tab-btn" onclick="showSection('game')">
+                🎮 Game
+            </button>
+            <button class="tab-btn" onclick="showSection('code')">
+                💻 Code
+            </button>
         </div>
         
-        <!-- Thêm video khác nếu muốn -->
-        <!-- 
-        <h2 class="video-title">📺 Video khác</h2>
-        <div class="video-container">
-            <iframe 
-                src="https://www.youtube.com/embed/VIDEO_ID_KHAC"
-                frameborder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowfullscreen>
-            </iframe>
+        <!-- Tiếng Nhật Section -->
+        <div id="japanese" class="video-section active">
+            <h2 class="section-title">📚 Video học Tiếng Nhật</h2>
+            <div class="video-grid">
+                <div class="video-item">
+                    <div class="video-container">
+                        <iframe 
+                            src="https://www.youtube.com/embed/euufohRsmr0"
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                    <div class="video-title">Video Tiếng Nhật 1</div>
+                    <div class="video-desc">Học tiếng Nhật cơ bản</div>
+                </div>
+                
+                <div class="video-item">
+                    <div class="video-container">
+                        <iframe 
+                            src="https://www.youtube.com/embed/VIDEO_ID_TIENG_NHAT_2"
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                    <div class="video-title">Video Tiếng Nhật 2</div>
+                    <div class="video-desc">Ngữ pháp N5</div>
+                </div>
+                
+                <div class="video-item">
+                    <div class="video-container">
+                        <iframe 
+                            src="https://www.youtube.com/embed/VIDEO_ID_TIENG_NHAT_3"
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                    <div class="video-title">Video Tiếng Nhật 3</div>
+                    <div class="video-desc">Từ vựng thông dụng</div>
+                </div>
+            </div>
         </div>
-        -->
+        
+        <!-- Game Section -->
+        <div id="game" class="video-section">
+            <h2 class="section-title">🎮 Video về Game</h2>
+            <div class="video-grid">
+                <div class="video-item">
+                    <div class="video-container">
+                        <iframe 
+                            src="https://www.youtube.com/embed/VIDEO_ID_GAME_1"
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                    <div class="video-title">Game Play 1</div>
+                    <div class="video-desc">Hướng dẫn chơi game</div>
+                </div>
+                
+                <div class="video-item">
+                    <div class="video-container">
+                        <iframe 
+                            src="https://www.youtube.com/embed/VIDEO_ID_GAME_2"
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                    <div class="video-title">Game Play 2</div>
+                    <div class="video-desc">Review game mới</div>
+                </div>
+                
+                <div class="video-item">
+                    <div class="video-container">
+                        <iframe 
+                            src="https://www.youtube.com/embed/VIDEO_ID_GAME_3"
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                    <div class="video-title">Game Play 3</div>
+                    <div class="video-desc">Tips & Tricks</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Code Section -->
+        <div id="code" class="video-section">
+            <h2 class="section-title">💻 Video về lập trình</h2>
+            <div class="video-grid">
+                <div class="video-item">
+                    <div class="video-container">
+                        <iframe 
+                            src="https://www.youtube.com/embed/VIDEO_ID_CODE_1"
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                    <div class="video-title">Lập trình Web</div>
+                    <div class="video-desc">HTML, CSS, JavaScript cơ bản</div>
+                </div>
+                
+                <div class="video-item">
+                    <div class="video-container">
+                        <iframe 
+                            src="https://www.youtube.com/embed/VIDEO_ID_CODE_2"
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                    <div class="video-title">Python Tutorial</div>
+                    <div class="video-desc">Học Python từ đầu</div>
+                </div>
+                
+                <div class="video-item">
+                    <div class="video-container">
+                        <iframe 
+                            src="https://www.youtube.com/embed/VIDEO_ID_CODE_3"
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                    <div class="video-title">React JS</div>
+                    <div class="video-desc">Build ứng dụng với React</div>
+                </div>
+            </div>
+        </div>
         
         <div class="social-links">
             <a href="https://youtube.com/@HuyTKing" class="btn" target="_blank">
@@ -151,5 +350,27 @@
             <p>© 2024 HuyTKing. All rights reserved.</p>
         </footer>
     </div>
+    
+    <script>
+        function showSection(sectionId) {
+            // Ẩn tất cả sections
+            const sections = document.querySelectorAll('.video-section');
+            sections.forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Bỏ active tất cả buttons
+            const buttons = document.querySelectorAll('.tab-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Hiện section được chọn
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Active button được click
+            event.target.classList.add('active');
+        }
+    </script>
 </body>
 </html>

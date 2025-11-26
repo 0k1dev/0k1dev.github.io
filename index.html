@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <img src="12.png" alt="Logo HuyTKing" class="logo">
     <title>Những video hay - HuyTKing</title>
     
     <!-- Favicon -->
@@ -29,6 +30,25 @@
             border-radius: 20px;
             padding: 40px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        
+        .logo {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .logo:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
         }
         
         h1 {
@@ -36,6 +56,7 @@
             color: #333;
             margin-bottom: 10px;
             font-size: 2.5em;
+            padding-top: 20px;
         }
         
         .subtitle {
@@ -189,6 +210,9 @@
 </head>
 <body>
     <div class="container">
+        <!-- Logo ở góc trái trên -->
+        <img src="https://via.placeholder.com/80" alt="Logo HuyTKing" class="logo">
+        
         <h1>🎬 HuyTKing</h1>
         <p class="subtitle">Kênh YouTube của tôi</p>
         
@@ -247,9 +271,8 @@
                     <div class="video-title">Video 3</div>
                     <div class="video-desc">Từ vựng thông dụng</div>
                 </div>
-            </div>
-
-            <div class="video-item">
+                
+                <div class="video-item">
                     <div class="video-container">
                         <iframe 
                             src="https://www.youtube.com/embed/XfIaxcpko_8"
@@ -261,9 +284,8 @@
                     <div class="video-title">Video 4</div>
                     <div class="video-desc">Từ vựng thông dụng</div>
                 </div>
-            </div>
-
-        <div class="video-item">
+                
+                <div class="video-item">
                     <div class="video-container">
                         <iframe 
                             src="https://www.youtube.com/embed/dgjSsk7dF-8"
@@ -285,7 +307,7 @@
                 <div class="video-item">
                     <div class="video-container">
                         <iframe 
-                            src="https://www.youtube.com/embed/pdOJHdJcsQY"
+                            src="https://www.youtube.com/embed/y1Pa15WZQQM"
                             frameborder="0" 
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                             allowfullscreen>
@@ -298,7 +320,7 @@
                 <div class="video-item">
                     <div class="video-container">
                         <iframe 
-                            src="https://www.youtube.com/embed/mQCCDFv-ZV4"
+                            src="https://www.youtube.com/embed/-wxZ27p2z2I"
                             frameborder="0" 
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                             allowfullscreen>
@@ -311,7 +333,7 @@
                 <div class="video-item">
                     <div class="video-container">
                         <iframe 
-                            src="https://www.youtube.com/embed/aUVlDmEyras"
+                            src="https://www.youtube.com/embed/pdOJHdJcsQY"
                             frameborder="0" 
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                             allowfullscreen>
@@ -375,7 +397,7 @@
         </div>
         
         <footer>
-            <p>© 2025 HuyTKing. All rights reserved.</p>
+            <p>© 2024 HuyTKing. All rights reserved.</p>
         </footer>
     </div>
     

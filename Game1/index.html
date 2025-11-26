@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<title>Game Đậu Xe</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☠️</text></svg>">
+<style>
+    body { font-family: Arial; background:#222; color:#fff; text-align:center; }
+    #game { width:800px; margin:20px auto; display:grid; grid-template-columns:repeat(8,1fr); gap:6px; }
+    .slot { width:90px; height:60px; background:#444; border:2px solid #666; border-radius:6px; display:flex; justify-content:center; align-items:center; font-size:14px; }
+    .car { cursor:pointer; border-radius:6px; color:#000; font-weight:bold; }
+    .small { background:#4CAF50; }
+    .large { background:#FF9800; }
+    #incoming { margin-top:20px; display:flex; justify-content:center; gap:20px; }
+    #score { font-size:22px; margin-top:20px; }
+</style>
+</head>
+<body>
+<h2>Game Đậu Xe</h2>
+<h3>5s xuất hiện 1 xe mới. 40 vị trí. Điểm: nhỏ = 5, lớn = 10. Mỗi 10s có xe biến mất.</h3>
+<div id="score">Điểm: 0</div>
+<div id="game"></div>
+<h3>Xe sắp đến:</h3>
+<div id="incoming"></div>
+
+<script>
+const game = document.getElementById("game");
+const incoming = document.getElementById("incoming");
+const scoreEl = document.getElementById("score");
+let score = 0;
+let slots = [];
+let carId = 0;
+
+// Tạo 40 ô đậu xe
+for (let i = 0; i < 40; i++) {
+    const div = document.createElement("div");
+    div.className = "slot";
+    div.dataset.id = i;
+    div.addEventListener("click", () => parkCar(i));
+    game.appendChild(div);
+    slots.push(null);
+}
+
+// Tạo xe mới mỗi 5s
+setInterval(spawnCar, 5000);
+// Xóa ngẫu nhiên xe sau mỗi 10s
+setInterval(removeRandomCar, 10000);
+
+function spawnCar() {
+    const type = Math.random() < 0.5 ? "small" : "large";
+    createIncomingCar(type);
+}
+
+function createIncomingCar(type) {
+    const car = document.createElement("div");
+    car.className = "car " + type;
+    car.textContent = type === "small" ? "Xe nhỏ" : "Xe lớn";
+    car.dataset.type = type;
+    car.dataset.carid = carId++;
+    car.style.padding = "10px 20px";
+    car.addEventListener("click", () => selectCar(car));
+    incoming.appendChild(car);
+}
+
+let selectedCar = null;
+function selectCar(car) {
+    selectedCar = car;
+    [...incoming.children].forEach(c => c.style.outline = "none");
+    car.style.outline = "3px solid yellow";
+}
+
+function parkCar(slotIndex) {
+    if (!selectedCar) return;
+    if (slots[slotIndex] !== null) return alert("Ô này đã có xe!");
+
+    const type = selectedCar.dataset.type;
+    slots[slotIndex] = type;
+
+    const slot = game.children[slotIndex];
+    slot.textContent = type === "small" ? "🚗" : "🚌";
+    slot.style.background = type === "small" ? "#4CAF50" : "#FF9800";
+
+    selectedCar.remove();
+    selectedCar = null;
+
+    score += type === "small" ? 5 : 10;
+    scoreEl.textContent = "Điểm: " + score;
+}
+
+function removeRandomCar() {
+    const occupied = slots.map((v,i)=>({v,i})).filter(s => s.v !== null);
+    if (occupied.length === 0) return;
+
+    const randomSlot = occupied[Math.floor(Math.random()*occupied.length)].i;
+    slots[randomSlot] = null;
+    const slot = game.children[randomSlot];
+    slot.textContent = "";
+    slot.style.background = "#444";
+}
+</script>
+</body>
+</html>

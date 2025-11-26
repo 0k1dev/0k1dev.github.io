@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Công Thành 8 Đội Trên Bản Đồ</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☠️</text></svg>">
+    <title>Game Công Thành Tự Động Hóa</title>
     <style>
-        /* --- CSS --- */
+        /* --- CSS (Không đổi so với phiên bản trước, chỉ giữ lại để chạy) --- */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
@@ -40,8 +39,8 @@
         /* --- VÙNG BẢN ĐỒ (MAP) --- */
         .game-map {
             display: grid;
-            grid-template-columns: repeat(4, 1fr); /* Chia 4 cột */
-            grid-template-rows: repeat(2, 1fr);    /* Chia 2 hàng */
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(2, 1fr);
             width: 800px;
             height: 400px;
             border: 5px solid #333;
@@ -66,7 +65,7 @@
         }
         
         /* Màu sắc lãnh thổ */
-        .team-1 { background-color: #e74c3c; color: white; } /* Red */
+        .team-1 { background-color: #e74c3c; color: white; } /* Red - Player */
         .team-2 { background-color: #3498db; color: white; } /* Blue */
         .team-3 { background-color: #2ecc71; color: #333; } /* Green */
         .team-4 { background-color: #f1c40f; color: #333; } /* Yellow */
@@ -136,14 +135,24 @@
             padding: 5px;
             border: 1px dashed #c0392b;
         }
+        .auto-battle-log {
+            font-size: 0.9em;
+            color: #2c3e50;
+            max-height: 100px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 5px;
+            margin-top: 10px;
+            text-align: left;
+        }
     </style>
 </head>
 <body>
     <div class="game-container">
-        <h1>⚔️ Trận Chiến Công Thành Trên Bản Đồ ⚔️</h1>
+        <h1>⚔️ Trận Chiến Công Thành Tự Động Hóa ⚔️</h1>
         
         <div class="current-player">
-            Người chơi hiện tại (Attacker): <span id="current-player-name">Đội 1 (RED)</span>
+            Người chơi (Bạn): <span id="current-player-name">Đội 1 (RED)</span>
             <p style="font-size: 0.7em; font-weight: normal; margin: 5px 0 0;">(Click vào vùng lãnh thổ khác để tấn công)</p>
         </div>
 
@@ -151,6 +160,8 @@
             </div>
 
         <div id="message" class="message">Click vào vùng lãnh thổ địch để tấn công. Cần 50 quân để tấn công.</div>
+        
+        <div id="auto-battle-log" class="auto-battle-log">Log chiến đấu tự động:</div>
 
         <h2 style="margin-top: 30px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Bảng Trạng Thái Quân Lính</h2>
         <div id="status-panel-container" class="status-panel">
@@ -166,7 +177,8 @@
         const PRODUCTION_RATE = 5; // Số quân sản xuất mỗi giây
         const ATTACK_COST = 50; // Quân cần để phát động tấn công
         const ATTACK_POWER = 60; // Quân bị tiêu diệt khi tấn công thành công
-        const CURRENT_PLAYER_ID = 1; // Mặc định người chơi là Đội 1 (RED)
+        const CURRENT_PLAYER_ID = 1; // ID của người chơi (Bạn)
+        const AUTO_ATTACK_INTERVAL = 3000; // Tần suất tự động tấn công (3 giây)
 
         let teams = {};
         let teamColors = ["#e74c3c", "#3498db", "#2ecc71", "#f1c40f", "#9b59b6", "#1abc9c", "#e67e22", "#34495e"];
@@ -190,7 +202,7 @@
         }
 
         /**
-         * Tạo và chèn HTML cho bản đồ và bảng trạng thái.
+         * Tạo và chèn HTML cho bản đồ và bảng trạng thái. (Không thay đổi)
          */
         function createMapAndStatus() {
             const mapContainer = document.getElementById('game-map');
@@ -233,43 +245,71 @@
                 document.getElementById(`army-status-${teamId}`).textContent = army;
 
                 // Xử lý đội bị tiêu diệt
-                if (army <= 0) {
+                if (army <= 0 && territoryEl) {
                     territoryEl.classList.add('disabled');
                     statusEl.classList.add('disabled');
                     territoryEl.onclick = null; // Vô hiệu hóa click
-                } else {
+                    
+                    // Đảm bảo không sản xuất quân nữa
+                    teams[teamId].production = 0; 
+                } else if (territoryEl) {
                     territoryEl.classList.remove('disabled');
-                    territoryEl.onclick = () => handleMapClick(parseInt(teamId)); // Kích hoạt click lại
+                    // Chỉ Đội 1 mới có thể click tấn công
+                    if (parseInt(teamId) === CURRENT_PLAYER_ID) {
+                        territoryEl.onclick = () => handleMapClick(parseInt(teamId)); 
+                    } else {
+                        territoryEl.onclick = () => handleMapClick(parseInt(teamId)); 
+                    }
                 }
             }
         }
 
         /**
-         * Xử lý sự kiện click vào lãnh thổ (Công thành)
+         * Xử lý sự kiện click vào lãnh thổ (Chỉ dành cho Đội 1)
          * @param {number} targetId - ID của đội bị tấn công (lãnh thổ được click).
          */
         function handleMapClick(targetId) {
             if (!gameRunning) return;
 
-            const attackerId = CURRENT_PLAYER_ID; // Người chơi hiện tại luôn là Đội 1 (trong ví dụ này)
+            const attackerId = CURRENT_PLAYER_ID; 
             
             if (attackerId === targetId) {
                 document.getElementById('message').textContent = `⚠️ Không thể tấn công lãnh thổ của chính mình (${teams[targetId].name}).`;
                 return;
             }
             
-            attack(attackerId, targetId);
+            // Đảm bảo mục tiêu vẫn còn quân
+            if (teams[targetId].army <= 0) {
+                 document.getElementById('message').textContent = `⚠️ Lãnh thổ ${teams[targetId].name} đã bị tiêu diệt!`;
+                 return;
+            }
+
+            // Tấn công bằng tay (Đội 1)
+            attack(attackerId, targetId, document.getElementById('message'));
         }
 
         /**
-         * Hàm xử lý logic tấn công.
+         * Thêm thông báo vào log tự động.
+         */
+        function addToLog(message) {
+            const log = document.getElementById('auto-battle-log');
+            const now = new Date().toLocaleTimeString();
+            log.innerHTML = `[${now}] ${message}<br>` + log.innerHTML;
+            // Giới hạn log để tránh quá tải
+            while (log.children.length > 50) {
+                log.removeChild(log.lastChild);
+            }
+        }
+
+        /**
+         * Hàm xử lý logic tấn công chung.
          * @param {number} attackerId - ID của đội tấn công.
          * @param {number} targetId - ID của đội bị tấn công.
+         * @param {HTMLElement} [outputEl] - Element để hiển thị tin nhắn (dành cho người chơi).
          */
-        function attack(attackerId, targetId) {
+        function attack(attackerId, targetId, outputEl) {
             const attacker = teams[attackerId];
             const target = teams[targetId];
-            const messageEl = document.getElementById('message');
 
             if (attacker.army >= ATTACK_COST) {
                 // 1. Trừ quân phí tổn cho đội tấn công
@@ -278,29 +318,42 @@
                 // 2. Mô phỏng trận chiến: đội bị tấn công mất quân
                 target.army -= ATTACK_POWER;
 
-                messageEl.className = 'message';
-                messageEl.textContent = `💥 ${attacker.name} đã dùng ${ATTACK_COST} quân TẤN CÔNG ${target.name}. ${target.name} mất ${ATTACK_POWER} quân!`;
+                const message = `💥 ${attacker.name} đã dùng ${ATTACK_COST} quân TẤN CÔNG ${target.name}. ${target.name} mất ${ATTACK_POWER} quân!`;
+                
+                if (outputEl) {
+                    // Thông báo cho người chơi (Đội 1)
+                    outputEl.textContent = message;
+                } else {
+                    // Log trận chiến tự động
+                    addToLog(message);
+                }
 
                 // 3. Kiểm tra điều kiện thắng/thua
                 if (target.army <= 0) {
                     target.army = 0;
                     
-                    // Lãnh thổ bị chiếm (đổi màu) - Giả lập
+                    // Lãnh thổ bị chiếm (đổi màu)
                     const targetTerritoryEl = document.getElementById(`territory-${targetId}`);
-                    targetTerritoryEl.classList.remove(target.class); // Xóa class cũ
-                    targetTerritoryEl.classList.add(attacker.class);  // Thêm class mới (Màu của người tấn công)
+                    targetTerritoryEl.classList.remove(target.class); 
+                    targetTerritoryEl.classList.add(attacker.class);  
                     
-                    target.class = attacker.class; // Cập nhật class
-                    target.color = attacker.color; // Cập nhật màu
-                    target.name = `${target.name} (BỊ CHIẾM)`; // Đổi tên để dễ nhận biết
+                    target.class = attacker.class; 
+                    target.color = attacker.color;
+                    target.name = `${target.name} (BỊ CHIẾM bởi ${attacker.name})`; 
 
-                    messageEl.textContent = `🎉 ${attacker.name} đã CHIẾM được lãnh thổ của ${target.name}! 🎉`;
+                    const conquestMessage = `🎉 ${attacker.name} đã CHIẾM được lãnh thổ của ${target.name}! 🎉`;
+                    if (outputEl) {
+                        outputEl.textContent = conquestMessage;
+                    } else {
+                        addToLog(conquestMessage);
+                    }
 
                     checkGameOver();
                 }
 
-            } else {
-                messageEl.textContent = `⚠️ ${attacker.name}: Không đủ quân (${Math.floor(attacker.army)}) để tấn công. Cần ${ATTACK_COST} quân.`;
+            } else if (outputEl) {
+                // Chỉ thông báo thiếu quân cho người chơi (Đội 1)
+                outputEl.textContent = `⚠️ ${attacker.name}: Không đủ quân (${Math.floor(attacker.army)}) để tấn công. Cần ${ATTACK_COST} quân.`;
             }
 
             updateUI();
@@ -313,36 +366,70 @@
             if (!gameRunning) return;
 
             for (const teamId in teams) {
-                // Chỉ sản xuất nếu đội đó chưa bị tiêu diệt
-                if (teams[teamId].army > 0 || teams[teamId].army === INITIAL_ARMY) {
-                    teams[teamId].army += teams[teamId].production;
-                }
+                teams[teamId].army += teams[teamId].production;
             }
             updateUI();
         }
 
         /**
-         * Kiểm tra điều kiện kết thúc game (Chỉ còn 1 đội).
+         * Logic cho các đội máy (Đội 2 đến Đội 8) tự động tấn công.
+         */
+        function autoAttack() {
+            if (!gameRunning) return;
+
+            for (let attackerId = 2; attackerId <= NUM_TEAMS; attackerId++) {
+                const attacker = teams[attackerId];
+
+                // Kiểm tra đội còn quân không và đủ chi phí không
+                if (attacker.army <= 0 || attacker.army < ATTACK_COST) {
+                    continue;
+                }
+
+                // Tìm tất cả các mục tiêu còn sống (còn quân > 0)
+                let availableTargets = [];
+                for (let targetId = 1; targetId <= NUM_TEAMS; targetId++) {
+                    if (targetId !== attackerId && teams[targetId].army > 0) {
+                        availableTargets.push(targetId);
+                    }
+                }
+
+                if (availableTargets.length > 0) {
+                    // Chọn mục tiêu ngẫu nhiên
+                    const randomIndex = Math.floor(Math.random() * availableTargets.length);
+                    const targetId = availableTargets[randomIndex];
+                    
+                    // Thực hiện tấn công
+                    attack(attackerId, targetId);
+                }
+            }
+        }
+
+        /**
+         * Kiểm tra điều kiện kết thúc game.
          */
         function checkGameOver() {
-            // Trong phiên bản bản đồ này, chúng ta sẽ tập trung vào việc chiếm lãnh thổ (thay đổi màu)
-            // và giảm số quân của các đội địch. Khi tất cả 7 đội địch có quân <= 0, người chơi 1 thắng.
-            
-            let activeOpponentTeams = 0;
+            let activeTeams = 0;
+            let lastActiveTeamId = null;
 
-            for (let id = 2; id <= NUM_TEAMS; id++) {
+            for (const id in teams) {
                 if (teams[id].army > 0) {
-                    activeOpponentTeams++;
+                    activeTeams++;
+                    lastActiveTeamId = parseInt(id);
                 }
             }
 
-            if (activeOpponentTeams === 0) {
+            if (activeTeams <= 1) {
                 gameRunning = false;
-                clearInterval(gameInterval);
+                clearInterval(gameInterval); 
+                clearInterval(autoAttackInterval);
                 const messageEl = document.getElementById('message');
 
-                messageEl.className = 'message team-3';
-                messageEl.textContent = `👑 CHÚC MỪNG! ${teams[CURRENT_PLAYER_ID].name} đã CHIẾM TOÀN BỘ BẢN ĐỒ! 👑`;
+                if (lastActiveTeamId) {
+                    messageEl.className = 'message team-3'; 
+                    messageEl.textContent = `👑 TRẬN CHIẾN KẾT THÚC! ${teams[lastActiveTeamId].name} là người chiến thắng cuối cùng! 👑`;
+                } else {
+                    messageEl.textContent = `Trận chiến kết thúc trong hỗn loạn (Tất cả các đội đều bị tiêu diệt!)`;
+                }
             }
         }
 
@@ -354,6 +441,9 @@
         
         // Thiết lập chu kỳ sản xuất quân mỗi 1000ms (1 giây)
         const gameInterval = setInterval(produceArmy, 1000);
+        
+        // Thiết lập chu kỳ tự động tấn công cho các đội máy
+        const autoAttackInterval = setInterval(autoAttack, AUTO_ATTACK_INTERVAL);
 
         // Khởi tạo giao diện
         updateUI();

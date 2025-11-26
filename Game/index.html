@@ -65,9 +65,14 @@
 
 <script>
 const boardSize = 10;
+const cellSize = 40;
 const board = [];
 const boardDiv = document.getElementById("board");
 const piecesDiv = document.getElementById("pieces");
+
+let draggingPiece = null;
+let draggingShape = null;
+let previewCells = [];
 
 const blockShapes = [
     [[1]],
@@ -79,7 +84,7 @@ const blockShapes = [
     [[1,1,1],[0,1,0]]
 ];
 
-// Tạo bảng
+// Tạo board
 function initBoard() {
     for (let r = 0; r < boardSize; r++) {
         board[r] = [];
@@ -103,10 +108,11 @@ function renderBoard() {
     });
 }
 
+// Tạo khối
 function generatePieces() {
     piecesDiv.innerHTML = "";
     for (let i = 0; i < 3; i++) {
-        let shape = blockShapes[Math.floor(Math.random() * blockShapes.length)];
+        let shape = blockShapes[Math.floor(Math.random()*blockShapes.length)];
         createPiece(shape);
     }
 }
@@ -114,6 +120,7 @@ function generatePieces() {
 function createPiece(shape) {
     const piece = document.createElement("div");
     piece.className = "piece";
+    piece.style.position = "relative";
     piece.style.gridTemplateColumns = `repeat(${shape[0].length}, 20px)`;
 
     shape.forEach(row => {
@@ -125,24 +132,105 @@ function createPiece(shape) {
         });
     });
 
-    piece.draggable = true;
-
-    // dragstart — lưu shape vào data
-    piece.addEventListener("dragstart", e => {
-        e.dataTransfer.setData("shape", JSON.stringify(shape));
-        e.dataTransfer.setData("pieceID", piece.dataset.id);
-        window._currentDraggingPiece = piece; // tránh lấy nhầm target
-    });
-
+    piece.addEventListener("mousedown", e => startDrag(e, shape, piece));
     piecesDiv.appendChild(piece);
+}
+
+// Bắt đầu kéo
+function startDrag(e, shape, piece) {
+    draggingPiece = piece.cloneNode(true);
+    draggingShape = shape;
+
+    draggingPiece.style.position = "fixed";
+    draggingPiece.style.pointerEvents = "none";
+    draggingPiece.style.opacity = "0.8";
+    draggingPiece.style.transform = "scale(1.4)";
+    document.body.appendChild(draggingPiece);
+
+    moveDrag(e);
+
+    document.addEventListener("mousemove", moveDrag);
+    document.addEventListener("mouseup", stopDrag);
+}
+
+function moveDrag(e) {
+    if (!draggingPiece) return;
+
+    draggingPiece.style.left = e.pageX - 20 + "px";
+    draggingPiece.style.top = e.pageY - 20 + "px";
+
+    showPreview(e);
+}
+
+// Preview vị trí khối
+function showPreview(e) {
+    clearPreview();
+
+    const rect = boardDiv.getBoundingClientRect();
+    let x = e.clientX - rect.left;
+    let y = e.clientY - rect.top;
+
+    if (x < 0 || y < 0 || x > rect.width || y > rect.height) return;
+
+    let col = Math.floor(x / cellSize);
+    let row = Math.floor(y / cellSize);
+
+    if (!canPlace(draggingShape, row, col)) return;
+
+    // highlight
+    draggingShape.forEach((r, i) => {
+        r.forEach((v, j) => {
+            if (v === 1) {
+                let cellIndex = (row + i) * boardSize + (col + j);
+                if (boardDiv.childNodes[cellIndex]) {
+                    boardDiv.childNodes[cellIndex].style.background = "#77e0ff";
+                    previewCells.push(boardDiv.childNodes[cellIndex]);
+                }
+            }
+        });
+    });
+}
+
+function clearPreview() {
+    previewCells.forEach(c => {
+        let r = c.dataset.row;
+        let col = c.dataset.col;
+        c.style.background = board[r][col] ? "#4fc3f7" : "#141a2e";
+    });
+    previewCells = [];
+}
+
+// Thả chuột
+function stopDrag(e) {
+    document.removeEventListener("mousemove", moveDrag);
+    document.removeEventListener("mouseup", stopDrag);
+
+    if (draggingPiece) draggingPiece.remove();
+
+    const rect = boardDiv.getBoundingClientRect();
+    let x = e.clientX - rect.left;
+    let y = e.clientY - rect.top;
+
+    let col = Math.floor(x / cellSize);
+    let row = Math.floor(y / cellSize);
+
+    if (canPlace(draggingShape, row, col)) {
+        place(draggingShape, row, col);
+        clearPreview();
+        piecesDiv.querySelector(".piece")?.remove();
+        if (piecesDiv.children.length === 0) generatePieces();
+    }
+
+    draggingPiece = null;
+    draggingShape = null;
 }
 
 function canPlace(shape, row, col) {
     for (let r = 0; r < shape.length; r++) {
         for (let c = 0; c < shape[0].length; c++) {
             if (shape[r][c]) {
-                if (row + r >= boardSize || col + c >= boardSize) return false;
-                if (board[row + r][col + c] !== 0) return false;
+                if (row+r >= boardSize || col+c >= boardSize) return false;
+                if (board[row+r][col+c] !== 0) return false;
             }
         }
     }
@@ -152,7 +240,7 @@ function canPlace(shape, row, col) {
 function place(shape, row, col) {
     for (let r = 0; r < shape.length; r++) {
         for (let c = 0; c < shape[0].length; c++) {
-            if (shape[r][c]) board[row + r][col + c] = 1;
+            if (shape[r][c]) board[row+r][col+c] = 1;
         }
     }
     clearLines();
@@ -160,55 +248,20 @@ function place(shape, row, col) {
 }
 
 function clearLines() {
-    // Clear hàng
     for (let r = 0; r < boardSize; r++) {
-        if (board[r].every(v => v === 1)) {
-            for (let c = 0; c < boardSize; c++) board[r][c] = 0;
-        }
+        if (board[r].every(v => v === 1)) board[r].fill(0);
     }
-    // Clear cột
     for (let c = 0; c < boardSize; c++) {
         let full = true;
-        for (let r = 0; r < boardSize; r++) {
-            if (!board[r][c]) full = false;
-        }
-        if (full) {
-            for (let r = 0; r < boardSize; r++) board[r][c] = 0;
-        }
+        for (let r = 0; r < boardSize; r++) if (!board[r][c]) full = false;
+        if (full) for (let r = 0; r < boardSize; r++) board[r][c] = 0;
     }
 }
 
-// Fix drag & drop lệch
-boardDiv.addEventListener("dragover", e => e.preventDefault());
-
-boardDiv.addEventListener("drop", e => {
-    let shape = JSON.parse(e.dataTransfer.getData("shape"));
-    let piece = window._currentDraggingPiece;
-    if (!piece) return;
-
-    let rect = boardDiv.getBoundingClientRect();
-    let x = e.clientX - rect.left;
-    let y = e.clientY - rect.top;
-
-    // lấy kích thước ô thực trong DOM
-    let cellSize = boardDiv.clientWidth / 10;
-
-    let col = Math.floor(x / cellSize);
-    let row = Math.floor(y / cellSize);
-
-    if (canPlace(shape, row, col)) {
-        place(shape, row, col);
-        piece.remove();
-
-        if (piecesDiv.children.length === 0) generatePieces();
-    }
-});
-
-// Start game
 generatePieces();
 renderBoard();
-
 </script>
+
 
 </body>
 </html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thông tin File Upload</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+        .file-info { 
+            margin-top: 20px; 
+            padding: 15px; 
+            border: 1px solid #3498db; 
+            border-radius: 8px; 
+            background-color: #ecf0f1;
+        }
+        .file-info h2 { color: #2980b9; margin-top: 0; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Xử lý và Hiển thị Thông tin File</h1>
+    
+    <label for="fileInput">
+        **Chọn File để xem thông tin:**
+    </label>
+    <input type="file" id="fileInput" name="uploadFile">
+    
+    <div id="fileInfoContainer">
+        </div>
+
+    <script>
+        document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+
+        /**
+         * Chuyển đổi bytes sang định dạng dễ đọc (KB, MB, GB).
+         */
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0) return '0 Bytes';
+
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+
+        /**
+         * Xử lý sự kiện khi người dùng chọn file.
+         */
+        function handleFileSelect(event) {
+            const files = event.target.files;
+            const container = document.getElementById('fileInfoContainer');
+            container.innerHTML = ''; // Xóa thông tin cũ
+
+            if (files.length === 0) {
+                container.innerHTML = '<p class="error">Vui lòng chọn ít nhất một file.</p>';
+                return;
+            }
+
+            // Xử lý từng file được chọn
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const fileType = file.type || 'Không xác định'; // Mime type (image/jpeg, application/pdf, etc.)
+
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'file-info';
+                
+                let content = `
+                    <h2>File #${i + 1}: ${file.name}</h2>
+                    <p><strong>Tên File (Gốc):</strong> ${file.name}</p>
+                    <p><strong>Kích Thước (Bytes):</strong> ${file.size} bytes</p>
+                    <p><strong>Dung Lượng:</strong> <span class="success">${formatBytes(file.size)}</span></p>
+                    <p><strong>Loại File (MIME):</strong> ${fileType}</p>
+                    <p><strong>Lần cuối chỉnh sửa:</strong> ${file.lastModifiedDate ? file.lastModifiedDate.toLocaleDateString() : 'N/A'}</p>
+                `;
+                
+                // Nếu là ảnh, có thể thêm thông tin xem trước (tùy chọn)
+                if (fileType.startsWith('image/')) {
+                    content += `<p><strong>Xem trước Ảnh:</strong></p>`;
+                    const img = document.createElement('img');
+                    img.style.maxWidth = '100px';
+                    img.style.maxHeight = '100px';
+                    img.style.display = 'block';
+                    img.style.marginTop = '5px';
+                    
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                    
+                    infoDiv.innerHTML = content;
+                    infoDiv.appendChild(img);
+                } else {
+                    infoDiv.innerHTML = content;
+                }
+                
+                container.appendChild(infoDiv);
+            }
+        }
+    </script>
+</body>
+</html>

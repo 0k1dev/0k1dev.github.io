@@ -1,205 +1,213 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Game Xếp Gạch</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥳</text></svg>">
-  <style>
-    :root{--bg:#0f1724;--panel:#0b1320;--accent:#ff2b2b}
-    *{box-sizing:border-box}
-    body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#1b2430, #2a3350);font-family:Inter, system-ui, Arial;color:#fff}
-    .wrap{width:900px;display:grid;grid-template-columns:320px 1fr;gap:24px;padding:24px}
-    .panel{background:linear-gradient(180deg,#071026,#0b1426);padding:16px;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,0.6)}
-
-    .left{display:flex;flex-direction:column;gap:12px}
-    canvas{background:#071124;border-radius:8px;display:block;width:100%;height:auto}
-    .info{display:flex;flex-direction:column;gap:8px}
-    .row{display:flex;justify-content:space-between;align-items:center}
-    .btn{background:var(--accent);border:none;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:700;color:#fff}
-    .small{font-size:14px;color:#cfe3ff}
-    .controls{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-    .next{width:100%;height:120px;background:#061122;border-radius:8px;padding:8px}
-
-    .right{display:flex;flex-direction:column;gap:12px}
-    h1{margin:0;font-size:20px}
-    .legend{display:flex;gap:8px;flex-wrap:wrap}
-    .key{background:#07122a;padding:8px;border-radius:8px}
-
-    footer{grid-column:1/-1;text-align:center;color:#9fb6ff;font-size:13px;margin-top:10px}
-    @media(max-width:900px){.wrap{grid-template-columns:1fr;}}
-  </style>
+<meta charset="UTF-8">
+<title>Block Puzzle 10x10 - HuyTKing</title>
+<style>
+    body {
+        background: #1d2333;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        font-family: Arial;
+        color: #fff;
+    }
+    .game {
+        display: flex;
+        gap: 20px;
+    }
+    #board {
+        width: 400px;
+        height: 400px;
+        background: #0a1020;
+        display: grid;
+        grid-template-columns: repeat(10, 1fr);
+        grid-template-rows: repeat(10, 1fr);
+        gap: 2px;
+        padding: 5px;
+        border-radius: 10px;
+    }
+    .cell {
+        background: #141a2e;
+        border-radius: 4px;
+    }
+    #pieces {
+        width: 200px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    .piece {
+        display: inline-grid;
+        gap: 3px;
+        padding: 10px;
+        background: #0b1426;
+        border-radius: 10px;
+        cursor: grab;
+        width: fit-content;
+    }
+    .block {
+        width: 20px;
+        height: 20px;
+        background: #4fc3f7;
+        border-radius: 4px;
+    }
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="panel left">
-      <h1>Tetris - Bản demo</h1>
-      <div class="row info">
-        <div class="small">Score: <span id="score">0</span></div>
-        <div class="small">Level: <span id="level">1</span></div>
-      </div>
 
-      <canvas id="board" width="200" height="400"></canvas>
-
-      <div class="row">
-        <button id="startBtn" class="btn">Start / Restart</button>
-        <button id="pauseBtn" class="btn">Pause</button>
-      </div>
-
-      <div class="controls">
-        <div class="next panel">
-          <div class="small">Next piece:</div>
-          <canvas id="next" width="80" height="80"></canvas>
-        </div>
-        <div class="panel" style="padding:12px;min-height:120px;">
-          <div class="small">Controls</div>
-          <div class="legend" style="margin-top:8px">
-            <div class="key">← Move left</div>
-            <div class="key">→ Move right</div>
-            <div class="key">↓ Soft drop</div>
-            <div class="key">Space Hard drop</div>
-            <div class="key">↑ / X Rotate</div>
-            <div class="key">C Hold</div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="panel right">
-      <h1>Instructions</h1>
-      <p class="small">Trò chơi xếp gạch (Tetris) đơn giản bằng HTML5 Canvas và JavaScript. Gồm có: di chuyển, xoay, giữ (hold), hiển thị mảnh tiếp theo, tính điểm và tăng level.</p>
-
-      <h1 style="font-size:16px;margin-top:8px">Tips & scoring</h1>
-      <ul class="small">
-        <li>1 dòng: 100 điểm, 2 dòng: 300, 3 dòng: 500, 4 dòng (Tetris): 800</li>
-        <li>Mỗi level tăng tốc độ rơi</li>
-      </ul>
-
-      <h1 style="font-size:16px">Made by HuyTKing</h1>
-    </div>
-
-    <footer>© 2025 HuyTKing - Demo Tetris</footer>
-  </div>
+<div class="game">
+    <div id="board"></div>
+    <div id="pieces"></div>
+</div>
 
 <script>
-(() => {
-  const COLS = 10, ROWS = 20, BLOCK = 20;
-  const COLORS = { I:'#00f0f0', J:'#0000f0', L:'#f0a000', O:'#f0f000', S:'#00f000', T:'#a000f0', Z:'#f00000' };
+const boardSize = 10;
+const board = [];
+const boardDiv = document.getElementById("board");
+const piecesDiv = document.getElementById("pieces");
 
-  const SHAPES = {
-    I: [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],
-    J: [[1,0,0],[1,1,1],[0,0,0]],
-    L: [[0,0,1],[1,1,1],[0,0,0]],
-    O: [[1,1],[1,1]],
-    S: [[0,1,1],[1,1,0],[0,0,0]],
-    T: [[0,1,0],[1,1,1],[0,0,0]],
-    Z: [[1,1,0],[0,1,1],[0,0,0]]
-  };
+const blockShapes = [
+    [[1]],                     // 1 ô
+    [[1,1]],                   // 2 ngang
+    [[1],[1]],                 // 2 dọc
+    [[1,1,1]],                 // 3 ngang
+    [[1],[1],[1]],             // 3 dọc
+    [[1,1],[1,1]],             // Vuông
+    [[1,1,1],[0,1,0]]          // Chữ T
+];
 
-  const scoreTable = {1:100,2:300,3:500,4:800};
-
-  const boardCanvas = document.getElementById('board');
-  const nextCanvas = document.getElementById('next');
-  const ctx = boardCanvas.getContext('2d');
-  const nctx = nextCanvas.getContext('2d');
-
-  boardCanvas.width = COLS*BLOCK; boardCanvas.height = ROWS*BLOCK;
-  nextCanvas.width = 4*BLOCK; nextCanvas.height = 4*BLOCK;
-
-  let board, current, nextPiece, holdPiece = null, canHold=true;
-  let score=0, level=1, lines=0, speed=800; let gameOver=false, paused=false;
-  let dropCounter=0, lastTime=0;
-
-  function resetBoard(){ board = Array.from({length:ROWS},()=>Array(COLS).fill(0)); }
-
-  function randomPiece(){ const keys = Object.keys(SHAPES); const k = keys[Math.floor(Math.random()*keys.length)]; return {shape:SHAPES[k], type:k}; }
-
-  function rotate(matrix){ const N = matrix.length; const res = Array.from({length:N},()=>Array(N).fill(0));
-    for(let r=0;r<N;r++) for(let c=0;c<N;c++) res[c][N-1-r]=matrix[r][c]; return res;
-  }
-
-  function drawCell(x,y,color){ ctx.fillStyle=color; ctx.fillRect(x*BLOCK,y*BLOCK,BLOCK-1,BLOCK-1); }
-
-  function draw(){ ctx.clearRect(0,0,boardCanvas.width,boardCanvas.height);
-    // draw board
-    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){ if(board[r][c]) drawCell(c,r,board[r][c]); }
-    // draw current
-    if(current) for(let r=0;r<current.shape.length;r++) for(let c=0;c<current.shape[r].length;c++) if(current.shape[r][c]) drawCell(current.x + c, current.y + r, COLORS[current.type]);
-  }
-
-  function drawNext(){ nctx.clearRect(0,0,nextCanvas.width,nextCanvas.height);
-    if(!nextPiece) return; const shape = nextPiece.shape; const w = shape[0].length; const h = shape.length;
-    const offsetX = Math.floor((4-w)/2)*BLOCK; const offsetY = Math.floor((4-h)/2)*BLOCK;
-    for(let r=0;r<h;r++) for(let c=0;c<w;c++) if(shape[r][c]){
-      nctx.fillStyle = COLORS[nextPiece.type]; nctx.fillRect(offsetX + c*BLOCK + 1, offsetY + r*BLOCK + 1, BLOCK-2, BLOCK-2);
+// Tạo bảng 10x10
+function initBoard() {
+    for (let r = 0; r < boardSize; r++) {
+        board[r] = [];
+        for (let c = 0; c < boardSize; c++) {
+            board[r][c] = 0;
+            const cell = document.createElement("div");
+            cell.className = "cell";
+            cell.dataset.row = r;
+            cell.dataset.col = c;
+            boardDiv.appendChild(cell);
+        }
     }
-  }
+}
+initBoard();
 
-  function collide(board, piece){ for(let r=0;r<piece.shape.length;r++) for(let c=0;c<piece.shape[r].length;c++) if(piece.shape[r][c]){
-    const x = piece.x + c, y = piece.y + r; if(y>=ROWS || x<0 || x>=COLS) return true; if(y>=0 && board[y][x]) return true;
-  } return false; }
+// Vẽ lại board
+function renderBoard() {
+    boardDiv.childNodes.forEach(cell => {
+        let r = cell.dataset.row;
+        let c = cell.dataset.col;
+        cell.style.background = board[r][c] ? "#4fc3f7" : "#141a2e";
+    });
+}
 
-  function merge(board,piece){ for(let r=0;r<piece.shape.length;r++) for(let c=0;c<piece.shape[r].length;c++) if(piece.shape[r][c]){
-    const x = piece.x + c, y = piece.y + r; if(y>=0) board[y][x] = COLORS[piece.type]; }
-  }
+// Random 3 khối cho mỗi lượt
+function generatePieces() {
+    piecesDiv.innerHTML = "";
+    for (let i = 0; i < 3; i++) {
+        let shape = blockShapes[Math.floor(Math.random()*blockShapes.length)];
+        createPiece(shape);
+    }
+}
 
-  function clearLines(){ let rowCount=0; outer: for(let r=ROWS-1;r>=0;r--){ if(board[r].every(cell=>cell)){
-      board.splice(r,1); board.unshift(Array(COLS).fill(0)); rowCount++; r++; // check same row again
-    }} if(rowCount>0){ lines += rowCount; score += scoreTable[rowCount] * level; if(lines >= level*10){ level++; speed = Math.max(100, speed - 80); }
-    document.getElementById('score').textContent = score; document.getElementById('level').textContent = level; }
-  }
+// Tạo 1 khối
+function createPiece(shape) {
+    const piece = document.createElement("div");
+    piece.className = "piece";
+    piece.style.gridTemplateColumns = `repeat(${shape[0].length}, 20px)`;
+    
+    shape.forEach(row => {
+        row.forEach(val => {
+            const block = document.createElement("div");
+            block.className = "block";
+            block.style.visibility = val ? "visible" : "hidden";
+            piece.appendChild(block);
+        });
+    });
 
-  function spawn(){ current = nextPiece || randomPiece(); current.x = Math.floor((COLS - current.shape[0].length)/2); current.y = -1; nextPiece = randomPiece(); canHold = true; drawNext(); if(collide(board,current)){ gameOver=true; paused=true; alert('Game Over! Score: '+score); }
-  }
+    piece.draggable = true;
 
-  function move(dx){ if(!current) return; current.x += dx; if(collide(board,current)) current.x -= dx; }
+    piece.addEventListener("dragstart", e => {
+        e.dataTransfer.setData("shape", JSON.stringify(shape));
+    });
 
-  function softDrop(){ if(!current) return; current.y++; if(collide(board,current)){ current.y--; lockPiece(); } }
+    piecesDiv.appendChild(piece);
+}
 
-  function hardDrop(){ if(!current) return; while(!collide(board,{...current, y: current.y+1})) current.y++; lockPiece(); }
+// Kiểm tra đặt được khối hay không
+function canPlace(shape, row, col) {
+    for (let r = 0; r < shape.length; r++) {
+        for (let c = 0; c < shape[0].length; c++) {
+            if (shape[r][c]) {
+                if (row+r >= boardSize || col+c >= boardSize) return false;
+                if (board[row+r][col+c] !== 0) return false;
+            }
+        }
+    }
+    return true;
+}
 
-  function lockPiece(){ merge(board,current); clearLines(); spawn(); }
+// Đặt khối xuống bảng
+function place(shape, row, col) {
+    for (let r = 0; r < shape.length; r++) {
+        for (let c = 0; c < shape[0].length; c++) {
+            if (shape[r][c]) {
+                board[row+r][col+c] = 1;
+            }
+        }
+    }
+    clearLines();
+    renderBoard();
+}
 
-  function rotateCurrent(){ if(!current) return; const orig = current.shape; current.shape = rotate(current.shape); if(collide(board,current)){
-    // wall kicks simple
-    current.x++; if(collide(board,current)){ current.x-=2; if(collide(board,current)){ current.x++; current.shape = orig; } }
-  }
-  }
+function clearLines() {
+    // Clear hàng
+    for (let r = 0; r < boardSize; r++) {
+        if (board[r].every(v => v === 1)) {
+            for (let c = 0; c < boardSize; c++) board[r][c] = 0;
+        }
+    }
 
-  function hold(){ if(!current || !canHold) return; if(!holdPiece){ holdPiece = {shape:current.shape, type:current.type}; spawn(); } else { const temp = {shape:current.shape, type:current.type}; current.shape = holdPiece.shape; current.type = holdPiece.type; holdPiece = temp; current.x = Math.floor((COLS - current.shape[0].length)/2); current.y = -1; if(collide(board,current)){ gameOver=true; paused=true; alert('Game Over! Score: '+score); } }
-    canHold=false; drawHold(); }
+    // Clear cột
+    for (let c = 0; c < boardSize; c++) {
+        let full = true;
+        for (let r = 0; r < boardSize; r++) {
+            if (!board[r][c]) full = false;
+        }
+        if (full) {
+            for (let r = 0; r < boardSize; r++) board[r][c] = 0;
+        }
+    }
+}
 
-  function drawHold(){ // small console style display in next canvas corner - optional
-    // not implemented visually to keep code short
-  }
+// Drag & Drop khối vào bảng
+boardDiv.addEventListener("dragover", e => e.preventDefault());
 
-  document.addEventListener('keydown',(e)=>{
-    if(e.key === 'ArrowLeft'){ move(-1); draw(); }
-    else if(e.key === 'ArrowRight'){ move(1); draw(); }
-    else if(e.key === 'ArrowDown'){ softDrop(); draw(); }
-    else if(e.key === ' '){ e.preventDefault(); hardDrop(); draw(); }
-    else if(e.key === 'ArrowUp' || e.key.toLowerCase() === 'x'){ rotateCurrent(); draw(); }
-    else if(e.key.toLowerCase() === 'c'){ hold(); draw(); }
-    else if(e.key.toLowerCase() === 'p'){ paused = !paused; }
-  });
+boardDiv.addEventListener("drop", e => {
+    let shape = JSON.parse(e.dataTransfer.getData("shape"));
+    let rect = boardDiv.getBoundingClientRect();
+    let x = e.clientX - rect.left;
+    let y = e.clientY - rect.top;
 
-  document.getElementById('startBtn').addEventListener('click',()=>{ startGame(); });
-  document.getElementById('pauseBtn').addEventListener('click',()=>{ paused = !paused; document.getElementById('pauseBtn').textContent = paused? 'Resume':'Pause'; });
+    let col = Math.floor(x / 40);
+    let row = Math.floor(y / 40);
 
-  function startGame(){ resetBoard(); score=0; level=1; lines=0; speed=800; gameOver=false; paused=false; nextPiece = randomPiece(); spawn(); document.getElementById('score').textContent = score; document.getElementById('level').textContent = level; }
+    if (canPlace(shape, row, col)) {
+        place(shape, row, col);
+        e.target.closest(".piece")?.remove();
 
-  function update(time=0){ if(paused){ lastTime = time; requestAnimationFrame(update); return; }
-    const delta = time - lastTime; lastTime = time; dropCounter += delta;
-    if(!current) spawn();
-    if(dropCounter > speed){ current.y++; if(collide(board,current)){ current.y--; lockPiece(); } dropCounter = 0; }
-    draw(); requestAnimationFrame(update);
-  }
+        if (piecesDiv.children.length === 0) {
+            generatePieces();
+        }
+    }
+});
 
-  // initialize
-  resetBoard(); drawNext(); draw(); requestAnimationFrame(update);
-
-})();
+// Start
+generatePieces();
+renderBoard();
 </script>
+
 </body>
 </html>

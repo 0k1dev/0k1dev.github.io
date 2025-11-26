@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Công Thành 8 Đội</title>
+    <title>Game Công Thành 8 Đội Trên Bản Đồ</title>
     <style>
-        /* CSS */
+        /* --- CSS --- */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
@@ -13,101 +13,108 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-color: #e9ebee;
+            background-color: #f4f7f6;
             margin: 0;
             color: #333;
         }
 
         .game-container {
-            text-align: center;
-            padding: 20px;
+            padding: 30px;
             border: 1px solid #ddd;
             border-radius: 12px;
             background-color: #fff;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
             width: 95%;
-            max-width: 1200px;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         h1 {
             color: #2c3e50;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
             margin-bottom: 20px;
         }
 
-        .team-status {
-            display: flex;
-            flex-wrap: wrap; /* Cho phép các đội xuống dòng */
-            justify-content: center;
-            gap: 15px;
+        /* --- VÙNG BẢN ĐỒ (MAP) --- */
+        .game-map {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* Chia 4 cột */
+            grid-template-rows: repeat(2, 1fr);    /* Chia 2 hàng */
+            width: 800px;
+            height: 400px;
+            border: 5px solid #333;
             margin: 20px 0;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
 
-        .team {
-            padding: 15px;
-            border-radius: 8px;
-            width: 22%; /* 4 đội trên 1 hàng */
-            min-width: 200px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s;
-            text-align: left;
+        .territory {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #333;
+            cursor: pointer;
+            transition: opacity 0.3s, transform 0.1s;
+            font-weight: bold;
         }
 
-        .team:hover {
-            transform: translateY(-3px);
+        .territory:hover:not(.disabled) {
+            transform: scale(1.02);
+            z-index: 10;
         }
         
-        /* Màu sắc cho 8 đội */
-        .team-1 { border: 3px solid #e74c3c; background-color: #fcecec; } /* Red */
-        .team-2 { border: 3px solid #3498db; background-color: #ecf3fc; } /* Blue */
-        .team-3 { border: 3px solid #2ecc71; background-color: #e9f8ed; } /* Green */
-        .team-4 { border: 3px solid #f1c40f; background-color: #fffaf0; } /* Yellow */
-        .team-5 { border: 3px solid #9b59b6; background-color: #f6eff9; } /* Purple */
-        .team-6 { border: 3px solid #1abc9c; background-color: #e8f7f5; } /* Turquoise */
-        .team-7 { border: 3px solid #e67e22; background-color: #fdf5eb; } /* Orange */
-        .team-8 { border: 3px solid #34495e; background-color: #eff3f7; } /* Dark Blue */
+        /* Màu sắc lãnh thổ */
+        .team-1 { background-color: #e74c3c; color: white; } /* Red */
+        .team-2 { background-color: #3498db; color: white; } /* Blue */
+        .team-3 { background-color: #2ecc71; color: #333; } /* Green */
+        .team-4 { background-color: #f1c40f; color: #333; } /* Yellow */
+        .team-5 { background-color: #9b59b6; color: white; } /* Purple */
+        .team-6 { background-color: #1abc9c; color: #333; } /* Turquoise */
+        .team-7 { background-color: #e67e22; color: white; } /* Orange */
+        .team-8 { background-color: #34495e; color: white; } /* Dark Blue */
 
-        h2 {
-            margin-top: 0;
-            font-size: 1.2em;
-        }
-
-        p {
-            font-size: 1em;
-            font-weight: 500;
-            margin: 5px 0;
-        }
-
-        span {
-            font-weight: bold;
-            font-size: 1.1em;
-            color: #27ae60;
-        }
-
-        button {
-            padding: 8px 12px;
-            font-size: 0.9em;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
-            background-color: #f39c12;
-            color: white;
-            font-weight: bold;
-            margin-top: 10px;
-            transition: background-color 0.2s;
-            width: 100%;
-        }
-
-        button:hover:not(:disabled) {
-            background-color: #e67e22;
-        }
-
-        button:disabled {
-            background-color: #bdc3c7;
+        .disabled {
+            opacity: 0.3;
             cursor: not-allowed;
         }
 
+        .army-display {
+            font-size: 1.5em;
+            margin-top: 5px;
+        }
+        
+        .owner-display {
+             font-size: 1.1em;
+             margin-bottom: 5px;
+        }
+
+        /* --- BẢNG THÔNG TIN --- */
+        .status-panel {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            width: 100%;
+        }
+        .team-status-mini {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            width: 20%;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .team-status-mini p {
+            margin: 2px 0;
+            font-weight: 600;
+        }
+        .team-status-mini span {
+            font-weight: bold;
+            color: #27ae60;
+        }
+        
         .message {
             margin-top: 25px;
             padding: 15px;
@@ -117,29 +124,53 @@
             font-weight: bold;
             color: #333;
             text-align: center;
+            width: 90%;
+        }
+        
+        .current-player {
+            font-size: 1.3em;
+            color: #c0392b;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding: 5px;
+            border: 1px dashed #c0392b;
         }
     </style>
 </head>
 <body>
     <div class="game-container">
-        <h1>⚔️ Trận Chiến Công Thành 8 Đội ⚔️</h1>
-        <div id="team-status-container" class="team-status">
+        <h1>⚔️ Trận Chiến Công Thành Trên Bản Đồ ⚔️</h1>
+        
+        <div class="current-player">
+            Người chơi hiện tại (Attacker): <span id="current-player-name">Đội 1 (RED)</span>
+            <p style="font-size: 0.7em; font-weight: normal; margin: 5px 0 0;">(Click vào vùng lãnh thổ khác để tấn công)</p>
+        </div>
+
+        <div id="game-map" class="game-map">
             </div>
 
-        <div id="message" class="message">Trận chiến 8 đội bắt đầu! Quân số là 0 và sẽ được sản xuất theo thời gian.</div>
+        <div id="message" class="message">Click vào vùng lãnh thổ địch để tấn công. Cần 50 quân để tấn công.</div>
+
+        <h2 style="margin-top: 30px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Bảng Trạng Thái Quân Lính</h2>
+        <div id="status-panel-container" class="status-panel">
+            </div>
     </div>
 
     <script>
-        // JavaScript
+        // --- JavaScript ---
+
         // --- Cấu hình Game ---
         const NUM_TEAMS = 8;
         const INITIAL_ARMY = 0; // Quân khởi đầu là 0
         const PRODUCTION_RATE = 5; // Số quân sản xuất mỗi giây
         const ATTACK_COST = 50; // Quân cần để phát động tấn công
         const ATTACK_POWER = 60; // Quân bị tiêu diệt khi tấn công thành công
+        const CURRENT_PLAYER_ID = 1; // Mặc định người chơi là Đội 1 (RED)
 
         let teams = {};
+        let teamColors = ["#e74c3c", "#3498db", "#2ecc71", "#f1c40f", "#9b59b6", "#1abc9c", "#e67e22", "#34495e"];
         let teamNames = ["RED", "BLUE", "GREEN", "YELLOW", "PURPLE", "TURQUOISE", "ORANGE", "DARK"];
+        let teamClasses = ["team-1", "team-2", "team-3", "team-4", "team-5", "team-6", "team-7", "team-8"];
         let gameRunning = true;
 
         /**
@@ -151,63 +182,127 @@
                     army: INITIAL_ARMY,
                     production: PRODUCTION_RATE,
                     name: `Đội ${i} (${teamNames[i-1]})`,
-                    armyId: `army${i}`,
-                    prodId: `production${i}`
+                    class: teamClasses[i-1],
+                    color: teamColors[i-1]
                 };
             }
         }
 
         /**
-         * Tạo và chèn HTML cho tất cả các đội.
+         * Tạo và chèn HTML cho bản đồ và bảng trạng thái.
          */
-        function createTeamHTML() {
-            const container = document.getElementById('team-status-container');
-            let html = '';
+        function createMapAndStatus() {
+            const mapContainer = document.getElementById('game-map');
+            const statusContainer = document.getElementById('status-panel-container');
+            let mapHTML = '';
+            let statusHTML = '';
 
             for (let i = 1; i <= NUM_TEAMS; i++) {
-                html += `
-                    <div id="team${i}-info" class="team team-${i}">
-                        <h2>${teams[i].name}</h2>
-                        <p>Quân hiện tại: <span id="${teams[i].armyId}">${teams[i].army}</span></p>
-                        <p>Quân sản xuất/s: <span id="${teams[i].prodId}">${teams[i].production}</span></p>
-                        <select id="target-select-${i}" class="target-select">
-                            ${getTargetOptions(i)}
-                        </select>
-                        <button onclick="attack(${i})" id="btn-attack-${i}">Tấn Công</button>
+                // Tạo lãnh thổ trên bản đồ
+                mapHTML += `
+                    <div id="territory-${i}" class="territory ${teams[i].class}" onclick="handleMapClick(${i})">
+                        <div class="owner-display">${teams[i].name}</div>
+                        <div id="army-map-${i}" class="army-display">${teams[i].army}</div>
+                    </div>
+                `;
+
+                // Tạo thẻ trạng thái mini
+                statusHTML += `
+                    <div id="status-mini-${i}" class="team-status-mini ${teams[i].class}">
+                        <p>${teams[i].name}</p>
+                        <p>Quân: <span id="army-status-${i}">${teams[i].army}</span></p>
                     </div>
                 `;
             }
-            container.innerHTML = html;
+            mapContainer.innerHTML = mapHTML;
+            statusContainer.innerHTML = statusHTML;
         }
 
         /**
-         * Tạo các tùy chọn tấn công cho một đội.
-         */
-        function getTargetOptions(attackerId) {
-            let options = '<option value="">Chọn Mục Tiêu</option>';
-            for (let i = 1; i <= NUM_TEAMS; i++) {
-                if (i !== attackerId) {
-                    options += `<option value="${i}">Tấn Công Đội ${i}</option>`;
-                }
-            }
-            return options;
-        }
-
-
-        /**
-         * Cập nhật giao diện với số quân mới nhất.
+         * Cập nhật giao diện (Map và Status Panel)
          */
         function updateUI() {
             for (const teamId in teams) {
-                document.getElementById(teams[teamId].armyId).textContent = Math.floor(Math.max(0, teams[teamId].army));
-                // Vô hiệu hóa/kích hoạt nút tấn công
-                const btn = document.getElementById(`btn-attack-${teamId}`);
-                if (teams[teamId].army < ATTACK_COST || !gameRunning) {
-                    btn.disabled = true;
+                const army = Math.floor(Math.max(0, teams[teamId].army));
+                const territoryEl = document.getElementById(`territory-${teamId}`);
+                const statusEl = document.getElementById(`status-mini-${teamId}`);
+
+                // Cập nhật quân số trên bản đồ và bảng trạng thái
+                document.getElementById(`army-map-${teamId}`).textContent = army;
+                document.getElementById(`army-status-${teamId}`).textContent = army;
+
+                // Xử lý đội bị tiêu diệt
+                if (army <= 0) {
+                    territoryEl.classList.add('disabled');
+                    statusEl.classList.add('disabled');
+                    territoryEl.onclick = null; // Vô hiệu hóa click
                 } else {
-                    btn.disabled = false;
+                    territoryEl.classList.remove('disabled');
+                    territoryEl.onclick = () => handleMapClick(parseInt(teamId)); // Kích hoạt click lại
                 }
             }
+        }
+
+        /**
+         * Xử lý sự kiện click vào lãnh thổ (Công thành)
+         * @param {number} targetId - ID của đội bị tấn công (lãnh thổ được click).
+         */
+        function handleMapClick(targetId) {
+            if (!gameRunning) return;
+
+            const attackerId = CURRENT_PLAYER_ID; // Người chơi hiện tại luôn là Đội 1 (trong ví dụ này)
+            
+            if (attackerId === targetId) {
+                document.getElementById('message').textContent = `⚠️ Không thể tấn công lãnh thổ của chính mình (${teams[targetId].name}).`;
+                return;
+            }
+            
+            attack(attackerId, targetId);
+        }
+
+        /**
+         * Hàm xử lý logic tấn công.
+         * @param {number} attackerId - ID của đội tấn công.
+         * @param {number} targetId - ID của đội bị tấn công.
+         */
+        function attack(attackerId, targetId) {
+            const attacker = teams[attackerId];
+            const target = teams[targetId];
+            const messageEl = document.getElementById('message');
+
+            if (attacker.army >= ATTACK_COST) {
+                // 1. Trừ quân phí tổn cho đội tấn công
+                attacker.army -= ATTACK_COST;
+
+                // 2. Mô phỏng trận chiến: đội bị tấn công mất quân
+                target.army -= ATTACK_POWER;
+
+                messageEl.className = 'message';
+                messageEl.textContent = `💥 ${attacker.name} đã dùng ${ATTACK_COST} quân TẤN CÔNG ${target.name}. ${target.name} mất ${ATTACK_POWER} quân!`;
+
+                // 3. Kiểm tra điều kiện thắng/thua
+                if (target.army <= 0) {
+                    target.army = 0;
+                    
+                    // Lãnh thổ bị chiếm (đổi màu) - Giả lập
+                    const targetTerritoryEl = document.getElementById(`territory-${targetId}`);
+                    targetTerritoryEl.classList.remove(target.class); // Xóa class cũ
+                    targetTerritoryEl.classList.add(attacker.class);  // Thêm class mới (Màu của người tấn công)
+                    
+                    target.class = attacker.class; // Cập nhật class
+                    target.color = attacker.color; // Cập nhật màu
+                    target.name = `${target.name} (BỊ CHIẾM)`; // Đổi tên để dễ nhận biết
+
+                    messageEl.textContent = `🎉 ${attacker.name} đã CHIẾM được lãnh thổ của ${target.name}! 🎉`;
+
+                    checkGameOver();
+                }
+
+            } else {
+                messageEl.textContent = `⚠️ ${attacker.name}: Không đủ quân (${Math.floor(attacker.army)}) để tấn công. Cần ${ATTACK_COST} quân.`;
+            }
+
+            updateUI();
         }
 
         /**
@@ -226,86 +321,35 @@
         }
 
         /**
-         * Hàm xử lý tấn công.
-         * @param {number} attackerId - ID của đội tấn công.
-         */
-        function attack(attackerId) {
-            if (!gameRunning) return;
-
-            const targetSelect = document.getElementById(`target-select-${attackerId}`);
-            const targetId = parseInt(targetSelect.value);
-
-            if (!targetId) {
-                document.getElementById('message').textContent = `⚠️ Đội ${attackerId}: Vui lòng chọn mục tiêu tấn công!`;
-                return;
-            }
-
-            const attacker = teams[attackerId];
-            const target = teams[targetId];
-            const messageEl = document.getElementById('message');
-
-            if (attacker.army >= ATTACK_COST) {
-                // 1. Trừ quân phí tổn cho đội tấn công
-                attacker.army -= ATTACK_COST;
-
-                // 2. Mô phỏng trận chiến: đội bị tấn công mất quân
-                target.army -= ATTACK_POWER;
-
-                messageEl.className = 'message';
-                messageEl.textContent = `💥 ${attacker.name} đã dùng ${ATTACK_COST} quân tấn công ${target.name}. ${target.name} mất ${ATTACK_POWER} quân!`;
-
-                // 3. Kiểm tra điều kiện thắng/thua
-                if (target.army <= 0) {
-                    target.army = 0;
-                    
-                    // Vô hiệu hóa đội bị tiêu diệt
-                    document.getElementById(`team${targetId}-info`).style.opacity = 0.5;
-                    document.getElementById(`team${targetId}-info`).innerHTML += '<div style="color: red; font-weight: bold; margin-top: 10px;">(ĐÃ BỊ TIÊU DIỆT)</div>';
-
-                    messageEl.textContent = `🎉 ${attacker.name} đã tiêu diệt ${target.name}! 🎉`;
-
-                    checkGameOver();
-                }
-
-            } else {
-                messageEl.textContent = `⚠️ ${attacker.name}: Không đủ quân (${Math.floor(attacker.army)}) để tấn công. Cần ${ATTACK_COST} quân.`;
-            }
-
-            updateUI();
-        }
-
-        /**
          * Kiểm tra điều kiện kết thúc game (Chỉ còn 1 đội).
          */
         function checkGameOver() {
-            let activeTeams = 0;
-            let winnerId = null;
+            // Trong phiên bản bản đồ này, chúng ta sẽ tập trung vào việc chiếm lãnh thổ (thay đổi màu)
+            // và giảm số quân của các đội địch. Khi tất cả 7 đội địch có quân <= 0, người chơi 1 thắng.
+            
+            let activeOpponentTeams = 0;
 
-            for (const id in teams) {
+            for (let id = 2; id <= NUM_TEAMS; id++) {
                 if (teams[id].army > 0) {
-                    activeTeams++;
-                    winnerId = id;
+                    activeOpponentTeams++;
                 }
             }
 
-            if (activeTeams <= 1) {
+            if (activeOpponentTeams === 0) {
                 gameRunning = false;
-                clearInterval(gameInterval); // Dừng game
+                clearInterval(gameInterval);
                 const messageEl = document.getElementById('message');
 
-                if (winnerId) {
-                    messageEl.className = 'message team-3'; // Màu xanh lá
-                    messageEl.textContent = `👑 TRẬN CHIẾN KẾT THÚC! ${teams[winnerId].name} là người chiến thắng cuối cùng! 👑`;
-                } else {
-                    messageEl.textContent = `Trận chiến kết thúc trong hòa bình (hoặc cả 8 đội đều bị tiêu diệt!)`;
-                }
+                messageEl.className = 'message team-3';
+                messageEl.textContent = `👑 CHÚC MỪNG! ${teams[CURRENT_PLAYER_ID].name} đã CHIẾM TOÀN BỘ BẢN ĐỒ! 👑`;
             }
         }
 
 
         // --- Khởi động Game ---
         initializeTeams();
-        createTeamHTML();
+        createMapAndStatus();
+        document.getElementById('current-player-name').textContent = teams[CURRENT_PLAYER_ID].name;
         
         // Thiết lập chu kỳ sản xuất quân mỗi 1000ms (1 giây)
         const gameInterval = setInterval(produceArmy, 1000);

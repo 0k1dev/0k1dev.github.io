@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Những video hay - HuyTKing</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.2em;
+        }
+        
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            background: #000;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;
+        }
+        
+        .video-title {
+            font-size: 1.3em;
+            color: #333;
+            margin: 20px 0 10px 0;
+            font-weight: bold;
+        }
+        
+        .description {
+            text-align: center;
+            color: #666;
+            margin: 20px 0;
+            line-height: 1.8;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #FF0000;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 50px;
+            margin: 20px 10px;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        
+        .btn:hover {
+            background: #CC0000;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255,0,0,0.3);
+        }
+        
+        .social-links {
+            text-align: center;
+            margin-top: 30px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #999;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 HuyTKing</h1>
+        <p class="subtitle">Kênh YouTube của tôi</p>
+        
+        <p class="description">
+            Chào mừng bạn đến với kênh của tôi! 
+            Đây là nơi chia sẻ những video thú vị và bổ ích.
+        </p>
+        
+        <!-- Video chính -->
+        <h2 class="video-title">📺 Video nổi bật</h2>
+        <div class="video-container">
+            <iframe 
+                src="https://www.youtube.com/embed/euufohRsmr0"
+                frameborder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowfullscreen>
+            </iframe>
+        </div>
+        
+        <!-- Thêm video khác nếu muốn -->
+        <!-- 
+        <h2 class="video-title">📺 Video khác</h2>
+        <div class="video-container">
+            <iframe 
+                src="https://www.youtube.com/embed/VIDEO_ID_KHAC"
+                frameborder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowfullscreen>
+            </iframe>
+        </div>
+        -->
+        
+        <div class="social-links">
+            <a href="https://youtube.com/@HuyTKing" class="btn" target="_blank">
+                🔔 Đăng ký kênh YouTube
+            </a>
+        </div>
+        
+        <footer>
+            <p>© 2024 HuyTKing. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>
+```
+
+4. Click **"Commit new file"**
+
+### Bước 3: Kích hoạt GitHub Pages
+
+1. Vào tab **"Settings"** của repository
+2. Click **"Pages"** ở menu bên trái
+3. Tại **"Source"**: chọn **"main"** và **"/ (root)"**
+4. Click **"Save"**
+
+### Bước 4: Truy cập website
+
+Đợi 1-2 phút, sau đó truy cập:
+```
+https://0k1dev.github.io

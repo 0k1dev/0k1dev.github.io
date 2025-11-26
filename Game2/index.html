@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Flappy Bird - HuyTKing</title>
+<style>
+    body {
+        margin: 0;
+        background: #70c5ce;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        overflow: hidden;
+        font-family: Arial;
+    }
+    #game {
+        width: 400px;
+        height: 600px;
+        background: #4ec0ca;
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+        box-shadow: 0 0 20px #0005;
+    }
+    #bird {
+        width: 34px;
+        height: 24px;
+        background: yellow;
+        border-radius: 50%;
+        position: absolute;
+        left: 50px;
+        top: 250px;
+    }
+    .pipe {
+        width: 60px;
+        background: #2ecc71;
+        position: absolute;
+        right: -60px;
+    }
+    #score {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 30px;
+        font-weight: bold;
+        color: white;
+        text-shadow: 0 0 5px black;
+    }
+    #gameover {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0; left: 0;
+        background: #0008;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-size: 40px;
+        font-weight: bold;
+        display: none;
+        flex-direction: column;
+        gap: 20px;
+    }
+    #restart {
+        padding: 10px 20px;
+        background: yellow;
+        color: black;
+        font-size: 20px;
+        border-radius: 10px;
+        cursor: pointer;
+    }
+</style>
+</head>
+<body>
+
+<div id="game">
+    <div id="score">0</div>
+    <div id="bird"></div>
+    <div id="gameover">
+        GAME OVER
+        <div id="restart">RESTART</div>
+    </div>
+</div>
+
+<script>
+const game = document.getElementById("game");
+const bird = document.getElementById("bird");
+const scoreText = document.getElementById("score");
+const gameover = document.getElementById("gameover");
+const restart = document.getElementById("restart");
+
+let birdY = 250;
+let velocity = 0;
+let gravity = 0.4;
+let jumpPower = -7;
+
+let pipes = [];
+let score = 0;
+let alive = true;
+
+// Chim bay lên khi nhấn phím
+document.addEventListener("keydown", () => {
+    if (!alive) return;
+    velocity = jumpPower;
+});
+
+// Chim bay lên khi bấm chuột
+document.addEventListener("mousedown", () => {
+    if (!alive) return;
+    velocity = jumpPower;
+});
+
+// Tạo ống
+function createPipe() {
+    let gap = 150;
+    let topHeight = Math.floor(Math.random() * 250) + 50;
+
+    let topPipe = document.createElement("div");
+    topPipe.className = "pipe";
+    topPipe.style.height = topHeight + "px";
+    topPipe.style.top = "0px";
+
+    let bottomPipe = document.createElement("div");
+    bottomPipe.className = "pipe";
+    bottomPipe.style.height = (600 - topHeight - gap) + "px";
+    bottomPipe.style.bottom = "0px";
+
+    game.appendChild(topPipe);
+    game.appendChild(bottomPipe);
+
+    pipes.push({ top: topPipe, bottom: bottomPipe, x: 400 });
+}
+
+setInterval(() => {
+    if (alive) createPipe();
+}, 1800);
+
+// Game loop
+function loop() {
+    if (!alive) return;
+
+    velocity += gravity;
+    birdY += velocity;
+
+    bird.style.top = birdY + "px";
+
+    if (birdY > 580 || birdY < 0) {
+        die();
+    }
+
+    pipes.forEach(pipe => {
+        pipe.x -= 2.5;
+        pipe.top.style.right = (-pipe.x) + "px";
+        pipe.bottom.style.right = (-pipe.x) + "px";
+
+        let pipeX = pipe.x;
+        let pipeTopHeight = pipe.top.offsetHeight;
+        let pipeBottomY = 600 - pipe.bottom.offsetHeight;
+
+        let birdRight = 50 + 34;
+        let birdBottom = birdY + 24;
+
+        // Va chạm
+        if (birdRight > pipeX && 50 < pipeX + 60) {
+            if (birdY < pipeTopHeight || birdBottom > pipeBottomY) {
+                die();
+            }
+        }
+
+        // Ghi điểm
+        if (pipe.x + 60 < 50 && !pipe.scored) {
+            score++;
+            scoreText.textContent = score;
+            pipe.scored = true;
+        }
+    });
+
+    requestAnimationFrame(loop);
+}
+loop();
+
+function die() {
+    alive = false;
+    gameover.style.display = "flex";
+}
+
+// Restart game
+restart.onclick = () => {
+    location.reload();
+};
+</script>
+
+</body>
+</html>

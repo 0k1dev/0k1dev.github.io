@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Công Thành 8 Đội</title>
+    <style>
+        /* CSS */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #e9ebee;
+            margin: 0;
+            color: #333;
+        }
+
+        .game-container {
+            text-align: center;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            background-color: #fff;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            width: 95%;
+            max-width: 1200px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .team-status {
+            display: flex;
+            flex-wrap: wrap; /* Cho phép các đội xuống dòng */
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .team {
+            padding: 15px;
+            border-radius: 8px;
+            width: 22%; /* 4 đội trên 1 hàng */
+            min-width: 200px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s;
+            text-align: left;
+        }
+
+        .team:hover {
+            transform: translateY(-3px);
+        }
+        
+        /* Màu sắc cho 8 đội */
+        .team-1 { border: 3px solid #e74c3c; background-color: #fcecec; } /* Red */
+        .team-2 { border: 3px solid #3498db; background-color: #ecf3fc; } /* Blue */
+        .team-3 { border: 3px solid #2ecc71; background-color: #e9f8ed; } /* Green */
+        .team-4 { border: 3px solid #f1c40f; background-color: #fffaf0; } /* Yellow */
+        .team-5 { border: 3px solid #9b59b6; background-color: #f6eff9; } /* Purple */
+        .team-6 { border: 3px solid #1abc9c; background-color: #e8f7f5; } /* Turquoise */
+        .team-7 { border: 3px solid #e67e22; background-color: #fdf5eb; } /* Orange */
+        .team-8 { border: 3px solid #34495e; background-color: #eff3f7; } /* Dark Blue */
+
+        h2 {
+            margin-top: 0;
+            font-size: 1.2em;
+        }
+
+        p {
+            font-size: 1em;
+            font-weight: 500;
+            margin: 5px 0;
+        }
+
+        span {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #27ae60;
+        }
+
+        button {
+            padding: 8px 12px;
+            font-size: 0.9em;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #f39c12;
+            color: white;
+            font-weight: bold;
+            margin-top: 10px;
+            transition: background-color 0.2s;
+            width: 100%;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #e67e22;
+        }
+
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .message {
+            margin-top: 25px;
+            padding: 15px;
+            background-color: #ecf0f1;
+            border: 1px solid #bdc3c7;
+            border-radius: 8px;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>⚔️ Trận Chiến Công Thành 8 Đội ⚔️</h1>
+        <div id="team-status-container" class="team-status">
+            </div>
+
+        <div id="message" class="message">Trận chiến 8 đội bắt đầu! Quân số là 0 và sẽ được sản xuất theo thời gian.</div>
+    </div>
+
+    <script>
+        // JavaScript
+        // --- Cấu hình Game ---
+        const NUM_TEAMS = 8;
+        const INITIAL_ARMY = 0; // Quân khởi đầu là 0
+        const PRODUCTION_RATE = 5; // Số quân sản xuất mỗi giây
+        const ATTACK_COST = 50; // Quân cần để phát động tấn công
+        const ATTACK_POWER = 60; // Quân bị tiêu diệt khi tấn công thành công
+
+        let teams = {};
+        let teamNames = ["RED", "BLUE", "GREEN", "YELLOW", "PURPLE", "TURQUOISE", "ORANGE", "DARK"];
+        let gameRunning = true;
+
+        /**
+         * Khởi tạo dữ liệu cho 8 đội.
+         */
+        function initializeTeams() {
+            for (let i = 1; i <= NUM_TEAMS; i++) {
+                teams[i] = {
+                    army: INITIAL_ARMY,
+                    production: PRODUCTION_RATE,
+                    name: `Đội ${i} (${teamNames[i-1]})`,
+                    armyId: `army${i}`,
+                    prodId: `production${i}`
+                };
+            }
+        }
+
+        /**
+         * Tạo và chèn HTML cho tất cả các đội.
+         */
+        function createTeamHTML() {
+            const container = document.getElementById('team-status-container');
+            let html = '';
+
+            for (let i = 1; i <= NUM_TEAMS; i++) {
+                html += `
+                    <div id="team${i}-info" class="team team-${i}">
+                        <h2>${teams[i].name}</h2>
+                        <p>Quân hiện tại: <span id="${teams[i].armyId}">${teams[i].army}</span></p>
+                        <p>Quân sản xuất/s: <span id="${teams[i].prodId}">${teams[i].production}</span></p>
+                        <select id="target-select-${i}" class="target-select">
+                            ${getTargetOptions(i)}
+                        </select>
+                        <button onclick="attack(${i})" id="btn-attack-${i}">Tấn Công</button>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        /**
+         * Tạo các tùy chọn tấn công cho một đội.
+         */
+        function getTargetOptions(attackerId) {
+            let options = '<option value="">Chọn Mục Tiêu</option>';
+            for (let i = 1; i <= NUM_TEAMS; i++) {
+                if (i !== attackerId) {
+                    options += `<option value="${i}">Tấn Công Đội ${i}</option>`;
+                }
+            }
+            return options;
+        }
+
+
+        /**
+         * Cập nhật giao diện với số quân mới nhất.
+         */
+        function updateUI() {
+            for (const teamId in teams) {
+                document.getElementById(teams[teamId].armyId).textContent = Math.floor(Math.max(0, teams[teamId].army));
+                // Vô hiệu hóa/kích hoạt nút tấn công
+                const btn = document.getElementById(`btn-attack-${teamId}`);
+                if (teams[teamId].army < ATTACK_COST || !gameRunning) {
+                    btn.disabled = true;
+                } else {
+                    btn.disabled = false;
+                }
+            }
+        }
+
+        /**
+         * Sản xuất quân mỗi giây.
+         */
+        function produceArmy() {
+            if (!gameRunning) return;
+
+            for (const teamId in teams) {
+                // Chỉ sản xuất nếu đội đó chưa bị tiêu diệt
+                if (teams[teamId].army > 0 || teams[teamId].army === INITIAL_ARMY) {
+                    teams[teamId].army += teams[teamId].production;
+                }
+            }
+            updateUI();
+        }
+
+        /**
+         * Hàm xử lý tấn công.
+         * @param {number} attackerId - ID của đội tấn công.
+         */
+        function attack(attackerId) {
+            if (!gameRunning) return;
+
+            const targetSelect = document.getElementById(`target-select-${attackerId}`);
+            const targetId = parseInt(targetSelect.value);
+
+            if (!targetId) {
+                document.getElementById('message').textContent = `⚠️ Đội ${attackerId}: Vui lòng chọn mục tiêu tấn công!`;
+                return;
+            }
+
+            const attacker = teams[attackerId];
+            const target = teams[targetId];
+            const messageEl = document.getElementById('message');
+
+            if (attacker.army >= ATTACK_COST) {
+                // 1. Trừ quân phí tổn cho đội tấn công
+                attacker.army -= ATTACK_COST;
+
+                // 2. Mô phỏng trận chiến: đội bị tấn công mất quân
+                target.army -= ATTACK_POWER;
+
+                messageEl.className = 'message';
+                messageEl.textContent = `💥 ${attacker.name} đã dùng ${ATTACK_COST} quân tấn công ${target.name}. ${target.name} mất ${ATTACK_POWER} quân!`;
+
+                // 3. Kiểm tra điều kiện thắng/thua
+                if (target.army <= 0) {
+                    target.army = 0;
+                    
+                    // Vô hiệu hóa đội bị tiêu diệt
+                    document.getElementById(`team${targetId}-info`).style.opacity = 0.5;
+                    document.getElementById(`team${targetId}-info`).innerHTML += '<div style="color: red; font-weight: bold; margin-top: 10px;">(ĐÃ BỊ TIÊU DIỆT)</div>';
+
+                    messageEl.textContent = `🎉 ${attacker.name} đã tiêu diệt ${target.name}! 🎉`;
+
+                    checkGameOver();
+                }
+
+            } else {
+                messageEl.textContent = `⚠️ ${attacker.name}: Không đủ quân (${Math.floor(attacker.army)}) để tấn công. Cần ${ATTACK_COST} quân.`;
+            }
+
+            updateUI();
+        }
+
+        /**
+         * Kiểm tra điều kiện kết thúc game (Chỉ còn 1 đội).
+         */
+        function checkGameOver() {
+            let activeTeams = 0;
+            let winnerId = null;
+
+            for (const id in teams) {
+                if (teams[id].army > 0) {
+                    activeTeams++;
+                    winnerId = id;
+                }
+            }
+
+            if (activeTeams <= 1) {
+                gameRunning = false;
+                clearInterval(gameInterval); // Dừng game
+                const messageEl = document.getElementById('message');
+
+                if (winnerId) {
+                    messageEl.className = 'message team-3'; // Màu xanh lá
+                    messageEl.textContent = `👑 TRẬN CHIẾN KẾT THÚC! ${teams[winnerId].name} là người chiến thắng cuối cùng! 👑`;
+                } else {
+                    messageEl.textContent = `Trận chiến kết thúc trong hòa bình (hoặc cả 8 đội đều bị tiêu diệt!)`;
+                }
+            }
+        }
+
+
+        // --- Khởi động Game ---
+        initializeTeams();
+        createTeamHTML();
+        
+        // Thiết lập chu kỳ sản xuất quân mỗi 1000ms (1 giây)
+        const gameInterval = setInterval(produceArmy, 1000);
+
+        // Khởi tạo giao diện
+        updateUI();
+    </script>
+</body>
+</html>

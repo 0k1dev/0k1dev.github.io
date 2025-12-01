@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Quản Lý Logistics</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .stat-card h3 {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .game-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .panel h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .order-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .order-card.priority-high {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .order-info {
+            margin-bottom: 10px;
+        }
+
+        .order-info div {
+            margin: 5px 0;
+        }
+
+        .timer {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .timer.warning {
+            color: #ffeb3b;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .truck-select {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .truck-btn {
+            background: white;
+            color: #667eea;
+            border: 2px solid white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .truck-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .truck-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .truck-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .truck-card.busy {
+            opacity: 0.6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .truck-info {
+            flex: 1;
+        }
+
+        .truck-status {
+            background: rgba(255,255,255,0.3);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .delivery-card {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            color: #333;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+        }
+
+        .progress-bar {
+            background: rgba(255,255,255,0.5);
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.8em;
+        }
+
+        .shop {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .shop-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .shop-item {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .shop-item h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .shop-item .specs {
+            font-size: 0.9em;
+            color: #666;
+            margin: 5px 0;
+        }
+
+        .buy-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+
+        .buy-btn:hover {
+            background: #764ba2;
+            transform: scale(1.05);
+        }
+
+        .buy-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            color: #333;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s;
+            z-index: 1000;
+            font-weight: bold;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .game-area {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚚 Game Quản Lý Logistics</h1>
+            <div class="stats">
+                <div class="stat-card">
+                    <h3>💰 Tiền</h3>
+                    <div class="value" id="money">1000</div>
+                </div>
+                <div class="stat-card">
+                    <h3>⭐ Điểm</h3>
+                    <div class="value" id="score">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>📊 Cấp độ</h3>
+                    <div class="value" id="level">1</div>
+                </div>
+                <div class="stat-card">
+                    <h3>✅ Hoàn thành</h3>
+                    <div class="value" id="completed">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-area">
+            <div class="panel">
+                <h2>📦 Đơn Hàng Chờ</h2>
+                <div id="orders"></div>
+            </div>
+
+            <div class="panel">
+                <h2>🚛 Đội Xe</h2>
+                <div id="trucks"></div>
+            </div>
+        </div>
+
+        <div class="panel" style="margin-bottom: 20px;">
+            <h2>🚦 Đang Giao Hàng</h2>
+            <div id="deliveries"></div>
+        </div>
+
+        <div class="shop">
+            <h2 style="color: #667eea; margin-bottom: 15px;">🏪 Cửa Hàng Xe</h2>
+            <div class="shop-items" id="shop"></div>
+        </div>
+    </div>
+
+    <script>
+        const cities = ['Hà Nội', 'TP.HCM', 'Đà Nẵng', 'Hải Phòng', 'Cần Thơ', 'Nha Trang'];
+        
+        const truckTypes = [
+            { name: 'Xe Tải Nhỏ', capacity: 5, speed: 3, cost: 0, icon: '🚐' },
+            { name: 'Xe Tải Trung', capacity: 10, speed: 4, cost: 2000, icon: '🚚' },
+            { name: 'Xe Tải Lớn', capacity: 20, speed: 5, cost: 5000, icon: '🚛' },
+            { name: 'Xe Container', capacity: 40, speed: 6, cost: 10000, icon: '🚜' }
+        ];
+
+        let gameState = {
+            money: 1000,
+            score: 0,
+            level: 1,
+            completedOrders: 0,
+            trucks: [
+                { id: 1, name: 'Xe Tải Nhỏ', capacity: 5, speed: 3, available: true, icon: '🚐' }
+            ],
+            orders: [],
+            activeDeliveries: [],
+            gameTime: 0,
+            nextTruckId: 2
+        };
+
+        function showMessage(msg) {
+            const messageEl = document.createElement('div');
+            messageEl.className = 'message';
+            messageEl.textContent = msg;
+            document.body.appendChild(messageEl);
+            
+            setTimeout(() => {
+                messageEl.remove();
+            }, 3000);
+        }
+
+        function generateOrder() {
+            const from = cities[Math.floor(Math.random() * cities.length)];
+            let to = cities[Math.floor(Math.random() * cities.length)];
+            while (to === from) {
+                to = cities[Math.floor(Math.random() * cities.length)];
+            }
+
+            const packages = Math.floor(Math.random() * (gameState.level * 5)) + gameState.level * 2;
+            const reward = packages * 50 + Math.floor(Math.random() * 200) * gameState.level;
+            const deadline = 30 + Math.floor(Math.random() * 20);
+
+            const newOrder = {
+                id: Date.now(),
+                from,
+                to,
+                packages,
+                reward,
+                deadline,
+                timeLeft: deadline,
+                priority: packages > gameState.level * 5 ? 'high' : 'normal'
+            };
+
+            gameState.orders.push(newOrder);
+            renderOrders();
+        }
+
+        function assignTruck(orderId, truckId) {
+            const order = gameState.orders.find(o => o.id === orderId);
+            const truck = gameState.trucks.find(t => t.id === truckId);
+
+            if (!truck.available) {
+                showMessage('⚠️ Xe đang bận!');
+                return;
+            }
+
+            if (truck.capacity < order.packages) {
+                showMessage('⚠️ Xe không đủ sức chứa!');
+                return;
+            }
+
+            truck.available = false;
+            gameState.orders = gameState.orders.filter(o => o.id !== orderId);
+
+            gameState.activeDeliveries.push({
+                id: Date.now(),
+                order,
+                truck,
+                progress: 0
+            });
+
+            showMessage(`${truck.icon} ${truck.name} đã nhận đơn hàng!`);
+            renderAll();
+        }
+
+        function updateDeliveries() {
+            gameState.activeDeliveries.forEach((delivery, index) => {
+                delivery.progress += delivery.truck.speed;
+                
+                if (delivery.progress >= 100) {
+                    completeDelivery(index);
+                }
+            });
+            renderDeliveries();
+        }
+
+        function completeDelivery(index) {
+            const delivery = gameState.activeDeliveries[index];
+            
+            gameState.money += delivery.order.reward;
+            gameState.score += delivery.order.reward;
+            gameState.completedOrders++;
+
+            const truck = gameState.trucks.find(t => t.id === delivery.truck.id);
+            truck.available = true;
+
+            gameState.activeDeliveries.splice(index, 1);
+
+            if (gameState.completedOrders >= gameState.level * 5) {
+                gameState.level++;
+                showMessage(`🎉 Chúc mừng! Lên cấp ${gameState.level}!`);
+            }
+
+            showMessage(`✅ Giao hàng thành công! +${delivery.order.reward}đ`);
+            renderAll();
+        }
+
+        function updateOrders() {
+            gameState.orders = gameState.orders.map(order => ({
+                ...order,
+                timeLeft: order.timeLeft - 1
+            })).filter(order => {
+                if (order.timeLeft <= 0) {
+                    showMessage(`❌ Đơn hàng từ ${order.from} đến ${order.to} đã hết hạn!`);
+                    return false;
+                }
+                return true;
+            });
+            renderOrders();
+        }
+
+        function buyTruck(truckType) {
+            if (gameState.money < truckType.cost) {
+                showMessage('⚠️ Không đủ tiền!');
+                return;
+            }
+
+            gameState.money -= truckType.cost;
+            gameState.trucks.push({
+                id: gameState.nextTruckId++,
+                name: truckType.name,
+                capacity: truckType.capacity,
+                speed: truckType.speed,
+                available: true,
+                icon: truckType.icon
+            });
+
+            showMessage(`✅ Đã mua ${truckType.name}!`);
+            renderAll();
+        }
+
+        function renderStats() {
+            document.getElementById('money').textContent = gameState.money.toLocaleString() + 'đ';
+            document.getElementById('score').textContent = gameState.score.toLocaleString();
+            document.getElementById('level').textContent = gameState.level;
+            document.getElementById('completed').textContent = gameState.completedOrders;
+        }
+
+        function renderOrders() {
+            const ordersEl = document.getElementById('orders');
+            if (gameState.orders.length === 0) {
+                ordersEl.innerHTML = '<p style="text-align: center; color: #999;">Chưa có đơn hàng mới...</p>';
+                return;
+            }
+
+            ordersEl.innerHTML = gameState.orders.map(order => `
+                <div class="order-card ${order.priority === 'high' ? 'priority-high' : ''}">
+                    <div class="order-info">
+                        <div><strong>📍 ${order.from} → ${order.to}</strong></div>
+                        <div>📦 Hàng hóa: ${order.packages} kiện</div>
+                        <div>💰 Thưởng: ${order.reward.toLocaleString()}đ</div>
+                        <div class="timer ${order.timeLeft < 10 ? 'warning' : ''}">⏱️ Còn: ${order.timeLeft}s</div>
+                    </div>
+                    <div class="truck-select">
+                        ${gameState.trucks.map(truck => `
+                            <button class="truck-btn" 
+                                    onclick="assignTruck(${order.id}, ${truck.id})"
+                                    ${!truck.available || truck.capacity < order.packages ? 'disabled' : ''}>
+                                ${truck.icon} ${truck.name}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderTrucks() {
+            const trucksEl = document.getElementById('trucks');
+            trucksEl.innerHTML = gameState.trucks.map(truck => `
+                <div class="truck-card ${!truck.available ? 'busy' : ''}">
+                    <div class="truck-info">
+                        <div><strong>${truck.icon} ${truck.name}</strong></div>
+                        <div>Sức chứa: ${truck.capacity} kiện | Tốc độ: ${truck.speed}</div>
+                    </div>
+                    <div class="truck-status">
+                        ${truck.available ? '✅ Sẵn sàng' : '🚦 Đang giao'}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderDeliveries() {
+            const deliveriesEl = document.getElementById('deliveries');
+            if (gameState.activeDeliveries.length === 0) {
+                deliveriesEl.innerHTML = '<p style="text-align: center; color: #999;">Chưa có chuyến giao hàng nào...</p>';
+                return;
+            }
+
+            deliveriesEl.innerHTML = gameState.activeDeliveries.map(delivery => {
+                const progress = Math.min(delivery.progress, 100);
+                return `
+                    <div class="delivery-card">
+                        <div><strong>${delivery.truck.icon} ${delivery.truck.name}</strong></div>
+                        <div>📍 ${delivery.order.from} → ${delivery.order.to}</div>
+                        <div>💰 Thưởng: ${delivery.order.reward.toLocaleString()}đ</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${progress}%">
+                                ${Math.floor(progress)}%
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderShop() {
+            const shopEl = document.getElementById('shop');
+            shopEl.innerHTML = truckTypes.map(truck => `
+                <div class="shop-item">
+                    <h3>${truck.icon} ${truck.name}</h3>
+                    <div class="specs">Sức chứa: ${truck.capacity} kiện</div>
+                    <div class="specs">Tốc độ: ${truck.speed}/s</div>
+                    <div class="specs" style="font-weight: bold; color: #667eea;">
+                        ${truck.cost === 0 ? 'Miễn phí' : truck.cost.toLocaleString() + 'đ'}
+                    </div>
+                    <button class="buy-btn" 
+                            onclick="buyTruck(${JSON.stringify(truck).replace(/"/g, '&quot;')})"
+                            ${gameState.money < truck.cost ? 'disabled' : ''}>
+                        Mua ngay
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function renderAll() {
+            renderStats();
+            renderOrders();
+            renderTrucks();
+            renderDeliveries();
+            renderShop();
+        }
+
+        // Game loop
+        setInterval(() => {
+            gameState.gameTime++;
+            
+            if (gameState.gameTime % 5 === 0) {
+                generateOrder();
+            }
+            
+            updateOrders();
+            updateDeliveries();
+        }, 1000);
+
+        // Initial render
+        renderAll();
+        showMessage('🎮 Chào mừng đến với Game Logistics!');
+        
+        // Generate first order
+        setTimeout(() => generateOrder(), 2000);
+    </script>
+</body>
+</html>

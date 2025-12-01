@@ -10,6 +10,11 @@
     --gap: 2px;
     --board-size: calc(var(--cell-size) * 9 + var(--gap) * 8);
   }
+
+  .cell.hover {
+  background: rgba(255,255,0,0.4) !important;
+  border: 1px solid yellow;
+}
   body{
     font-family: system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     background: linear-gradient(180deg,#0f172a,#071132);
@@ -153,36 +158,40 @@
 
 <script>
 (function(){
-  // --- Config ---
   const ROWS = 9, COLS = 9;
   const POINT_PER_CELL = 5;
 
-  // --- State ---
   const board = Array.from({length: ROWS}, ()=> Array(COLS).fill(0));
   let score = 0;
-  let pieces = []; // mỗi piece = {id, shape:[[r,c]...], h, w}
+  let pieces = [];
   let selectedPieceIndex = -1;
   let gameOver = false;
 
-  // --- DOM refs ---
   const boardEl = document.getElementById('board');
   const piecesEl = document.getElementById('pieces');
   const scoreEl = document.getElementById('score');
   const messageEl = document.getElementById('message');
-  const newGameBtn = document.getElementById('newGame');
-  const hintBtn = document.getElementById('hintBtn');
-  const nextBtn = document.getElementById('nextBtn');
 
-  // --- Helpers ---
+  let hoverCells = [];   // cells currently highlighted for preview
+
+  function clearHover(){
+    hoverCells.forEach(el => el.classList.remove("hover"));
+    hoverCells = [];
+  }
+
   function buildGrid(){
     boardEl.innerHTML = '';
     for(let r=0;r<ROWS;r++){
       for(let c=0;c<COLS;c++){
         const cell = document.createElement('div');
         cell.className='cell';
-        cell.dataset.r=r; cell.dataset.c=c;
-        if(board[r][c]) cell.classList.add('filled');
-        cell.addEventListener('click', ()=> onCellClick(r,c));
+        cell.dataset.r=r; 
+        cell.dataset.c=c;
+
+        cell.addEventListener("mouseenter", ()=> onHover(r,c));
+        cell.addEventListener("mouseleave", clearHover);
+        cell.addEventListener("click", ()=> onCellClick(r,c));
+
         boardEl.appendChild(cell);
       }
     }
@@ -194,289 +203,207 @@
       for(let c=0;c<COLS;c++){
         const idx = r*COLS + c;
         const el = nodes[idx];
-        if(board[r][c]) el.classList.add('filled'); else el.classList.remove('filled');
+        if(board[r][c]) el.classList.add('filled'); 
+        else el.classList.remove('filled');
       }
     }
   }
 
   function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
 
-  // generate shapes:
-  // - some random shapes inside 3x3
-  // - line shapes length 1..5 (horizontal or vertical)
   function generateRandomPiece(id){
-    // decide line or blob
-    if(Math.random() < 0.35){ // line
+    if(Math.random() < 0.35){
       const len = randInt(1,5);
       const dir = Math.random() < 0.5 ? 'h' : 'v';
-      let coords = [];
+      const shape = [];
       for(let i=0;i<len;i++){
-        coords.push(dir==='h' ? [0,i] : [i,0]);
+        shape.push(dir==='h' ? [0,i] : [i,0]);
       }
-      const h = dir==='h' ? 1 : len;
-      const w = dir==='h' ? len : 1;
-      return {id, shape: coords, h, w};
-    } else {
-      // random 3x3 blob: create a set of filled cells within 3x3 ensuring at least 1 cell and <=9
-      const cells = [];
-      // We'll produce a random pattern but ensure connectivity not required
-      const used = [];
-      for(let r=0;r<3;r++){
-        for(let c=0;c<3;c++){
-          if(Math.random() < 0.46) used.push([r,c]);
-        }
-      }
-      if(used.length === 0) used.push([1,1]); // at least center
-      // Trim bounding box
-      const rs = used.map(x=>x[0]); const cs = used.map(x=>x[1]);
-      const rmin = Math.min(...rs), rmax = Math.max(...rs);
-      const cmin = Math.min(...cs), cmax = Math.max(...cs);
-      const shape = used.map(([r,c]) => [r-rmin, c-cmin]);
-      const h = rmax - rmin + 1;
-      const w = cmax - cmin + 1;
-      return {id, shape, h, w};
+      return {id, shape, h: dir==='h'?1:len, w: dir==='h'?len:1};
     }
+
+    const used=[];
+    for(let r=0;r<3;r++)
+      for(let c=0;c<3;c++)
+        if(Math.random()<0.45) used.push([r,c]);
+
+    if(used.length===0) used.push([1,1]);
+
+    const rs = used.map(v=>v[0]), cs=used.map(v=>v[1]);
+    const rmin=Math.min(...rs), rmax=Math.max(...rs);
+    const cmin=Math.min(...cs), cmax=Math.max(...cs);
+
+    const shape = used.map(([r,c])=>[r-rmin,c-cmin]);
+    return {id, shape, h:rmax-rmin+1, w:cmax-cmin+1};
   }
 
   function generateThreePieces(){
     pieces = [];
-    for(let i=0;i<3;i++){
-      pieces.push(generateRandomPiece(i));
-    }
+    for(let i=0;i<3;i++) pieces.push(generateRandomPiece(i));
     selectedPieceIndex = -1;
     renderPieces();
   }
 
   function renderPieces(){
-    piecesEl.innerHTML = '';
-    pieces.forEach((p, idx) => {
-      const box = document.createElement('div');
-      box.className='piece' + (selectedPieceIndex===idx ? ' selected' : '');
-      box.title = 'Click chọn cục này';
-      box.addEventListener('click', ()=> {
-        selectedPieceIndex = idx;
+    piecesEl.innerHTML='';
+    pieces.forEach((p,idx)=>{
+      const box=document.createElement("div");
+      box.className="piece"+(selectedPieceIndex===idx?" selected":"");
+      box.addEventListener("click", ()=>{
+        selectedPieceIndex=idx;
         renderPieces();
-        messageEl.textContent = 'Đã chọn cục #' + (idx+1);
+        clearHover();
       });
 
-      // Draw miniature 5x5 grid centered
-      const grid = document.createElement('div');
-      grid.className='mini-grid';
-      // we place the shape in top-left of a 5x5 preview so user sees shape
-      const preview = Array.from({length:25}, ()=> {
-        const d = document.createElement('div');
+      const grid=document.createElement("div");
+      grid.className="mini-grid";
+      const preview=Array.from({length:25},()=>{
+        const d=document.createElement("div");
         d.className='mini-cell';
         return d;
       });
-      // offset to center shape roughly
-      const offsetR = 1; const offsetC = 1;
+
       p.shape.forEach(([r,c])=>{
-        const rr = r + offsetR, cc = c + offsetC;
-        if(rr>=0 && rr<5 && cc>=0 && cc<5){
-          const idx2 = rr*5 + cc;
-          preview[idx2].classList.add('on');
-        }
+        const rr=r+1, cc=c+1;
+        preview[rr*5+cc].classList.add('on');
       });
-      preview.forEach(n => grid.appendChild(n));
+      preview.forEach(v=>grid.appendChild(v));
       box.appendChild(grid);
-
-      // small info
-      const info = document.createElement('div');
-      info.style.fontSize='12px';
-      info.style.marginTop='6px';
-      info.textContent = `Kích: ${p.h}x${p.w}, ô: ${p.shape.length}`;
-      box.appendChild(info);
-
       piecesEl.appendChild(box);
     });
   }
 
-  // check if piece can be placed at (r,c) as top-left
   function canPlaceAt(p, r, c){
-    if(r < 0 || c < 0) return false;
-    if(r + p.h > ROWS || c + p.w > COLS) return false;
+    if(r+p.h>ROWS || c+p.w>COLS) return false;
     for(const [dr,dc] of p.shape){
-      const rr = r + dr, cc = c + dc;
-      if(board[rr][cc]) return false;
+      if(board[r+dr][c+dc]) return false;
     }
     return true;
   }
 
-  // place piece at r,c (assume valid)
-  function placeAt(p, r, c){
-    for(const [dr,dc] of p.shape){
-      const rr = r + dr, cc = c + dc;
-      board[rr][cc] = 1;
-    }
-    updateBoardUI();
-    // remove piece from pieces
-    pieces = pieces.filter(px => px.id !== p.id);
-    selectedPieceIndex = -1;
-    renderPieces();
-    // check clears
-    const cleared = checkAndClearLines();
-    if(cleared > 0){
-      const gained = cleared * POINT_PER_CELL;
-      score += gained;
-      messageEl.textContent = `Đã xóa ${cleared} ô, +${gained} điểm!`;
-    } else {
-      messageEl.textContent = 'Đã đặt cục.';
-    }
-    scoreEl.textContent = score;
-    // if all 3 pieces used, auto-generate next 3 unless game lost
-    if(pieces.length === 0){
-      generateThreePieces();
-    }
-    // after placement, check game over
-    setTimeout(()=> {
-      if(checkGameOver()){
-        finishGame();
-      }
-    }, 10);
-  }
+  function onHover(r,c){
+    clearHover();
+    if(selectedPieceIndex===-1 || gameOver) return;
 
-  // check all full rows and columns, clear them, return number of cells cleared
-  function checkAndClearLines(){
-    const rowsFull = [];
-    const colsFull = [];
-    for(let r=0;r<ROWS;r++){
-      if(board[r].every(x=>x===1)) rowsFull.push(r);
-    }
-    for(let c=0;c<COLS;c++){
-      let full = true;
-      for(let r=0;r<ROWS;r++){
-        if(board[r][c] === 0){ full = false; break; }
-      }
-      if(full) colsFull.push(c);
-    }
-    // clear them
-    let cleared=0;
-    rowsFull.forEach(r=>{
-      for(let c=0;c<COLS;c++){
-        if(board[r][c] === 1){ board[r][c]=0; cleared++; }
-      }
+    const p = pieces[selectedPieceIndex];
+    if(!p) return;
+
+    if(!canPlaceAt(p,r,c)) return;
+
+    // highlight preview
+    const nodes = boardEl.children;
+    p.shape.forEach(([dr,dc])=>{
+      const idx = (r+dr)*COLS + (c+dc);
+      const el = nodes[idx];
+      el.classList.add("hover");
+      hoverCells.push(el);
     });
-    colsFull.forEach(c=>{
-      for(let r=0;r<ROWS;r++){
-        if(board[r][c] === 1){ board[r][c]=0; cleared++; }
-      }
-    });
-    if(cleared>0) updateBoardUI();
-    return cleared;
   }
 
   function onCellClick(r,c){
-    if(gameOver) return;
-    if(selectedPieceIndex === -1){
-      messageEl.textContent = 'Chưa chọn cục. Click vào 1 trong 3 cục để chọn.';
-      return;
-    }
+    if(gameOver || selectedPieceIndex===-1) return;
+
     const p = pieces[selectedPieceIndex];
-    if(!p){
-      messageEl.textContent = 'Cục đã bị dùng. Chọn lại.';
-      selectedPieceIndex = -1;
-      renderPieces();
+    if(!p) return;
+
+    if(!canPlaceAt(p,r,c)){
+      messageEl.textContent="Không đặt được tại đây.";
       return;
     }
-    if(canPlaceAt(p, r, c)){
-      placeAt(p, r, c);
-    } else {
-      messageEl.textContent = 'Không thể đặt tại vị trí này.';
+
+    // place piece
+    p.shape.forEach(([dr,dc])=>{
+      board[r+dr][c+dc] = 1;
+    });
+    pieces = pieces.filter(x=>x.id!==p.id);
+    selectedPieceIndex=-1;
+
+    clearHover();
+    updateBoardUI();
+    renderPieces();
+    messageEl.textContent="Đặt thành công!";
+
+    const cleared=checkAndClearLines();
+    if(cleared>0){
+      score += cleared*POINT_PER_CELL;
+      scoreEl.textContent = score;
     }
+
+    if(pieces.length===0) generateThreePieces();
+
+    if(checkGameOver()) finishGame();
   }
 
-  function anyPlacementPossibleForPiece(p){
-    for(let r=0;r<=ROWS-p.h;r++){
-      for(let c=0;c<=COLS-p.w;c++){
-        if(canPlaceAt(p, r, c)) return true;
+  function checkAndClearLines(){
+    let clearedCells=0;
+
+    for(let r=0;r<ROWS;r++){
+      if(board[r].every(v=>v===1)){
+        for(let c=0;c<COLS;c++){
+          board[r][c]=0;
+          clearedCells++;
+        }
       }
     }
+
+    for(let c=0;c<COLS;c++){
+      let full=true;
+      for(let r=0;r<ROWS;r++){
+        if(board[r][c]===0){ full=false; break; }
+      }
+      if(full){
+        for(let r=0;r<ROWS;r++){
+          board[r][c]=0;
+          clearedCells++;
+        }
+      }
+    }
+
+    if(clearedCells>0) updateBoardUI();
+    return clearedCells;
+  }
+
+  function anyPossible(p){
+    for(let r=0;r<=ROWS-p.h;r++)
+      for(let c=0;c<=COLS-p.w;c++)
+        if(canPlaceAt(p,r,c)) return true;
     return false;
   }
 
   function checkGameOver(){
-    // If any of the current pieces can be placed -> not over
-    for(const p of pieces){
-      if(anyPlacementPossibleForPiece(p)) return false;
-    }
-    // Else no piece placeable -> game over
+    for(const p of pieces) if(anyPossible(p)) return false;
     return true;
   }
 
   function finishGame(){
-    gameOver = true;
-    // final scoring rule
-    if(score < 100000){
-      messageEl.innerHTML = `KẾT THÚC — Điểm cuối: ${score}. <strong>mày ngu ko qua được 100000 điểm</strong>`;
+    gameOver=true;
+
+    if(score<100000){
+      messageEl.innerHTML=`Kết thúc — ${score}. <b>mày ngu ko qua được 100000 điểm</b>`;
     } else {
-      const newScore = score + 1000;
-      messageEl.innerHTML = `KẾT THÚC — Điểm trước khi cộng: ${score}. Cộng thêm 1000 => ${newScore}. <strong>mày ngu ko qua được A+1k điểm</strong>`;
-      score = newScore;
-      scoreEl.textContent = score;
+      score+=1000;
+      messageEl.innerHTML=`Kết thúc — +1k. <b>mày ngu ko qua được A+1k điểm</b>`;
+      scoreEl.textContent=score;
     }
   }
 
-  // hint: highlight any valid placements for selected piece
-  function showHintsForSelected(){
-    // simply highlight border of available cells
-    // clear previous highlights by flashing message
-    if(selectedPieceIndex === -1){
-      messageEl.textContent = 'Chưa chọn cục để kiểm tra.';
-      return;
-    }
-    const p = pieces[selectedPieceIndex];
-    let count=0;
-    for(let r=0;r<=ROWS-p.h;r++){
-      for(let c=0;c<=COLS-p.w;c++){
-        if(canPlaceAt(p,r,c)) count++;
-      }
-    }
-    messageEl.textContent = `Có ${count} vị trí khả dĩ cho cục đã chọn.`;
-  }
+  function start(){
+    for(let r=0;r<ROWS;r++)
+      for(let c=0;c<COLS;c++) board[r][c]=0;
 
-  // generate initial board and pieces
-  function startNewGame(){
-    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) board[r][c]=0;
-    score = 0; scoreEl.textContent = score;
-    gameOver = false;
-    messageEl.textContent = 'Bắt đầu mới — Chọn 1 trong 3 cục và click ô để đặt.';
-    generateThreePieces();
+    score=0;
+    scoreEl.textContent="0";
+    gameOver=false;
+
     buildGrid();
     updateBoardUI();
+    generateThreePieces();
+    messageEl.textContent="Chọn cục rồi đưa chuột vào bảng để xem vị trí chính xác!";
   }
 
-  // Next button: manually request new 3 pieces if current all used (or even if not)
-  nextBtn.addEventListener('click', ()=> {
-    if(gameOver) return;
-    if(pieces.length === 0){
-      generateThreePieces();
-      messageEl.textContent = 'Lấy 3 cục mới.';
-    } else {
-      messageEl.textContent = 'Bạn vẫn còn ' + pieces.length + ' cục chưa dùng. Hãy đặt chúng trước.';
-    }
-  });
-
-  // hint
-  hintBtn.addEventListener('click', ()=> {
-    showHintsForSelected();
-  });
-
-  newGameBtn.addEventListener('click', ()=>{
-    startNewGame();
-  });
-
-  // Start
-  startNewGame();
-
-  // Optional: automatic check for game-over if none of 3 placeable initially
-  // (occurs at beginning too if random pieces impossible)
-  setTimeout(()=>{
-    if(checkGameOver() && !gameOver){
-      finishGame();
-    }
-  }, 50);
-
+  start();
 })();
 </script>
+
 </body>
 </html>

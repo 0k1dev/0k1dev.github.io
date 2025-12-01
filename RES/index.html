@@ -174,7 +174,7 @@
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.8);
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
             z-index: 10000;
@@ -1433,13 +1433,13 @@
                 <button class="view-btn active" onclick="switchView('customer')" id="customerViewBtn">
                     <i class="fas fa-user"></i> Khách Hàng
                 </button>
-                <button class="view-btn disabled" onclick="switchView('staff')" id="staffViewBtn">
+                <button class="view-btn" onclick="switchView('staff')" id="staffViewBtn">
                     <i class="fas fa-user-tie"></i> Nhân Viên
                 </button>
-                <button class="view-btn disabled" onclick="switchView('management')" id="managementViewBtn">
+                <button class="view-btn" onclick="switchView('management')" id="managementViewBtn">
                     <i class="fas fa-chart-line"></i> Quản Lý
                 </button>
-                <button class="view-btn disabled" onclick="switchView('reports')" id="reportsViewBtn">
+                <button class="view-btn" onclick="switchView('reports')" id="reportsViewBtn">
                     <i class="fas fa-file-alt"></i> Báo Cáo
                 </button>
             </div>
@@ -1807,14 +1807,41 @@
                 currentRole = savedRole;
                 handleSuccessfulLogin();
             } else {
-                document.getElementById('loginOverlay').style.display = 'flex';
+                // KHÔNG hiển thị màn hình đăng nhập khi vào trang
+                // Chỉ hiện khi click vào nút "Nhân Viên" hoặc "Quản Lý"
                 updateViewButtons();
             }
         }
 
+        function showLoginModal(requestedRole = 'staff') {
+            // Hiển thị modal đăng nhập
+            document.getElementById('loginOverlay').style.display = 'flex';
+            
+            // Chọn role dựa trên nút được click
+            selectRole(requestedRole);
+            
+            // Reset form
+            document.getElementById('staffUsername').value = '';
+            document.getElementById('staffPassword').value = '';
+            document.getElementById('managementUsername').value = '';
+            document.getElementById('managementPassword').value = '';
+            document.getElementById('loginError').style.display = 'none';
+        }
+
+        function hideLoginModal() {
+            document.getElementById('loginOverlay').style.display = 'none';
+        }
+
         function selectRole(role) {
             document.querySelectorAll('.role-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            
+            // Tìm và kích hoạt nút tương ứng
+            const roleButtons = document.querySelectorAll('.role-btn');
+            roleButtons.forEach(btn => {
+                if (btn.textContent.includes(role === 'staff' ? 'Nhân Viên' : 'Quản Lý')) {
+                    btn.classList.add('active');
+                }
+            });
             
             document.getElementById('staffLoginForm').classList.remove('active');
             document.getElementById('managementLoginForm').classList.remove('active');
@@ -1847,6 +1874,7 @@
                 localStorage.setItem('hotel_current_role', role);
                 
                 handleSuccessfulLogin();
+                hideLoginModal();
                 addNotification(`✅ Đăng nhập thành công! Chào mừng ${user.name}`, 'success');
             } else {
                 loginAttempts++;
@@ -1872,8 +1900,6 @@
         }
 
         function handleSuccessfulLogin() {
-            document.getElementById('loginOverlay').style.display = 'none';
-            
             // Hiển thị user info
             document.getElementById('userInfo').style.display = 'flex';
             document.getElementById('userName').textContent = currentUser.name;
@@ -1899,13 +1925,6 @@
                 localStorage.removeItem('hotel_current_role');
                 
                 document.getElementById('userInfo').style.display = 'none';
-                document.getElementById('loginOverlay').style.display = 'flex';
-                
-                document.getElementById('staffUsername').value = '';
-                document.getElementById('staffPassword').value = '';
-                document.getElementById('managementUsername').value = '';
-                document.getElementById('managementPassword').value = '';
-                document.getElementById('loginError').style.display = 'none';
                 
                 updateViewButtons();
                 switchView('customer');
@@ -1926,44 +1945,41 @@
             // Reset all buttons
             Object.values(viewButtons).forEach(btn => {
                 btn.classList.remove('active');
-                btn.classList.add('disabled');
-                btn.disabled = true;
+                btn.classList.remove('disabled');
+                btn.disabled = false;
             });
             
             // Enable customer view for everyone
-            viewButtons.customer.classList.remove('disabled');
-            viewButtons.customer.disabled = false;
+            viewButtons.customer.classList.add('active');
             
             // Enable views based on role
             if (currentRole === 'staff') {
                 viewButtons.staff.classList.remove('disabled');
-                viewButtons.staff.disabled = false;
             } else if (currentRole === 'management') {
                 viewButtons.staff.classList.remove('disabled');
-                viewButtons.staff.disabled = false;
                 viewButtons.management.classList.remove('disabled');
-                viewButtons.management.disabled = false;
                 viewButtons.reports.classList.remove('disabled');
-                viewButtons.reports.disabled = false;
-            }
-            
-            // Set active button based on current view
-            const activeView = document.querySelector('.view-content.active').id.replace('View', '');
-            if (viewButtons[activeView]) {
-                viewButtons[activeView].classList.add('active');
-            } else {
-                viewButtons.customer.classList.add('active');
             }
         }
 
         function switchView(view) {
-            // Check permissions
-            if (!hasPermissionToView(view)) {
-                if (view === 'staff' || view === 'management' || view === 'reports') {
-                    addNotification('⚠️ Vui lòng đăng nhập để sử dụng chức năng này', 'warning');
-                    document.getElementById('loginOverlay').style.display = 'flex';
-                    if (view === 'staff') selectRole('staff');
-                    else selectRole('management');
+            // Kiểm tra quyền truy cập
+            if (view === 'staff' || view === 'management' || view === 'reports') {
+                if (!currentUser) {
+                    // Hiển thị màn hình đăng nhập với role tương ứng
+                    const requestedRole = view === 'staff' ? 'staff' : 'management';
+                    showLoginModal(requestedRole);
+                    return;
+                }
+                
+                // Kiểm tra role
+                if (view === 'staff' && currentRole !== 'staff' && currentRole !== 'management') {
+                    addNotification('⚠️ Bạn không có quyền truy cập chức năng Nhân Viên', 'warning');
+                    return;
+                }
+                
+                if ((view === 'management' || view === 'reports') && currentRole !== 'management') {
+                    addNotification('⚠️ Bạn không có quyền truy cập chức năng này', 'warning');
                     return;
                 }
             }
@@ -2054,7 +2070,6 @@
         }
 
         // ================== HOTEL MANAGEMENT SYSTEM ==================
-        // (Giữ nguyên phần code quản lý khách sạn từ phiên bản trước)
         const MENU_ITEMS = [
             { id: 'goi-cuon', name: 'Gỏi cuốn', price: 45000, icon: '🥬', category: 'appetizer', description: 'Gỏi cuốn tôm thịt' },
             { id: 'sup-ngo', name: 'Súp nấm', price: 35000, icon: '🍲', category: 'appetizer', description: 'Súp nấm tươi' },
@@ -2250,6 +2265,940 @@
             return amount.toLocaleString('vi-VN') + 'đ';
         }
 
+        // ================== CÁC HÀM QUẢN LÝ KHÁCH SẠN ==================
+        // Generate floor buttons
+        function generateFloorButtons() {
+            const floorSelect = document.querySelector('.floor-select');
+            const allBtn = floorSelect.querySelector('.floor-btn');
+            floorSelect.innerHTML = '';
+            floorSelect.appendChild(allBtn);
+            
+            for (let floor = 1; floor <= FLOORS; floor++) {
+                const floorBtn = document.createElement('button');
+                floorBtn.className = 'floor-btn';
+                floorBtn.textContent = floor;
+                floorBtn.onclick = () => changeFloor(floor);
+                floorSelect.appendChild(floorBtn);
+            }
+            
+            if (currentFloor === 'all') {
+                floorSelect.querySelector('.floor-btn').classList.add('active');
+            } else {
+                floorSelect.querySelectorAll('.floor-btn')[currentFloor].classList.add('active');
+            }
+        }
+
+        // Change floor view
+        function changeFloor(floor) {
+            currentFloor = floor;
+            
+            document.querySelectorAll('.floor-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            renderRooms();
+        }
+
+        // Update room select for customers
+        function updateRoomSelect() {
+            const select = document.getElementById('customerRoom');
+            select.innerHTML = '<option value="">-- Chọn phòng --</option>';
+            
+            rooms.forEach(room => {
+                if (room.customer) {
+                    const option = document.createElement('option');
+                    option.value = room.id;
+                    option.textContent = `Phòng ${room.roomNumber} - ${room.customer} (${ROOM_TYPES[room.type].name})`;
+                    select.appendChild(option);
+                }
+            });
+            
+            // Also add empty rooms for new customers
+            rooms.filter(room => !room.customer).forEach(room => {
+                const option = document.createElement('option');
+                option.value = room.id;
+                const promoText = room.hasPromo ? ' [KHUYẾN MÃI]' : '';
+                option.textContent = `Phòng ${room.roomNumber} - ${ROOM_TYPES[room.type].name} - ${formatCurrency(room.pricePerDay)}/đêm${promoText}`;
+                select.appendChild(option);
+            });
+        }
+
+        // Filter rooms by type
+        function filterRoomsByType() {
+            const type = document.getElementById('roomTypeFilter').value;
+            const select = document.getElementById('customerRoom');
+            select.innerHTML = '<option value="">-- Chọn phòng --</option>';
+            
+            let filteredRooms = rooms;
+            if (type !== 'all') {
+                filteredRooms = rooms.filter(room => room.type === type);
+            }
+            
+            filteredRooms.forEach(room => {
+                if (room.customer) {
+                    const option = document.createElement('option');
+                    option.value = room.id;
+                    option.textContent = `Phòng ${room.roomNumber} - ${room.customer} (${ROOM_TYPES[room.type].name})`;
+                    select.appendChild(option);
+                } else {
+                    const option = document.createElement('option');
+                    option.value = room.id;
+                    const promoText = room.hasPromo ? ' [KHUYẾN MÃI]' : '';
+                    option.textContent = `Phòng ${room.roomNumber} - ${ROOM_TYPES[room.type].name} - ${formatCurrency(room.pricePerDay)}/đêm${promoText}`;
+                    select.appendChild(option);
+                }
+            });
+        }
+
+        // Update room details when room is selected
+        function updateRoomDetails() {
+            const roomId = document.getElementById('customerRoom').value;
+            const detailsDiv = document.getElementById('roomDetails');
+            
+            if (!roomId) {
+                detailsDiv.style.display = 'none';
+                return;
+            }
+            
+            const room = rooms.find(r => r.id == roomId);
+            if (!room) return;
+            
+            const typeInfo = ROOM_TYPES[room.type];
+            
+            document.getElementById('roomTypeDisplay').innerHTML = `
+                <strong>${typeInfo.icon} ${typeInfo.name} - Tầng ${room.floor}</strong>
+            `;
+            
+            let priceText = formatCurrency(room.pricePerDay) + ' / đêm';
+            if (room.hasPromo) {
+                const discountedPrice = room.pricePerDay * 0.8; // 20% discount
+                priceText = `<span style="text-decoration: line-through; color: #999;">${formatCurrency(room.pricePerDay)}</span> 
+                             <span style="color: #e74c3c; font-size: 1.2em;">${formatCurrency(discountedPrice)}</span> / đêm 
+                             <span style="background: #e74c3c; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8em;">GIẢM 20%</span>`;
+            }
+            
+            document.getElementById('roomPriceDisplay').innerHTML = priceText;
+            
+            const featuresHtml = room.features.map(feature => 
+                `<div style="display: inline-block; background: #e8f4fc; padding: 5px 10px; border-radius: 15px; margin: 5px 5px 5px 0; font-size: 0.9em;">✓ ${feature}</div>`
+            ).join('');
+            
+            document.getElementById('roomFeatures').innerHTML = `
+                <div style="margin-top: 10px; font-size: 0.9em;">
+                    <div style="font-weight: bold; margin-bottom: 5px;">Tiện nghi:</div>
+                    ${featuresHtml}
+                </div>
+            `;
+            
+            detailsDiv.style.display = 'block';
+        }
+
+        // Render menu
+        function renderMenu() {
+            const grid = document.getElementById('menuGrid');
+            grid.innerHTML = '';
+            
+            let filteredItems = MENU_ITEMS;
+            if (currentMenuFilter !== 'all') {
+                filteredItems = MENU_ITEMS.filter(item => item.category === currentMenuFilter);
+            }
+            
+            filteredItems.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'menu-item';
+                itemDiv.onclick = () => addToOrder(item);
+                itemDiv.innerHTML = `
+                    <div class="menu-icon">${item.icon}</div>
+                    <div class="menu-name">${item.name}</div>
+                    <div class="menu-category">${getCategoryName(item.category)}</div>
+                    <div style="font-size: 0.9em; color: #666; margin-bottom: 10px;">${item.description}</div>
+                    <div class="menu-price">${formatCurrency(item.price)}</div>
+                `;
+                grid.appendChild(itemDiv);
+            });
+        }
+
+        // Get category name
+        function getCategoryName(category) {
+            const names = {
+                'appetizer': 'Khai vị',
+                'main': 'Món chính',
+                'drink': 'Đồ uống',
+                'dessert': 'Tráng miệng'
+            };
+            return names[category] || category;
+        }
+
+        // Filter menu
+        function filterMenu(category) {
+            currentMenuFilter = category;
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            renderMenu();
+        }
+
+        // Add item to order
+        function addToOrder(item) {
+            const existingItem = currentOrderItems.find(i => i.id === item.id);
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                currentOrderItems.push({
+                    id: item.id,
+                    name: item.name,
+                    price: item.price,
+                    quantity: 1,
+                    icon: item.icon
+                });
+            }
+            
+            updateOrderSummary();
+            
+            // Highlight the menu item briefly
+            const menuItems = document.querySelectorAll('.menu-item');
+            menuItems.forEach(menuItem => {
+                if (menuItem.querySelector('.menu-name').textContent === item.name) {
+                    menuItem.classList.add('highlight');
+                    setTimeout(() => {
+                        menuItem.classList.remove('highlight');
+                    }, 500);
+                }
+            });
+        }
+
+        // Update order summary
+        function updateOrderSummary() {
+            const orderItemsDiv = document.getElementById('orderItems');
+            const orderTotalDiv = document.getElementById('orderTotal');
+            const submitBtn = document.getElementById('submitOrderBtn');
+            
+            if (currentOrderItems.length === 0) {
+                orderItemsDiv.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-shopping-basket"></i>
+                        <p>Chưa có món nào trong đơn hàng</p>
+                        <p>Hãy chọn món từ thực đơn bên trên</p>
+                    </div>
+                `;
+                orderTotalDiv.textContent = '0đ';
+                submitBtn.disabled = true;
+                return;
+            }
+            
+            let total = 0;
+            let itemsHtml = '';
+            
+            currentOrderItems.forEach((item, index) => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                
+                itemsHtml += `
+                    <div class="order-item">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span>${item.icon}</span>
+                            <span>${item.name}</span>
+                        </div>
+                        <div class="item-controls">
+                            <button class="qty-btn" onclick="changeQuantity(${index}, -1)">-</button>
+                            <span class="item-qty">${item.quantity}</span>
+                            <button class="qty-btn" onclick="changeQuantity(${index}, 1)">+</button>
+                            <span style="min-width: 80px; text-align: right; font-weight: bold;">${formatCurrency(itemTotal)}</span>
+                            <button class="remove-btn" onclick="removeItem(${index})">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            orderItemsDiv.innerHTML = itemsHtml;
+            orderTotalDiv.textContent = formatCurrency(total);
+            submitBtn.disabled = false;
+        }
+
+        // Change item quantity
+        function changeQuantity(index, change) {
+            const item = currentOrderItems[index];
+            item.quantity += change;
+            
+            if (item.quantity <= 0) {
+                currentOrderItems.splice(index, 1);
+            }
+            
+            updateOrderSummary();
+        }
+
+        // Remove item from order
+        function removeItem(index) {
+            currentOrderItems.splice(index, 1);
+            updateOrderSummary();
+        }
+
+        // Submit order
+        function submitOrder() {
+            const roomId = document.getElementById('customerRoom').value;
+            const customerName = document.getElementById('customerName').value.trim();
+            const customerPhone = document.getElementById('customerPhone').value.trim();
+            
+            if (!roomId) {
+                addNotification('Vui lòng chọn phòng!', 'error');
+                return;
+            }
+            
+            if (!customerName) {
+                addNotification('Vui lòng nhập tên khách hàng!', 'error');
+                return;
+            }
+            
+            if (!customerPhone) {
+                addNotification('Vui lòng nhập số điện thoại!', 'error');
+                return;
+            }
+            
+            if (currentOrderItems.length === 0) {
+                addNotification('Vui lòng chọn ít nhất một món!', 'error');
+                return;
+            }
+            
+            const room = rooms.find(r => r.id == roomId);
+            
+            // Format order items
+            let orderText = '';
+            let orderTotal = 0;
+            
+            currentOrderItems.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                orderTotal += itemTotal;
+                orderText += `${item.name} x ${item.quantity} - ${formatCurrency(itemTotal)}\n`;
+            });
+            
+            orderText += `\nTổng cộng: ${formatCurrency(orderTotal)}`;
+            
+            // Create order
+            const order = {
+                id: Date.now(),
+                roomId: room.roomNumber,
+                roomIdNum: parseInt(roomId),
+                customerName: customerName,
+                customerPhone: customerPhone,
+                items: orderText,
+                time: new Date(),
+                status: 'pending',
+                priority: 'medium'
+            };
+            
+            orders.push(order);
+            
+            // Add to activities
+            activities.push({
+                type: 'order',
+                roomNumber: room.roomNumber,
+                customerName: customerName,
+                time: new Date()
+            });
+            
+            // Clear order
+            currentOrderItems = [];
+            updateOrderSummary();
+            
+            addNotification(`✅ Đơn hàng từ phòng ${room.roomNumber} đã được gửi! Tổng: ${formatCurrency(orderTotal)}`, 'success');
+            
+            // If in staff view, update orders list
+            if (document.getElementById('staffView').classList.contains('active')) {
+                renderOrders();
+                updateDashboardStats();
+            }
+        }
+
+        // Render orders for staff
+        function renderOrders() {
+            const list = document.getElementById('ordersList');
+            
+            let filteredOrders = orders;
+            if (currentOrderFilter !== 'all') {
+                filteredOrders = orders.filter(order => order.status === currentOrderFilter);
+            }
+            
+            if (filteredOrders.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-concierge-bell"></i>
+                        <p>Không có đơn hàng nào</p>
+                        <p>${currentOrderFilter !== 'all' ? 'Thử chọn bộ lọc khác' : 'Đơn hàng sẽ xuất hiện ở đây'}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            list.innerHTML = '';
+            
+            // Sort by priority and time
+            filteredOrders.sort((a, b) => {
+                const priorityOrder = { 'high': 3, 'medium': 2, 'low': 1 };
+                if (priorityOrder[b.priority] !== priorityOrder[a.priority]) {
+                    return priorityOrder[b.priority] - priorityOrder[a.priority];
+                }
+                return new Date(b.time) - new Date(a.time);
+            });
+            
+            filteredOrders.forEach(order => {
+                const orderDiv = document.createElement('div');
+                orderDiv.className = `order-card ${order.priority === 'high' ? 'high-priority' : order.priority === 'medium' ? 'medium-priority' : ''}`;
+                
+                const statusColors = {
+                    'pending': '#f39c12',
+                    'preparing': '#3498db',
+                    'completed': '#27ae60',
+                    'cancelled': '#e74c3c'
+                };
+                
+                const statusTexts = {
+                    'pending': 'Chờ xử lý',
+                    'preparing': 'Đang chuẩn bị',
+                    'completed': 'Hoàn thành',
+                    'cancelled': 'Đã hủy'
+                };
+                
+                const priorityTexts = {
+                    'high': 'Cao',
+                    'medium': 'Trung bình',
+                    'low': 'Thấp'
+                };
+                
+                orderDiv.innerHTML = `
+                    <div class="order-header">
+                        <div class="order-room">
+                            <i class="fas fa-door-closed"></i> Phòng ${order.roomId}
+                            <span style="font-size: 0.9em; color: #666; margin-left: 10px;">${order.customerName}</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="order-priority priority-${order.priority}">${priorityTexts[order.priority]}</span>
+                            <span class="order-time">
+                                <i class="far fa-clock"></i> ${new Date(order.time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="order-items">${order.items}</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="padding: 5px 15px; border-radius: 15px; background: ${statusColors[order.status]}; color: white; font-weight: bold; font-size: 0.9em;">
+                                ${statusTexts[order.status]}
+                            </span>
+                            <span style="font-size: 0.9em; color: #666;">
+                                <i class="fas fa-phone"></i> ${order.customerPhone}
+                            </span>
+                        </div>
+                        <div class="order-actions">
+                            ${order.status === 'pending' || order.status === 'preparing' ? `
+                                <button class="complete-btn" onclick="updateOrderStatus(${order.id}, 'completed')">
+                                    <i class="fas fa-check"></i> Hoàn thành
+                                </button>
+                                <button class="cancel-btn" onclick="updateOrderStatus(${order.id}, 'cancelled')">
+                                    <i class="fas fa-times"></i> Hủy
+                                </button>
+                            ` : ''}
+                            ${order.status === 'pending' ? `
+                                <button class="complete-btn" style="background: #3498db;" onclick="updateOrderStatus(${order.id}, 'preparing')">
+                                    <i class="fas fa-utensils"></i> Chuẩn bị
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+                list.appendChild(orderDiv);
+            });
+        }
+
+        // Filter orders
+        function filterOrders(status) {
+            currentOrderFilter = status;
+            
+            const filterBtns = event.target.parentElement.querySelectorAll('.filter-btn');
+            filterBtns.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            renderOrders();
+        }
+
+        // Update order status
+        function updateOrderStatus(orderId, status) {
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
+            
+            const oldStatus = order.status;
+            order.status = status;
+            
+            // Update priority based on waiting time if pending
+            if (status === 'pending') {
+                const waitTime = new Date() - new Date(order.time);
+                if (waitTime > 30 * 60 * 1000) { // More than 30 minutes
+                    order.priority = 'high';
+                } else if (waitTime > 15 * 60 * 1000) { // More than 15 minutes
+                    order.priority = 'medium';
+                }
+            }
+            
+            renderOrders();
+            
+            if (status === 'completed') {
+                addNotification(`✅ Đơn hàng phòng ${order.roomId} đã hoàn thành`, 'success');
+            } else if (status === 'cancelled') {
+                addNotification(`❌ Đơn hàng phòng ${order.roomId} đã hủy`, 'error');
+            }
+        }
+
+        // Show checkin modal
+        function showCheckinModal(roomId) {
+            if (!currentUser || (currentRole !== 'staff' && currentRole !== 'management')) {
+                addNotification('⚠️ Vui lòng đăng nhập với tư cách nhân viên hoặc quản lý', 'warning');
+                return;
+            }
+            
+            currentCheckinRoom = roomId;
+            document.getElementById('checkinModal').classList.add('active');
+            document.getElementById('modalCustomerName').value = '';
+            document.getElementById('modalCustomerPhone').value = '';
+            document.getElementById('modalNumDays').value = '1';
+            document.getElementById('modalSpecialRequests').value = '';
+        }
+
+        // Show service modal
+        function showServiceModal(roomId) {
+            if (!currentUser || (currentRole !== 'staff' && currentRole !== 'management')) {
+                addNotification('⚠️ Vui lòng đăng nhập với tư cách nhân viên hoặc quản lý', 'warning');
+                return;
+            }
+            
+            currentServiceRoom = roomId;
+            const room = rooms.find(r => r.id == roomId);
+            if (!room) return;
+            
+            document.getElementById('serviceRoomNumber').textContent = room.roomNumber;
+            document.getElementById('serviceModal').classList.add('active');
+            
+            // Clear checkboxes
+            document.querySelectorAll('.service-checkbox').forEach(cb => cb.checked = false);
+            document.getElementById('serviceNotes').value = '';
+        }
+
+        // Close modal
+        function closeModal() {
+            document.querySelectorAll('.modal').forEach(modal => modal.classList.remove('active'));
+            currentCheckinRoom = null;
+            currentServiceRoom = null;
+        }
+
+        // Confirm checkin
+        function confirmCheckin() {
+            if (!currentUser || (currentRole !== 'staff' && currentRole !== 'management')) {
+                addNotification('⚠️ Không có quyền thực hiện thao tác này', 'error');
+                closeModal();
+                return;
+            }
+            
+            const customerName = document.getElementById('modalCustomerName').value.trim();
+            const customerPhone = document.getElementById('modalCustomerPhone').value.trim();
+            const numDays = parseInt(document.getElementById('modalNumDays').value);
+            const specialRequests = document.getElementById('modalSpecialRequests').value.trim();
+            
+            if (!customerName) {
+                addNotification('Vui lòng nhập tên khách hàng!', 'error');
+                return;
+            }
+            
+            if (!customerPhone) {
+                addNotification('Vui lòng nhập số điện thoại!', 'error');
+                return;
+            }
+            
+            if (!numDays || numDays < 1) {
+                addNotification('Số ngày thuê phải lớn hơn 0!', 'error');
+                return;
+            }
+            
+            const room = rooms.find(r => r.id === currentCheckinRoom);
+            room.customer = customerName;
+            room.customerPhone = customerPhone;
+            room.numDays = numDays;
+            room.checkinTime = new Date();
+            room.status = 'occupied';
+            room.specialRequests = specialRequests;
+            room.needsCleaning = false;
+            
+            // Add to activities
+            activities.push({
+                type: 'checkin',
+                roomNumber: room.roomNumber,
+                customerName: customerName,
+                time: new Date()
+            });
+            
+            closeModal();
+            renderRooms();
+            updateRoomSelect();
+            updateDashboardStats();
+            
+            addNotification(`✅ ${customerName} đã nhận phòng ${room.roomNumber} - ${numDays} ngày`, 'success');
+        }
+
+        // Confirm service request
+        function confirmServiceRequest() {
+            if (!currentUser || (currentRole !== 'staff' && currentRole !== 'management')) {
+                addNotification('⚠️ Không có quyền thực hiện thao tác này', 'error');
+                closeModal();
+                return;
+            }
+            
+            const room = rooms.find(r => r.id === currentServiceRoom);
+            if (!room) return;
+            
+            const selectedServices = Array.from(document.querySelectorAll('.service-checkbox:checked')).map(cb => cb.value);
+            const notes = document.getElementById('serviceNotes').value.trim();
+            
+            if (selectedServices.length === 0) {
+                addNotification('Vui lòng chọn ít nhất một dịch vụ!', 'error');
+                return;
+            }
+            
+            selectedServices.forEach(service => {
+                room.serviceRequests.push({
+                    service: service,
+                    time: new Date(),
+                    completed: false,
+                    notes: notes
+                });
+            });
+            
+            closeModal();
+            renderRooms();
+            
+            addNotification(`✅ Đã gửi yêu cầu dịch vụ cho phòng ${room.roomNumber}`, 'success');
+        }
+
+        // Checkout
+        function checkout(roomId) {
+            if (!currentUser || (currentRole !== 'staff' && currentRole !== 'management')) {
+                addNotification('⚠️ Vui lòng đăng nhập với tư cách nhân viên hoặc quản lý', 'warning');
+                return;
+            }
+            
+            const room = rooms.find(r => r.id === roomId);
+            if (!room.customer) return;
+            
+            const roomCharge = room.pricePerDay * room.numDays;
+            
+            // Apply discount for promo rooms
+            const finalCharge = room.hasPromo ? roomCharge * 0.8 : roomCharge;
+            
+            totalRevenue += finalCharge;
+            todayRevenue += finalCharge;
+            
+            addNotification(`💰 ${room.customer} trả phòng ${room.roomNumber}. Tiền phòng: ${formatCurrency(finalCharge)} (${room.numDays} ngày)`, 'success');
+            
+            // Add to activities
+            activities.push({
+                type: 'checkout',
+                roomNumber: room.roomNumber,
+                customerName: room.customer,
+                time: new Date(),
+                amount: finalCharge
+            });
+            
+            // Mark room as needing cleaning
+            room.status = 'cleaning';
+            room.needsCleaning = true;
+            const oldCustomer = room.customer;
+            
+            // Clear customer data after a delay (to show cleaning status)
+            setTimeout(() => {
+                room.customer = null;
+                room.customerPhone = null;
+                room.customerEmail = null;
+                room.numDays = 0;
+                room.checkinTime = null;
+                room.specialRequests = '';
+                renderRooms();
+                updateRoomSelect();
+            }, 3000);
+            
+            renderRooms();
+            updateDashboardStats();
+        }
+
+        // Mark cleaning as done
+        function markCleaningDone(roomId) {
+            if (!currentUser || (currentRole !== 'staff' && currentRole !== 'management')) {
+                addNotification('⚠️ Vui lòng đăng nhập với tư cách nhân viên hoặc quản lý', 'warning');
+                return;
+            }
+            
+            const room = rooms.find(r => r.id === roomId);
+            room.status = 'empty';
+            room.needsCleaning = false;
+            room.serviceRequests = room.serviceRequests.filter(req => !req.completed);
+            
+            // Add to activities
+            activities.push({
+                type: 'cleaning',
+                roomNumber: room.roomNumber,
+                time: new Date(),
+                action: 'completed'
+            });
+            
+            renderRooms();
+            addNotification(`🧹 Phòng ${room.roomNumber} đã được dọn xong`, 'success');
+        }
+
+        // Render rooms for staff
+        function renderRooms() {
+            const list = document.getElementById('roomsList');
+            list.innerHTML = '';
+            
+            let filteredRooms = rooms;
+            
+            // Filter by floor
+            if (currentFloor !== 'all') {
+                filteredRooms = rooms.filter(room => room.floor == currentFloor);
+            }
+            
+            if (filteredRooms.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <i class="fas fa-bed"></i>
+                        <p>Không có phòng nào</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            filteredRooms.forEach(room => {
+                const roomDiv = document.createElement('div');
+                roomDiv.className = `room-card ${room.type} ${room.status === 'occupied' ? 'occupied' : ''} ${room.needsCleaning ? 'need-cleaning' : ''}`;
+                
+                // Add badges
+                let badges = '';
+                if (room.isNew) {
+                    badges += `<div class="room-badge badge-new">MỚI</div>`;
+                }
+                if (room.hasPromo) {
+                    badges += `<div class="room-badge badge-promo">GIẢM 20%</div>`;
+                }
+                if (room.floor >= 5) {
+                    badges += `<div class="room-badge badge-sea-view">VIEW ĐẸP</div>`;
+                }
+                
+                const typeInfo = ROOM_TYPES[room.type];
+                
+                // Customer info if occupied
+                let customerInfo = '';
+                let serviceRequests = '';
+                let actions = '';
+                
+                if (room.customer) {
+                    customerInfo = `
+                        <div class="room-customer">
+                            <i class="fas fa-user"></i> ${room.customer}
+                        </div>
+                        <div class="room-details">
+                            <i class="fas fa-phone"></i> ${room.customerPhone}
+                        </div>
+                        <div class="room-details">
+                            <i class="far fa-calendar"></i> ${room.numDays} ngày (đến ${formatDate(new Date(room.checkinTime.getTime() + room.numDays * 24 * 60 * 60 * 1000))})
+                        </div>
+                        ${room.specialRequests ? `
+                            <div class="room-details">
+                                <i class="fas fa-sticky-note"></i> ${room.specialRequests.substring(0, 30)}${room.specialRequests.length > 30 ? '...' : ''}
+                            </div>
+                        ` : ''}
+                    `;
+                    
+                    // Service requests
+                    if (room.serviceRequests.length > 0) {
+                        const pendingServices = room.serviceRequests.filter(req => !req.completed);
+                        if (pendingServices.length > 0) {
+                            serviceRequests = `
+                                <div class="service-request">
+                                    <div style="font-size: 0.9em; font-weight: bold; margin-bottom: 5px;">Yêu cầu dịch vụ:</div>
+                                    ${pendingServices.map(req => 
+                                        `<span class="service-tag">${req.service}</span>`
+                                    ).join('')}
+                        </div>
+                            `;
+                        }
+                    }
+                    
+                    actions = `
+                        <button class="room-btn checkout-btn" onclick="checkout(${room.id})">
+                            <i class="fas fa-sign-out-alt"></i> Trả phòng
+                        </button>
+                        <button class="room-btn service-btn" onclick="showServiceModal(${room.id})">
+                            <i class="fas fa-concierge-bell"></i> Dịch vụ
+                        </button>
+                    `;
+                } else if (room.status === 'cleaning') {
+                    customerInfo = `
+                        <div class="room-customer">
+                            <i class="fas fa-broom"></i> Đang dọn dẹp
+                        </div>
+                        <div class="room-details">
+                            <i class="far fa-clock"></i> Cần dọn trước khi nhận khách
+                        </div>
+                    `;
+                    
+                    actions = `
+                        <button class="room-btn checkin-btn" onclick="markCleaningDone(${room.id})">
+                            <i class="fas fa-check"></i> Đã dọn xong
+                        </button>
+                    `;
+                } else {
+                    customerInfo = `
+                        <div style="text-align: center; padding: 20px 0; color: #999;">
+                            <i class="fas fa-door-open" style="font-size: 2em; margin-bottom: 10px;"></i>
+                            <div>Phòng trống</div>
+                        </div>
+                    `;
+                    
+                    actions = `
+                        <button class="room-btn checkin-btn" onclick="showCheckinModal(${room.id})">
+                            <i class="fas fa-key"></i> Nhận phòng
+                        </button>
+                    `;
+                }
+                
+                const roomPrice = room.hasPromo ? 
+                    `<span style="text-decoration: line-through; color: #999;">${formatCurrency(room.pricePerDay)}</span>
+                     <span style="color: #e74c3c;">${formatCurrency(room.pricePerDay * 0.8)}</span>` : 
+                    formatCurrency(room.pricePerDay);
+                
+                roomDiv.innerHTML = `
+                    ${badges}
+                    <div class="room-header-info">
+                        <div class="room-number">
+                            ${typeInfo.icon} Phòng ${room.roomNumber}
+                            <span class="room-type type-${room.type}">${typeInfo.name}</span>
+                        </div>
+                        <div class="room-status status-${room.status}">
+                            ${room.status === 'occupied' ? 'Đang thuê' : 
+                              room.status === 'cleaning' ? 'Đang dọn' : 'Trống'}
+                        </div>
+                    </div>
+                    ${customerInfo}
+                    <div class="room-price">
+                        <i class="fas fa-tag"></i> ${roomPrice} / đêm
+                    </div>
+                    ${serviceRequests}
+                    <div class="room-actions">
+                        ${actions}
+                    </div>
+                `;
+                
+                list.appendChild(roomDiv);
+            });
+        }
+
+        // Format date
+        function formatDate(date) {
+            return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
+        // Update dashboard stats
+        function updateDashboardStats() {
+            // Calculate stats
+            const occupiedRooms = rooms.filter(r => r.status === 'occupied').length;
+            const cleaningRooms = rooms.filter(r => r.status === 'cleaning').length;
+            const availableRooms = rooms.length - occupiedRooms - cleaningRooms;
+            const occupancyRate = Math.round((occupiedRooms / rooms.length) * 100);
+            
+            const todayOrders = orders.filter(o => {
+                const orderDate = new Date(o.time);
+                const today = new Date();
+                return orderDate.getDate() === today.getDate() && 
+                       orderDate.getMonth() === today.getMonth() && 
+                       orderDate.getFullYear() === today.getFullYear();
+            }).length;
+            
+            // Update UI
+            document.getElementById('todayRevenue').textContent = formatCurrency(todayRevenue);
+            document.getElementById('occupancyRate').textContent = `${occupancyRate}%`;
+            document.getElementById('availableRooms').textContent = availableRooms;
+            document.getElementById('todayOrders').textContent = todayOrders;
+            
+            // Update activity list
+            updateActivityList();
+        }
+
+        // Update activity list
+        function updateActivityList() {
+            const activityList = document.getElementById('activityList');
+            activityList.innerHTML = '';
+            
+            // Get recent activities (last 10)
+            const recentActivities = [...activities]
+                .sort((a, b) => new Date(b.time) - new Date(a.time))
+                .slice(0, 10);
+            
+            if (recentActivities.length === 0) {
+                activityList.innerHTML = `
+                    <div class="empty-state">
+                        <p>Chưa có hoạt động nào</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            recentActivities.forEach(activity => {
+                const activityDiv = document.createElement('div');
+                activityDiv.className = 'activity-item';
+                
+                let iconClass = '';
+                let icon = '';
+                let text = '';
+                
+                switch(activity.type) {
+                    case 'checkin':
+                        iconClass = 'icon-checkin';
+                        icon = 'fas fa-key';
+                        text = `<strong>${activity.customerName}</strong> nhận phòng <strong>${activity.roomNumber}</strong>`;
+                        break;
+                    case 'checkout':
+                        iconClass = 'icon-checkout';
+                        icon = 'fas fa-sign-out-alt';
+                        text = `<strong>${activity.customerName}</strong> trả phòng <strong>${activity.roomNumber}</strong>`;
+                        if (activity.amount) {
+                            text += ` - ${formatCurrency(activity.amount)}`;
+                        }
+                        break;
+                    case 'order':
+                        iconClass = 'icon-order';
+                        icon = 'fas fa-utensils';
+                        text = `Đơn hàng từ phòng <strong>${activity.roomNumber}</strong> - ${activity.customerName}`;
+                        break;
+                    case 'cleaning':
+                        iconClass = 'icon-cleaning';
+                        icon = 'fas fa-broom';
+                        text = `Phòng <strong>${activity.roomNumber}</strong> ${activity.action === 'completed' ? 'đã được dọn xong' : 'cần dọn dẹp'}`;
+                        break;
+                }
+                
+                activityDiv.innerHTML = `
+                    <div class="activity-icon ${iconClass}">
+                        <i class="${icon}"></i>
+                    </div>
+                    <div class="activity-details">
+                        <div>${text}</div>
+                        <div class="activity-time">
+                            ${new Date(activity.time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} - 
+                            ${new Date(activity.time).toLocaleDateString('vi-VN')}
+                        </div>
+                    </div>
+                `;
+                
+                activityList.appendChild(activityDiv);
+            });
+        }
+
         // ================== INITIALIZATION ==================
         function initialize() {
             initializeRooms();
@@ -2276,968 +3225,6 @@
                 }
             }, 1000);
         };
-
-      // ================== CÁC HÀM QUẢN LÝ KHÁCH SẠN ==================
-// Generate floor buttons
-function generateFloorButtons() {
-    const floorSelect = document.querySelector('.floor-select');
-    const allBtn = floorSelect.querySelector('.floor-btn');
-    floorSelect.innerHTML = '';
-    floorSelect.appendChild(allBtn);
-    
-    for (let floor = 1; floor <= FLOORS; floor++) {
-        const floorBtn = document.createElement('button');
-        floorBtn.className = 'floor-btn';
-        floorBtn.textContent = floor;
-        floorBtn.onclick = () => changeFloor(floor);
-        floorSelect.appendChild(floorBtn);
-    }
-    
-    if (currentFloor === 'all') {
-        floorSelect.querySelector('.floor-btn').classList.add('active');
-    } else {
-        floorSelect.querySelectorAll('.floor-btn')[currentFloor].classList.add('active');
-    }
-}
-
-// Change floor view
-function changeFloor(floor) {
-    currentFloor = floor;
-    
-    document.querySelectorAll('.floor-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
-    
-    renderRooms();
-}
-
-// Update room select for customers
-function updateRoomSelect() {
-    const select = document.getElementById('customerRoom');
-    select.innerHTML = '<option value="">-- Chọn phòng --</option>';
-    
-    rooms.forEach(room => {
-        if (room.customer) {
-            const option = document.createElement('option');
-            option.value = room.id;
-            option.textContent = `Phòng ${room.roomNumber} - ${room.customer} (${ROOM_TYPES[room.type].name})`;
-            select.appendChild(option);
-        }
-    });
-    
-    // Also add empty rooms for new customers
-    rooms.filter(room => !room.customer).forEach(room => {
-        const option = document.createElement('option');
-        option.value = room.id;
-        const promoText = room.hasPromo ? ' [KHUYẾN MÃI]' : '';
-        option.textContent = `Phòng ${room.roomNumber} - ${ROOM_TYPES[room.type].name} - ${formatCurrency(room.pricePerDay)}/đêm${promoText}`;
-        select.appendChild(option);
-    });
-}
-
-// Filter rooms by type
-function filterRoomsByType() {
-    const type = document.getElementById('roomTypeFilter').value;
-    const select = document.getElementById('customerRoom');
-    select.innerHTML = '<option value="">-- Chọn phòng --</option>';
-    
-    let filteredRooms = rooms;
-    if (type !== 'all') {
-        filteredRooms = rooms.filter(room => room.type === type);
-    }
-    
-    filteredRooms.forEach(room => {
-        if (room.customer) {
-            const option = document.createElement('option');
-            option.value = room.id;
-            option.textContent = `Phòng ${room.roomNumber} - ${room.customer} (${ROOM_TYPES[room.type].name})`;
-            select.appendChild(option);
-        } else {
-            const option = document.createElement('option');
-            option.value = room.id;
-            const promoText = room.hasPromo ? ' [KHUYẾN MÃI]' : '';
-            option.textContent = `Phòng ${room.roomNumber} - ${ROOM_TYPES[room.type].name} - ${formatCurrency(room.pricePerDay)}/đêm${promoText}`;
-            select.appendChild(option);
-        }
-    });
-}
-
-// Update room details when room is selected
-function updateRoomDetails() {
-    const roomId = document.getElementById('customerRoom').value;
-    const detailsDiv = document.getElementById('roomDetails');
-    
-    if (!roomId) {
-        detailsDiv.style.display = 'none';
-        return;
-    }
-    
-    const room = rooms.find(r => r.id == roomId);
-    if (!room) return;
-    
-    const typeInfo = ROOM_TYPES[room.type];
-    
-    document.getElementById('roomTypeDisplay').innerHTML = `
-        <strong>${typeInfo.icon} ${typeInfo.name} - Tầng ${room.floor}</strong>
-    `;
-    
-    let priceText = formatCurrency(room.pricePerDay) + ' / đêm';
-    if (room.hasPromo) {
-        const discountedPrice = room.pricePerDay * 0.8; // 20% discount
-        priceText = `<span style="text-decoration: line-through; color: #999;">${formatCurrency(room.pricePerDay)}</span> 
-                     <span style="color: #e74c3c; font-size: 1.2em;">${formatCurrency(discountedPrice)}</span> / đêm 
-                     <span style="background: #e74c3c; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8em;">GIẢM 20%</span>`;
-    }
-    
-    document.getElementById('roomPriceDisplay').innerHTML = priceText;
-    
-    const featuresHtml = room.features.map(feature => 
-        `<div style="display: inline-block; background: #e8f4fc; padding: 5px 10px; border-radius: 15px; margin: 5px 5px 5px 0; font-size: 0.9em;">✓ ${feature}</div>`
-    ).join('');
-    
-    document.getElementById('roomFeatures').innerHTML = `
-        <div style="margin-top: 10px; font-size: 0.9em;">
-            <div style="font-weight: bold; margin-bottom: 5px;">Tiện nghi:</div>
-            ${featuresHtml}
-        </div>
-    `;
-    
-    detailsDiv.style.display = 'block';
-}
-
-// Render menu
-function renderMenu() {
-    const grid = document.getElementById('menuGrid');
-    grid.innerHTML = '';
-    
-    let filteredItems = MENU_ITEMS;
-    if (currentMenuFilter !== 'all') {
-        filteredItems = MENU_ITEMS.filter(item => item.category === currentMenuFilter);
-    }
-    
-    filteredItems.forEach(item => {
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'menu-item';
-        itemDiv.onclick = () => addToOrder(item);
-        itemDiv.innerHTML = `
-            <div class="menu-icon">${item.icon}</div>
-            <div class="menu-name">${item.name}</div>
-            <div class="menu-category">${getCategoryName(item.category)}</div>
-            <div style="font-size: 0.9em; color: #666; margin-bottom: 10px;">${item.description}</div>
-            <div class="menu-price">${formatCurrency(item.price)}</div>
-        `;
-        grid.appendChild(itemDiv);
-    });
-}
-
-// Get category name
-function getCategoryName(category) {
-    const names = {
-        'appetizer': 'Khai vị',
-        'main': 'Món chính',
-        'drink': 'Đồ uống',
-        'dessert': 'Tráng miệng'
-    };
-    return names[category] || category;
-}
-
-// Filter menu
-function filterMenu(category) {
-    currentMenuFilter = category;
-    
-    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
-    
-    renderMenu();
-}
-
-// Add item to order
-function addToOrder(item) {
-    const existingItem = currentOrderItems.find(i => i.id === item.id);
-    
-    if (existingItem) {
-        existingItem.quantity += 1;
-    } else {
-        currentOrderItems.push({
-            id: item.id,
-            name: item.name,
-            price: item.price,
-            quantity: 1,
-            icon: item.icon
-        });
-    }
-    
-    updateOrderSummary();
-    
-    // Highlight the menu item briefly
-    const menuItems = document.querySelectorAll('.menu-item');
-    menuItems.forEach(menuItem => {
-        if (menuItem.querySelector('.menu-name').textContent === item.name) {
-            menuItem.classList.add('highlight');
-            setTimeout(() => {
-                menuItem.classList.remove('highlight');
-            }, 500);
-        }
-    });
-}
-
-// Update order summary
-function updateOrderSummary() {
-    const orderItemsDiv = document.getElementById('orderItems');
-    const orderTotalDiv = document.getElementById('orderTotal');
-    const submitBtn = document.getElementById('submitOrderBtn');
-    
-    if (currentOrderItems.length === 0) {
-        orderItemsDiv.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-shopping-basket"></i>
-                <p>Chưa có món nào trong đơn hàng</p>
-                <p>Hãy chọn món từ thực đơn bên trên</p>
-            </div>
-        `;
-        orderTotalDiv.textContent = '0đ';
-        submitBtn.disabled = true;
-        return;
-    }
-    
-    let total = 0;
-    let itemsHtml = '';
-    
-    currentOrderItems.forEach((item, index) => {
-        const itemTotal = item.price * item.quantity;
-        total += itemTotal;
-        
-        itemsHtml += `
-            <div class="order-item">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span>${item.icon}</span>
-                    <span>${item.name}</span>
-                </div>
-                <div class="item-controls">
-                    <button class="qty-btn" onclick="changeQuantity(${index}, -1)">-</button>
-                    <span class="item-qty">${item.quantity}</span>
-                    <button class="qty-btn" onclick="changeQuantity(${index}, 1)">+</button>
-                    <span style="min-width: 80px; text-align: right; font-weight: bold;">${formatCurrency(itemTotal)}</span>
-                    <button class="remove-btn" onclick="removeItem(${index})">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-    });
-    
-    orderItemsDiv.innerHTML = itemsHtml;
-    orderTotalDiv.textContent = formatCurrency(total);
-    submitBtn.disabled = false;
-}
-
-// Change item quantity
-function changeQuantity(index, change) {
-    const item = currentOrderItems[index];
-    item.quantity += change;
-    
-    if (item.quantity <= 0) {
-        currentOrderItems.splice(index, 1);
-    }
-    
-    updateOrderSummary();
-}
-
-// Remove item from order
-function removeItem(index) {
-    currentOrderItems.splice(index, 1);
-    updateOrderSummary();
-}
-
-// Submit order
-function submitOrder() {
-    const roomId = document.getElementById('customerRoom').value;
-    const customerName = document.getElementById('customerName').value.trim();
-    const customerPhone = document.getElementById('customerPhone').value.trim();
-    
-    if (!roomId) {
-        addNotification('Vui lòng chọn phòng!', 'error');
-        return;
-    }
-    
-    if (!customerName) {
-        addNotification('Vui lòng nhập tên khách hàng!', 'error');
-        return;
-    }
-    
-    if (!customerPhone) {
-        addNotification('Vui lòng nhập số điện thoại!', 'error');
-        return;
-    }
-    
-    if (currentOrderItems.length === 0) {
-        addNotification('Vui lòng chọn ít nhất một món!', 'error');
-        return;
-    }
-    
-    const room = rooms.find(r => r.id == roomId);
-    
-    // Format order items
-    let orderText = '';
-    let orderTotal = 0;
-    
-    currentOrderItems.forEach(item => {
-        const itemTotal = item.price * item.quantity;
-        orderTotal += itemTotal;
-        orderText += `${item.name} x ${item.quantity} - ${formatCurrency(itemTotal)}\n`;
-    });
-    
-    orderText += `\nTổng cộng: ${formatCurrency(orderTotal)}`;
-    
-    // Create order
-    const order = {
-        id: Date.now(),
-        roomId: room.roomNumber,
-        roomIdNum: parseInt(roomId),
-        customerName: customerName,
-        customerPhone: customerPhone,
-        items: orderText,
-        time: new Date(),
-        status: 'pending',
-        priority: 'medium'
-    };
-    
-    orders.push(order);
-    
-    // Add to activities
-    activities.push({
-        type: 'order',
-        roomNumber: room.roomNumber,
-        customerName: customerName,
-        time: new Date()
-    });
-    
-    // Clear order
-    currentOrderItems = [];
-    updateOrderSummary();
-    
-    addNotification(`✅ Đơn hàng từ phòng ${room.roomNumber} đã được gửi! Tổng: ${formatCurrency(orderTotal)}`, 'success');
-    
-    // If in staff view, update orders list
-    if (document.getElementById('staffView').classList.contains('active')) {
-        renderOrders();
-        updateDashboardStats();
-    }
-}
-
-// Render orders for staff
-function renderOrders() {
-    const list = document.getElementById('ordersList');
-    
-    let filteredOrders = orders;
-    if (currentOrderFilter !== 'all') {
-        filteredOrders = orders.filter(order => order.status === currentOrderFilter);
-    }
-    
-    if (filteredOrders.length === 0) {
-        list.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-concierge-bell"></i>
-                <p>Không có đơn hàng nào</p>
-                <p>${currentOrderFilter !== 'all' ? 'Thử chọn bộ lọc khác' : 'Đơn hàng sẽ xuất hiện ở đây'}</p>
-            </div>
-        `;
-        return;
-    }
-    
-    list.innerHTML = '';
-    
-    // Sort by priority and time
-    filteredOrders.sort((a, b) => {
-        const priorityOrder = { 'high': 3, 'medium': 2, 'low': 1 };
-        if (priorityOrder[b.priority] !== priorityOrder[a.priority]) {
-            return priorityOrder[b.priority] - priorityOrder[a.priority];
-        }
-        return new Date(b.time) - new Date(a.time);
-    });
-    
-    filteredOrders.forEach(order => {
-        const orderDiv = document.createElement('div');
-        orderDiv.className = `order-card ${order.priority === 'high' ? 'high-priority' : order.priority === 'medium' ? 'medium-priority' : ''}`;
-        
-        const statusColors = {
-            'pending': '#f39c12',
-            'preparing': '#3498db',
-            'completed': '#27ae60',
-            'cancelled': '#e74c3c'
-        };
-        
-        const statusTexts = {
-            'pending': 'Chờ xử lý',
-            'preparing': 'Đang chuẩn bị',
-            'completed': 'Hoàn thành',
-            'cancelled': 'Đã hủy'
-        };
-        
-        const priorityTexts = {
-            'high': 'Cao',
-            'medium': 'Trung bình',
-            'low': 'Thấp'
-        };
-        
-        orderDiv.innerHTML = `
-            <div class="order-header">
-                <div class="order-room">
-                    <i class="fas fa-door-closed"></i> Phòng ${order.roomId}
-                    <span style="font-size: 0.9em; color: #666; margin-left: 10px;">${order.customerName}</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span class="order-priority priority-${order.priority}">${priorityTexts[order.priority]}</span>
-                    <span class="order-time">
-                        <i class="far fa-clock"></i> ${new Date(order.time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                </div>
-            </div>
-            <div class="order-items">${order.items}</div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="padding: 5px 15px; border-radius: 15px; background: ${statusColors[order.status]}; color: white; font-weight: bold; font-size: 0.9em;">
-                        ${statusTexts[order.status]}
-                    </span>
-                    <span style="font-size: 0.9em; color: #666;">
-                        <i class="fas fa-phone"></i> ${order.customerPhone}
-                    </span>
-                </div>
-                <div class="order-actions">
-                    ${order.status === 'pending' || order.status === 'preparing' ? `
-                        <button class="complete-btn" onclick="updateOrderStatus(${order.id}, 'completed')">
-                            <i class="fas fa-check"></i> Hoàn thành
-                        </button>
-                        <button class="cancel-btn" onclick="updateOrderStatus(${order.id}, 'cancelled')">
-                            <i class="fas fa-times"></i> Hủy
-                        </button>
-                    ` : ''}
-                    ${order.status === 'pending' ? `
-                        <button class="complete-btn" style="background: #3498db;" onclick="updateOrderStatus(${order.id}, 'preparing')">
-                            <i class="fas fa-utensils"></i> Chuẩn bị
-                        </button>
-                    ` : ''}
-                </div>
-            </div>
-        `;
-        list.appendChild(orderDiv);
-    });
-}
-
-// Filter orders
-function filterOrders(status) {
-    currentOrderFilter = status;
-    
-    const filterBtns = event.target.parentElement.querySelectorAll('.filter-btn');
-    filterBtns.forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
-    
-    renderOrders();
-}
-
-// Update order status
-function updateOrderStatus(orderId, status) {
-    const order = orders.find(o => o.id === orderId);
-    if (!order) return;
-    
-    const oldStatus = order.status;
-    order.status = status;
-    
-    // Update priority based on waiting time if pending
-    if (status === 'pending') {
-        const waitTime = new Date() - new Date(order.time);
-        if (waitTime > 30 * 60 * 1000) { // More than 30 minutes
-            order.priority = 'high';
-        } else if (waitTime > 15 * 60 * 1000) { // More than 15 minutes
-            order.priority = 'medium';
-        }
-    }
-    
-    renderOrders();
-    
-    if (status === 'completed') {
-        addNotification(`✅ Đơn hàng phòng ${order.roomId} đã hoàn thành`, 'success');
-    } else if (status === 'cancelled') {
-        addNotification(`❌ Đơn hàng phòng ${order.roomId} đã hủy`, 'error');
-    }
-}
-
-// Show checkin modal
-function showCheckinModal(roomId) {
-    if (!currentUser || (currentRole !== 'staff' && currentRole !== 'management')) {
-        addNotification('⚠️ Vui lòng đăng nhập với tư cách nhân viên hoặc quản lý', 'warning');
-        return;
-    }
-    
-    currentCheckinRoom = roomId;
-    document.getElementById('checkinModal').classList.add('active');
-    document.getElementById('modalCustomerName').value = '';
-    document.getElementById('modalCustomerPhone').value = '';
-    document.getElementById('modalNumDays').value = '1';
-    document.getElementById('modalSpecialRequests').value = '';
-}
-
-// Show service modal
-function showServiceModal(roomId) {
-    if (!currentUser || (currentRole !== 'staff' && currentRole !== 'management')) {
-        addNotification('⚠️ Vui lòng đăng nhập với tư cách nhân viên hoặc quản lý', 'warning');
-        return;
-    }
-    
-    currentServiceRoom = roomId;
-    const room = rooms.find(r => r.id == roomId);
-    if (!room) return;
-    
-    document.getElementById('serviceRoomNumber').textContent = room.roomNumber;
-    document.getElementById('serviceModal').classList.add('active');
-    
-    // Clear checkboxes
-    document.querySelectorAll('.service-checkbox').forEach(cb => cb.checked = false);
-    document.getElementById('serviceNotes').value = '';
-}
-
-// Close modal
-function closeModal() {
-    document.querySelectorAll('.modal').forEach(modal => modal.classList.remove('active'));
-    currentCheckinRoom = null;
-    currentServiceRoom = null;
-}
-
-// Confirm checkin
-function confirmCheckin() {
-    if (!currentUser || (currentRole !== 'staff' && currentRole !== 'management')) {
-        addNotification('⚠️ Không có quyền thực hiện thao tác này', 'error');
-        closeModal();
-        return;
-    }
-    
-    const customerName = document.getElementById('modalCustomerName').value.trim();
-    const customerPhone = document.getElementById('modalCustomerPhone').value.trim();
-    const numDays = parseInt(document.getElementById('modalNumDays').value);
-    const specialRequests = document.getElementById('modalSpecialRequests').value.trim();
-    
-    if (!customerName) {
-        addNotification('Vui lòng nhập tên khách hàng!', 'error');
-        return;
-    }
-    
-    if (!customerPhone) {
-        addNotification('Vui lòng nhập số điện thoại!', 'error');
-        return;
-    }
-    
-    if (!numDays || numDays < 1) {
-        addNotification('Số ngày thuê phải lớn hơn 0!', 'error');
-        return;
-    }
-    
-    const room = rooms.find(r => r.id === currentCheckinRoom);
-    room.customer = customerName;
-    room.customerPhone = customerPhone;
-    room.numDays = numDays;
-    room.checkinTime = new Date();
-    room.status = 'occupied';
-    room.specialRequests = specialRequests;
-    room.needsCleaning = false;
-    
-    // Add to activities
-    activities.push({
-        type: 'checkin',
-        roomNumber: room.roomNumber,
-        customerName: customerName,
-        time: new Date()
-    });
-    
-    closeModal();
-    renderRooms();
-    updateRoomSelect();
-    updateDashboardStats();
-    
-    addNotification(`✅ ${customerName} đã nhận phòng ${room.roomNumber} - ${numDays} ngày`, 'success');
-}
-
-// Confirm service request
-function confirmServiceRequest() {
-    if (!currentUser || (currentRole !== 'staff' && currentRole !== 'management')) {
-        addNotification('⚠️ Không có quyền thực hiện thao tác này', 'error');
-        closeModal();
-        return;
-    }
-    
-    const room = rooms.find(r => r.id === currentServiceRoom);
-    if (!room) return;
-    
-    const selectedServices = Array.from(document.querySelectorAll('.service-checkbox:checked')).map(cb => cb.value);
-    const notes = document.getElementById('serviceNotes').value.trim();
-    
-    if (selectedServices.length === 0) {
-        addNotification('Vui lòng chọn ít nhất một dịch vụ!', 'error');
-        return;
-    }
-    
-    selectedServices.forEach(service => {
-        room.serviceRequests.push({
-            service: service,
-            time: new Date(),
-            completed: false,
-            notes: notes
-        });
-    });
-    
-    closeModal();
-    renderRooms();
-    
-    addNotification(`✅ Đã gửi yêu cầu dịch vụ cho phòng ${room.roomNumber}`, 'success');
-}
-
-// Checkout
-function checkout(roomId) {
-    if (!currentUser || (currentRole !== 'staff' && currentRole !== 'management')) {
-        addNotification('⚠️ Vui lòng đăng nhập với tư cách nhân viên hoặc quản lý', 'warning');
-        return;
-    }
-    
-    const room = rooms.find(r => r.id === roomId);
-    if (!room.customer) return;
-    
-    const roomCharge = room.pricePerDay * room.numDays;
-    
-    // Apply discount for promo rooms
-    const finalCharge = room.hasPromo ? roomCharge * 0.8 : roomCharge;
-    
-    totalRevenue += finalCharge;
-    todayRevenue += finalCharge;
-    
-    addNotification(`💰 ${room.customer} trả phòng ${room.roomNumber}. Tiền phòng: ${formatCurrency(finalCharge)} (${room.numDays} ngày)`, 'success');
-    
-    // Add to activities
-    activities.push({
-        type: 'checkout',
-        roomNumber: room.roomNumber,
-        customerName: room.customer,
-        time: new Date(),
-        amount: finalCharge
-    });
-    
-    // Mark room as needing cleaning
-    room.status = 'cleaning';
-    room.needsCleaning = true;
-    const oldCustomer = room.customer;
-    
-    // Clear customer data after a delay (to show cleaning status)
-    setTimeout(() => {
-        room.customer = null;
-        room.customerPhone = null;
-        room.customerEmail = null;
-        room.numDays = 0;
-        room.checkinTime = null;
-        room.specialRequests = '';
-        renderRooms();
-        updateRoomSelect();
-    }, 3000);
-    
-    renderRooms();
-    updateDashboardStats();
-}
-
-// Mark cleaning as done
-function markCleaningDone(roomId) {
-    if (!currentUser || (currentRole !== 'staff' && currentRole !== 'management')) {
-        addNotification('⚠️ Vui lòng đăng nhập với tư cách nhân viên hoặc quản lý', 'warning');
-        return;
-    }
-    
-    const room = rooms.find(r => r.id === roomId);
-    room.status = 'empty';
-    room.needsCleaning = false;
-    room.serviceRequests = room.serviceRequests.filter(req => !req.completed);
-    
-    // Add to activities
-    activities.push({
-        type: 'cleaning',
-        roomNumber: room.roomNumber,
-        time: new Date(),
-        action: 'completed'
-    });
-    
-    renderRooms();
-    addNotification(`🧹 Phòng ${room.roomNumber} đã được dọn xong`, 'success');
-}
-
-// Render rooms for staff
-function renderRooms() {
-    const list = document.getElementById('roomsList');
-    list.innerHTML = '';
-    
-    let filteredRooms = rooms;
-    
-    // Filter by floor
-    if (currentFloor !== 'all') {
-        filteredRooms = rooms.filter(room => room.floor == currentFloor);
-    }
-    
-    if (filteredRooms.length === 0) {
-        list.innerHTML = `
-            <div class="empty-state" style="grid-column: 1 / -1;">
-                <i class="fas fa-bed"></i>
-                <p>Không có phòng nào</p>
-            </div>
-        `;
-        return;
-    }
-    
-    filteredRooms.forEach(room => {
-        const roomDiv = document.createElement('div');
-        roomDiv.className = `room-card ${room.type} ${room.status === 'occupied' ? 'occupied' : ''} ${room.needsCleaning ? 'need-cleaning' : ''}`;
-        
-        // Add badges
-        let badges = '';
-        if (room.isNew) {
-            badges += `<div class="room-badge badge-new">MỚI</div>`;
-        }
-        if (room.hasPromo) {
-            badges += `<div class="room-badge badge-promo">GIẢM 20%</div>`;
-        }
-        if (room.floor >= 5) {
-            badges += `<div class="room-badge badge-sea-view">VIEW ĐẸP</div>`;
-        }
-        
-        const typeInfo = ROOM_TYPES[room.type];
-        
-        // Customer info if occupied
-        let customerInfo = '';
-        let serviceRequests = '';
-        let actions = '';
-        
-        if (room.customer) {
-            customerInfo = `
-                <div class="room-customer">
-                    <i class="fas fa-user"></i> ${room.customer}
-                </div>
-                <div class="room-details">
-                    <i class="fas fa-phone"></i> ${room.customerPhone}
-                </div>
-                <div class="room-details">
-                    <i class="far fa-calendar"></i> ${room.numDays} ngày (đến ${formatDate(new Date(room.checkinTime.getTime() + room.numDays * 24 * 60 * 60 * 1000))})
-                </div>
-                ${room.specialRequests ? `
-                    <div class="room-details">
-                        <i class="fas fa-sticky-note"></i> ${room.specialRequests.substring(0, 30)}${room.specialRequests.length > 30 ? '...' : ''}
-                    </div>
-                ` : ''}
-            `;
-            
-            // Service requests
-            if (room.serviceRequests.length > 0) {
-                const pendingServices = room.serviceRequests.filter(req => !req.completed);
-                if (pendingServices.length > 0) {
-                    serviceRequests = `
-                        <div class="service-request">
-                            <div style="font-size: 0.9em; font-weight: bold; margin-bottom: 5px;">Yêu cầu dịch vụ:</div>
-                            ${pendingServices.map(req => 
-                                `<span class="service-tag">${req.service}</span>`
-                            ).join('')}
-                        </div>
-                    `;
-                }
-            }
-            
-            actions = `
-                <button class="room-btn checkout-btn" onclick="checkout(${room.id})">
-                    <i class="fas fa-sign-out-alt"></i> Trả phòng
-                </button>
-                <button class="room-btn service-btn" onclick="showServiceModal(${room.id})">
-                    <i class="fas fa-concierge-bell"></i> Dịch vụ
-                </button>
-            `;
-        } else if (room.status === 'cleaning') {
-            customerInfo = `
-                <div class="room-customer">
-                    <i class="fas fa-broom"></i> Đang dọn dẹp
-                </div>
-                <div class="room-details">
-                    <i class="far fa-clock"></i> Cần dọn trước khi nhận khách
-                </div>
-            `;
-            
-            actions = `
-                <button class="room-btn checkin-btn" onclick="markCleaningDone(${room.id})">
-                    <i class="fas fa-check"></i> Đã dọn xong
-                </button>
-            `;
-        } else {
-            customerInfo = `
-                <div style="text-align: center; padding: 20px 0; color: #999;">
-                    <i class="fas fa-door-open" style="font-size: 2em; margin-bottom: 10px;"></i>
-                    <div>Phòng trống</div>
-                </div>
-            `;
-            
-            actions = `
-                <button class="room-btn checkin-btn" onclick="showCheckinModal(${room.id})">
-                    <i class="fas fa-key"></i> Nhận phòng
-                </button>
-            `;
-        }
-        
-        const roomPrice = room.hasPromo ? 
-            `<span style="text-decoration: line-through; color: #999;">${formatCurrency(room.pricePerDay)}</span>
-             <span style="color: #e74c3c;">${formatCurrency(room.pricePerDay * 0.8)}</span>` : 
-            formatCurrency(room.pricePerDay);
-        
-        roomDiv.innerHTML = `
-            ${badges}
-            <div class="room-header-info">
-                <div class="room-number">
-                    ${typeInfo.icon} Phòng ${room.roomNumber}
-                    <span class="room-type type-${room.type}">${typeInfo.name}</span>
-                </div>
-                <div class="room-status status-${room.status}">
-                    ${room.status === 'occupied' ? 'Đang thuê' : 
-                      room.status === 'cleaning' ? 'Đang dọn' : 'Trống'}
-                </div>
-            </div>
-            ${customerInfo}
-            <div class="room-price">
-                <i class="fas fa-tag"></i> ${roomPrice} / đêm
-            </div>
-            ${serviceRequests}
-            <div class="room-actions">
-                ${actions}
-            </div>
-        `;
-        
-        list.appendChild(roomDiv);
-    });
-}
-
-// Format date
-function formatDate(date) {
-    return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-}
-
-// Update dashboard stats
-function updateDashboardStats() {
-    // Calculate stats
-    const occupiedRooms = rooms.filter(r => r.status === 'occupied').length;
-    const cleaningRooms = rooms.filter(r => r.status === 'cleaning').length;
-    const availableRooms = rooms.length - occupiedRooms - cleaningRooms;
-    const occupancyRate = Math.round((occupiedRooms / rooms.length) * 100);
-    
-    const todayOrders = orders.filter(o => {
-        const orderDate = new Date(o.time);
-        const today = new Date();
-        return orderDate.getDate() === today.getDate() && 
-               orderDate.getMonth() === today.getMonth() && 
-               orderDate.getFullYear() === today.getFullYear();
-    }).length;
-    
-    // Update UI
-    document.getElementById('todayRevenue').textContent = formatCurrency(todayRevenue);
-    document.getElementById('occupancyRate').textContent = `${occupancyRate}%`;
-    document.getElementById('availableRooms').textContent = availableRooms;
-    document.getElementById('todayOrders').textContent = todayOrders;
-    
-    // Update activity list
-    updateActivityList();
-}
-
-// Update activity list
-function updateActivityList() {
-    const activityList = document.getElementById('activityList');
-    activityList.innerHTML = '';
-    
-    // Get recent activities (last 10)
-    const recentActivities = [...activities]
-        .sort((a, b) => new Date(b.time) - new Date(a.time))
-        .slice(0, 10);
-    
-    if (recentActivities.length === 0) {
-        activityList.innerHTML = `
-            <div class="empty-state">
-                <p>Chưa có hoạt động nào</p>
-            </div>
-        `;
-        return;
-    }
-    
-    recentActivities.forEach(activity => {
-        const activityDiv = document.createElement('div');
-        activityDiv.className = 'activity-item';
-        
-        let iconClass = '';
-        let icon = '';
-        let text = '';
-        
-        switch(activity.type) {
-            case 'checkin':
-                iconClass = 'icon-checkin';
-                icon = 'fas fa-key';
-                text = `<strong>${activity.customerName}</strong> nhận phòng <strong>${activity.roomNumber}</strong>`;
-                break;
-            case 'checkout':
-                iconClass = 'icon-checkout';
-                icon = 'fas fa-sign-out-alt';
-                text = `<strong>${activity.customerName}</strong> trả phòng <strong>${activity.roomNumber}</strong>`;
-                if (activity.amount) {
-                    text += ` - ${formatCurrency(activity.amount)}`;
-                }
-                break;
-            case 'order':
-                iconClass = 'icon-order';
-                icon = 'fas fa-utensils';
-                text = `Đơn hàng từ phòng <strong>${activity.roomNumber}</strong> - ${activity.customerName}`;
-                break;
-            case 'cleaning':
-                iconClass = 'icon-cleaning';
-                icon = 'fas fa-broom';
-                text = `Phòng <strong>${activity.roomNumber}</strong> ${activity.action === 'completed' ? 'đã được dọn xong' : 'cần dọn dẹp'}`;
-                break;
-        }
-        
-        activityDiv.innerHTML = `
-            <div class="activity-icon ${iconClass}">
-                <i class="${icon}"></i>
-            </div>
-            <div class="activity-details">
-                <div>${text}</div>
-                <div class="activity-time">
-                    ${new Date(activity.time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} - 
-                    ${new Date(activity.time).toLocaleDateString('vi-VN')}
-                </div>
-            </div>
-        `;
-        
-        activityList.appendChild(activityDiv);
-    });
-}
-
-// ================== INITIALIZATION ==================
-function initialize() {
-    initializeRooms();
-    updateRoomSelect();
-    renderMenu();
-    updateOrderSummary();
-    
-    if (currentRole === 'staff' || currentRole === 'management') {
-        renderOrders();
-        renderRooms();
-        updateDashboardStats();
-        generateFloorButtons();
-    }
-}
-
-// Khởi tạo khi page loads
-window.onload = function() {
-    initializeLoginSystem();
-    initialize();
-    
-    setTimeout(() => {
-        if (!currentUser) {
-            addNotification('Chào mừng đến với Hệ thống Quản lý Khách sạn Horizon!', 'info');
-        }
-    }, 1000);
-};
-
     </script>
 </body>
 </html>

@@ -1592,15 +1592,3 @@ document.addEventListener('DOMContentLoaded', function() {
     // Cập nhật thời gian mỗi phút
     setInterval(updateShiftDisplay, 60000);
 });
-
-// Thêm CSS
-if (!document.getElementById('staff-styles')) {
-    const style = document.createElement('style');
-    style.id = 'staff-styles';
-    style.textContent = `
-        .status-badge {
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-size: 0.8em;
-            font-weight: bold;
-            display: inline-block

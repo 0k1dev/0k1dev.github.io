@@ -1,4 +1,5 @@
 // staff.js - CHỈ CHỨA CHỨC NĂNG NHÂN VIÊN (KHÔNG CÓ ĐĂNG NHẬP)
+// Đầy đủ chức năng: Quản lý phòng, Check-in, Order dịch vụ, Check-out, Tạo QR thanh toán
 
 // ========== RENDER FUNCTIONS - STAFF ==========
 
@@ -68,7 +69,7 @@ function renderRoomManagement() {
     `;
 }
 
-// Hiển thị thông tin phòng đã đặt (chỉ hiện số điện thoại nhân viên)
+// Hiển thị thông tin phòng đã đặt
 function showReservedRoomInfo(roomNumber) {
     const room = appData.rooms.find(r => r.number === roomNumber);
     if (!room || room.status !== 'reserved') return;
@@ -81,7 +82,6 @@ function showOccupiedRoomInfo(roomNumber) {
     const room = appData.rooms.find(r => r.number === roomNumber);
     if (!room || room.status !== 'occupied') return;
     
-    // Tìm booking cho phòng này
     const booking = appData.bookings.find(b => b.roomNumber === room.number && b.status === 'active');
     
     let servicesHTML = '';
@@ -152,7 +152,7 @@ function renderCheckInProcess() {
                         <label for="checkin-guests"><i class="fas fa-users"></i> Số lượng khách</label>
                         <select id="checkin-guests">
                             <option value="1">1 khách</option>
-                            <option value="2">2 khách</option>
+                            <option value="2" selected>2 khách</option>
                             <option value="3">3 khách</option>
                             <option value="4">4 khách</option>
                         </select>
@@ -216,19 +216,16 @@ function processCheckIn() {
         return;
     }
     
-    // Kiểm tra số điện thoại
     if (!isValidPhone(customerPhone)) {
         alert('Số điện thoại không hợp lệ! Vui lòng nhập đúng 10 số (09, 03, 07, 08, 05).');
         return;
     }
     
-    // Kiểm tra CCCD
     if (!isValidCCCD(customerId)) {
         alert('CCCD không hợp lệ! Vui lòng nhập đúng 12 số.');
         return;
     }
     
-    // Tìm phòng
     const room = appData.rooms.find(r => r.number == roomNumber);
     if (!room) {
         alert('Không tìm thấy phòng!');
@@ -282,7 +279,6 @@ function processCheckIn() {
     `;
     document.getElementById('checkin-result').classList.remove('hidden');
     
-    // Reset form sau 5 giây
     setTimeout(() => {
         clearCheckInForm();
         document.getElementById('checkin-result').classList.add('hidden');
@@ -296,8 +292,430 @@ function clearCheckInForm() {
     document.getElementById('checkin-customer-id').value = '';
     document.getElementById('checkin-date').value = new Date().toISOString().split('T')[0];
     document.getElementById('checkout-date').value = new Date(Date.now() + 86400000).toISOString().split('T')[0];
-    document.getElementById('checkin-guests').value = '1';
+    document.getElementById('checkin-guests').value = '2';
     document.getElementById('checkin-payment-method').value = 'cash';
+}
+
+// Render trang order đồ ăn/thức uống
+function renderOrderService() {
+    const occupiedRooms = appData.rooms.filter(room => room.status === 'occupied');
+    
+    return `
+        <div class="order-service">
+            <h2 class="section-title"><i class="fas fa-utensils"></i> Order dịch vụ ăn uống</h2>
+            
+            <div class="form-container">
+                <div class="form-row">
+                    <div class="form-control">
+                        <label for="order-room"><i class="fas fa-door-closed"></i> Chọn phòng *</label>
+                        <select id="order-room" onchange="updateOrderCustomerInfo()">
+                            <option value="">-- Chọn phòng --</option>
+                            ${occupiedRooms.map(room => `
+                                <option value="${room.number}">${room.number} - ${room.customerName}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="order-customer-info" class="hidden" style="background-color: #f0f9ff; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                    <div class="form-row">
+                        <div class="form-control">
+                            <strong>Khách hàng:</strong> <span id="order-customer-name">-</span>
+                        </div>
+                        <div class="form-control">
+                            <strong>Số điện thoại:</strong> <span id="order-customer-phone">-</span>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-control">
+                            <strong>Phòng:</strong> <span id="order-room-info">-</span>
+                        </div>
+                        <div class="form-control">
+                            <strong>Tổng dịch vụ hiện tại:</strong> <span id="order-current-total">0đ</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Menu dịch vụ -->
+                <div class="menu-section">
+                    <h4><i class="fas fa-list"></i> Menu dịch vụ</h4>
+                    
+                    <!-- Thức uống -->
+                    <div class="menu-category" style="margin-top: 1.5rem;">
+                        <h5><i class="fas fa-coffee"></i> Thức uống</h5>
+                        <div class="menu-items" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                            ${renderMenuItem('Cà phê đen', 'Cà phê đen truyền thống', 25000)}
+                            ${renderMenuItem('Cà phê sữa', 'Cà phê sữa đặc biệt', 30000)}
+                            ${renderMenuItem('Nước suối', 'Nước suối 500ml', 15000)}
+                            ${renderMenuItem('Nước ngọt', 'Coca/Pepsi/7Up 330ml', 20000)}
+                            ${renderMenuItem('Nước cam ép', 'Cam tươi ép', 35000)}
+                            ${renderMenuItem('Trà đá', 'Trà đá truyền thống', 10000)}
+                        </div>
+                    </div>
+                    
+                    <!-- Đồ ăn nhẹ -->
+                    <div class="menu-category" style="margin-top: 2rem;">
+                        <h5><i class="fas fa-hamburger"></i> Đồ ăn nhẹ</h5>
+                        <div class="menu-items" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                            ${renderMenuItem('Mì tôm trứng', 'Mì tôm + 2 trứng', 40000)}
+                            ${renderMenuItem('Bánh mì pate', 'Bánh mì pate đặc biệt', 25000)}
+                            ${renderMenuItem('Trái cây dĩa', 'Dĩa trái cây theo mùa', 50000)}
+                            ${renderMenuItem('Bánh ngọt', 'Bánh ngọt các loại', 30000)}
+                            ${renderMenuItem('Xúc xích nướng', 'Xúc xích Đức', 45000)}
+                            ${renderMenuItem('Bánh bao', 'Bánh bao nhân thịt', 20000)}
+                        </div>
+                    </div>
+                    
+                    <!-- Tráng miệng -->
+                    <div class="menu-category" style="margin-top: 2rem;">
+                        <h5><i class="fas fa-ice-cream"></i> Tráng miệng</h5>
+                        <div class="menu-items" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                            ${renderMenuItem('Kem vani', 'Kem vani Ý', 35000)}
+                            ${renderMenuItem('Kem socola', 'Kem socola Bỉ', 35000)}
+                            ${renderMenuItem('Chè đậu đen', 'Chè đậu đen truyền thống', 25000)}
+                            ${renderMenuItem('Sữa chua', 'Sữa chua hoa quả', 20000)}
+                            ${renderMenuItem('Bánh flan', 'Bánh flan caramel', 30000)}
+                            ${renderMenuItem('Trái cây mix', 'Mix 3 loại trái cây', 40000)}
+                        </div>
+                    </div>
+                    
+                    <!-- Dịch vụ khác -->
+                    <div class="menu-category" style="margin-top: 2rem;">
+                        <h5><i class="fas fa-concierge-bell"></i> Dịch vụ khác</h5>
+                        <div class="menu-items" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                            ${renderMenuItem('Giặt ủi', 'Giặt 1kg đồ', 50000)}
+                            ${renderMenuItem('Thuê xe máy', 'Thuê 24 giờ', 150000)}
+                            ${renderMenuItem('Đưa đón sân bay', 'Xe 4-7 chỗ', 300000)}
+                            ${renderMenuItem('Tour du lịch', 'Tour nửa ngày', 500000)}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Danh sách order hiện tại -->
+                <div class="current-order" style="margin-top: 2rem; padding: 1.5rem; background-color: #fff8e1; border-radius: 8px;">
+                    <h4><i class="fas fa-shopping-cart"></i> Đơn hàng hiện tại</h4>
+                    <div id="order-items-list" style="margin-top: 1rem;">
+                        <p style="text-align: center; color: #999; font-style: italic;">Chưa có món nào trong đơn hàng</p>
+                    </div>
+                    <div style="text-align: right; margin-top: 1rem;">
+                        <strong>Tổng tiền:</strong> <span id="order-total-amount" style="font-size: 1.2rem; color: #e74c3c;">0đ</span>
+                    </div>
+                </div>
+                
+                <!-- Custom order -->
+                <div class="custom-order" style="margin-top: 2rem; padding: 1.5rem; background-color: #f0f5ff; border-radius: 8px;">
+                    <h4><i class="fas fa-edit"></i> Thêm dịch vụ tùy chỉnh</h4>
+                    <div class="form-row">
+                        <div class="form-control">
+                            <label for="custom-service-name">Tên dịch vụ</label>
+                            <input type="text" id="custom-service-name" placeholder="Ví dụ: Nước ép cam">
+                        </div>
+                        <div class="form-control">
+                            <label for="custom-service-price">Giá tiền (VND)</label>
+                            <input type="number" id="custom-service-price" placeholder="50000" min="1000">
+                        </div>
+                        <div class="form-control">
+                            <label for="custom-service-quantity">Số lượng</label>
+                            <input type="number" id="custom-service-quantity" value="1" min="1" max="99">
+                        </div>
+                        <div class="form-control">
+                            <button class="btn btn-primary" onclick="addCustomToOrder()" style="margin-top: 1.5rem;">
+                                <i class="fas fa-plus-circle"></i> Thêm dịch vụ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Nút hành động -->
+                <div class="form-actions" style="margin-top: 2rem; text-align: center;">
+                    <button class="btn btn-success" onclick="confirmOrder()">
+                        <i class="fas fa-check"></i> Xác nhận đơn hàng
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearOrder()" style="margin-left: 10px;">
+                        <i class="fas fa-times"></i> Hủy đơn
+                    </button>
+                    <button class="btn btn-primary" onclick="createBillFromOrder()" style="margin-left: 10px;">
+                        <i class="fas fa-file-invoice-dollar"></i> Tạo hóa đơn ngay
+                    </button>
+                </div>
+            </div>
+            
+            <div id="order-success" class="hidden" style="margin-top: 2rem; padding: 1.5rem; background-color: #d4edda; border-radius: 8px; text-align: center;">
+                <h4><i class="fas fa-check-circle"></i> Order thành công!</h4>
+                <p id="order-success-message"></p>
+                <p id="order-bill-info" class="hidden"></p>
+            </div>
+        </div>
+    `;
+}
+
+function renderMenuItem(name, description, price) {
+    return `
+        <div class="menu-item" style="border: 1px solid #ddd; padding: 1rem; border-radius: 8px; background: white;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong>${name}</strong>
+                    <p style="color: #666; margin: 5px 0; font-size: 0.9em;">${description}</p>
+                    <strong style="color: #e74c3c;">${formatCurrency(price)}</strong>
+                </div>
+                <button class="btn btn-sm btn-primary" onclick="addToOrder('${name}', ${price})">
+                    <i class="fas fa-plus"></i> Thêm
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+// Biến lưu đơn hàng tạm thời
+let currentOrder = {
+    roomNumber: null,
+    items: [],
+    total: 0
+};
+
+// Cập nhật thông tin khách hàng khi chọn phòng
+function updateOrderCustomerInfo() {
+    const roomNumber = document.getElementById('order-room').value;
+    if (!roomNumber) {
+        document.getElementById('order-customer-info').classList.add('hidden');
+        return;
+    }
+    
+    const room = appData.rooms.find(r => r.number == roomNumber);
+    if (!room) return;
+    
+    document.getElementById('order-customer-name').textContent = room.customerName;
+    document.getElementById('order-customer-phone').textContent = room.customerPhone;
+    document.getElementById('order-room-info').textContent = room.number + ' - ' + room.typeName;
+    
+    const currentServiceTotal = room.services ? 
+        room.services.reduce((sum, service) => sum + service.total, 0) : 0;
+    document.getElementById('order-current-total').textContent = formatCurrency(currentServiceTotal);
+    
+    document.getElementById('order-customer-info').classList.remove('hidden');
+    
+    currentOrder = {
+        roomNumber: roomNumber,
+        items: [],
+        total: 0
+    };
+    
+    updateOrderDisplay();
+}
+
+// Thêm món vào order
+function addToOrder(itemName, itemPrice) {
+    const roomNumber = document.getElementById('order-room').value;
+    if (!roomNumber) {
+        alert('Vui lòng chọn phòng trước khi thêm món!');
+        return;
+    }
+    
+    const existingItem = currentOrder.items.find(item => item.name === itemName);
+    if (existingItem) {
+        existingItem.quantity++;
+        existingItem.total = existingItem.quantity * existingItem.price;
+    } else {
+        currentOrder.items.push({
+            name: itemName,
+            price: itemPrice,
+            quantity: 1,
+            total: itemPrice
+        });
+    }
+    
+    currentOrder.total = currentOrder.items.reduce((sum, item) => sum + item.total, 0);
+    
+    updateOrderDisplay();
+}
+
+// Thêm dịch vụ tùy chỉnh
+function addCustomToOrder() {
+    const roomNumber = document.getElementById('order-room').value;
+    if (!roomNumber) {
+        alert('Vui lòng chọn phòng trước!');
+        return;
+    }
+    
+    const serviceName = document.getElementById('custom-service-name').value;
+    const servicePrice = parseInt(document.getElementById('custom-service-price').value);
+    const serviceQuantity = parseInt(document.getElementById('custom-service-quantity').value);
+    
+    if (!serviceName || !servicePrice || servicePrice < 1000) {
+        alert('Vui lòng nhập đầy đủ thông tin dịch vụ!');
+        return;
+    }
+    
+    currentOrder.items.push({
+        name: serviceName,
+        price: servicePrice,
+        quantity: serviceQuantity,
+        total: servicePrice * serviceQuantity
+    });
+    
+    currentOrder.total = currentOrder.items.reduce((sum, item) => sum + item.total, 0);
+    
+    document.getElementById('custom-service-name').value = '';
+    document.getElementById('custom-service-price').value = '';
+    document.getElementById('custom-service-quantity').value = 1;
+    
+    updateOrderDisplay();
+}
+
+// Cập nhật hiển thị order
+function updateOrderDisplay() {
+    const orderItemsList = document.getElementById('order-items-list');
+    const orderTotalAmount = document.getElementById('order-total-amount');
+    
+    if (currentOrder.items.length === 0) {
+        orderItemsList.innerHTML = '<p style="text-align: center; color: #999; font-style: italic;">Chưa có món nào trong đơn hàng</p>';
+        orderTotalAmount.textContent = '0đ';
+        return;
+    }
+    
+    orderItemsList.innerHTML = `
+        <div style="margin-bottom: 1rem;">
+            ${currentOrder.items.map((item, index) => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: white; border-radius: 5px; margin-bottom: 5px;">
+                    <div>
+                        <strong>${item.name}</strong>
+                        <div style="font-size: 0.9em; color: #666;">
+                            ${formatCurrency(item.price)} x ${item.quantity}
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                        <span style="margin-right: 1rem; color: #e74c3c; font-weight: bold;">
+                            ${formatCurrency(item.total)}
+                        </span>
+                        <button class="btn btn-sm btn-danger" onclick="removeOrderItem(${index})" style="padding: 2px 8px;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+    
+    orderTotalAmount.textContent = formatCurrency(currentOrder.total);
+}
+
+// Xóa món khỏi order
+function removeOrderItem(index) {
+    currentOrder.items.splice(index, 1);
+    currentOrder.total = currentOrder.items.reduce((sum, item) => sum + item.total, 0);
+    updateOrderDisplay();
+}
+
+// Xác nhận order
+function confirmOrder() {
+    const roomNumber = document.getElementById('order-room').value;
+    if (!roomNumber) {
+        alert('Vui lòng chọn phòng!');
+        return;
+    }
+    
+    if (currentOrder.items.length === 0) {
+        alert('Đơn hàng trống! Vui lòng thêm ít nhất một món.');
+        return;
+    }
+    
+    const room = appData.rooms.find(r => r.number == roomNumber);
+    if (!room) {
+        alert('Không tìm thấy phòng!');
+        return;
+    }
+    
+    if (!room.services) {
+        room.services = [];
+    }
+    
+    currentOrder.items.forEach(item => {
+        room.services.push({
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            total: item.total,
+            orderDate: new Date(),
+            staffName: currentUser ? currentUser.name : 'Nhân viên'
+        });
+    });
+    
+    document.getElementById('order-success-message').innerHTML = `
+        Đã order thành công cho phòng <strong>${roomNumber}</strong><br>
+        Tổng số món: <strong>${currentOrder.items.length}</strong><br>
+        Tổng tiền: <strong>${formatCurrency(currentOrder.total)}</strong><br>
+        Khách hàng: <strong>${room.customerName}</strong>
+    `;
+    
+    document.getElementById('order-success').classList.remove('hidden');
+    
+    currentOrder = {
+        roomNumber: null,
+        items: [],
+        total: 0
+    };
+    
+    updateOrderDisplay();
+    
+    setTimeout(() => {
+        document.getElementById('order-success').classList.add('hidden');
+    }, 5000);
+}
+
+// Xóa order
+function clearOrder() {
+    currentOrder = {
+        roomNumber: null,
+        items: [],
+        total: 0
+    };
+    updateOrderDisplay();
+    alert('Đã xóa đơn hàng hiện tại');
+}
+
+// Tạo hóa đơn ngay từ order
+function createBillFromOrder() {
+    const roomNumber = document.getElementById('order-room').value;
+    if (!roomNumber) {
+        alert('Vui lòng chọn phòng!');
+        return;
+    }
+    
+    if (currentOrder.items.length === 0) {
+        alert('Đơn hàng trống! Vui lòng thêm ít nhất một món.');
+        return;
+    }
+    
+    const room = appData.rooms.find(r => r.number == roomNumber);
+    if (!room) {
+        alert('Không tìm thấy phòng!');
+        return;
+    }
+    
+    // Thêm dịch vụ vào phòng trước
+    if (!room.services) {
+        room.services = [];
+    }
+    
+    currentOrder.items.forEach(item => {
+        room.services.push({
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            total: item.total,
+            orderDate: new Date(),
+            staffName: currentUser ? currentUser.name : 'Nhân viên'
+        });
+    });
+    
+    // Chuyển sang trang check-out với phòng đã chọn
+    switchView('check-out');
+    
+    // Đợi DOM load xong
+    setTimeout(() => {
+        document.getElementById('checkout-room').value = roomNumber;
+        loadCheckoutInfo();
+    }, 100);
 }
 
 // Render trang check-out & xuất bill (STAFF)
@@ -421,6 +839,7 @@ function renderCheckOutProcess() {
                                 <option value="cash">Tiền mặt</option>
                                 <option value="banking">Chuyển khoản</option>
                                 <option value="credit">Thẻ tín dụng</option>
+                                <option value="qr">QR Code</option>
                             </select>
                         </div>
                         <div class="form-control">
@@ -438,6 +857,9 @@ function renderCheckOutProcess() {
                         </button>
                         <button class="btn btn-primary" onclick="printBill()" style="margin-left: 10px;">
                             <i class="fas fa-print"></i> In hóa đơn
+                        </button>
+                        <button class="btn btn-info" onclick="generateQRForBill()" style="margin-left: 10px;">
+                            <i class="fas fa-qrcode"></i> Tạo QR thanh toán
                         </button>
                     </div>
                 </div>
@@ -473,7 +895,7 @@ function loadCheckoutInfo() {
     // Tính số ngày
     const checkIn = new Date(room.checkInDate);
     const checkOut = new Date();
-    const days = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+    const days = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24)) || 1;
     document.getElementById('bill-days').textContent = days;
     
     // Tính tiền phòng
@@ -530,12 +952,10 @@ function loadCheckoutInfo() {
         document.getElementById('bill-services-total').textContent = '0đ';
     }
     
-    // Tính tổng
     const serviceTotal = room.services ? room.services.reduce((sum, service) => sum + service.total, 0) : 0;
     const grandTotal = roomTotal + serviceTotal;
     document.getElementById('bill-grand-total').textContent = formatCurrency(grandTotal);
     
-    // Hiển thị phần check-out
     document.getElementById('checkout-info').classList.remove('hidden');
 }
 
@@ -558,10 +978,9 @@ function createBill() {
         return;
     }
     
-    // Tính toán
     const checkIn = new Date(room.checkInDate);
     const checkOut = new Date();
-    const days = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+    const days = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24)) || 1;
     const roomTotal = room.price * days;
     const serviceTotal = room.services ? room.services.reduce((sum, service) => sum + service.total, 0) : 0;
     const totalAmount = roomTotal + serviceTotal;
@@ -613,11 +1032,36 @@ function createBill() {
     switchView('room-management');
 }
 
-function printBill() {
-    alert('In hóa đơn... (Trong thực tế sẽ gọi window.print())');
+// Tạo QR cho bill hiện tại
+function generateQRForBill() {
+    const roomNumber = document.getElementById('checkout-room').value;
+    if (!roomNumber) {
+        alert('Vui lòng chọn phòng và tải thông tin trước!');
+        return;
+    }
+    
+    const totalAmount = parseFloat(document.getElementById('bill-grand-total').textContent.replace(/[^0-9]/g, ''));
+    if (!totalAmount || totalAmount === 0) {
+        alert('Không có số tiền để tạo QR!');
+        return;
+    }
+    
+    // Chuyển sang trang tạo QR
+    switchView('qr-generator');
+    
+    // Đợi DOM load xong
+    setTimeout(() => {
+        document.getElementById('qr-amount').value = totalAmount;
+        document.getElementById('qr-description').value = `Thanh toán phòng ${roomNumber}`;
+        generateVietQR();
+    }, 100);
 }
 
-// Render trang tạo mã thanh toán (STAFF) - CHỈ NHẬP SỐ TIỀN
+function printBill() {
+    alert('In hóa đơn... (Trong thực tế sẽ gọi window.print())');
+    // window.print();
+}
+
 // Render trang tạo mã thanh toán (STAFF) - SỬ DỤNG VIETQR API
 function renderQRGenerator() {
     return `
@@ -673,6 +1117,9 @@ function renderQRGenerator() {
                     </button>
                     <button class="btn btn-secondary" onclick="clearQRForm()">
                         <i class="fas fa-times"></i> Xóa form
+                    </button>
+                    <button class="btn btn-info" onclick="showQRHistory()" style="margin-left: 10px;">
+                        <i class="fas fa-history"></i> Lịch sử QR
                     </button>
                 </div>
             </div>
@@ -760,12 +1207,10 @@ function generateVietQR() {
         return;
     }
     
-    // Loại bỏ dấu và giới hạn ký tự
     const cleanDescription = removeVietnameseTones(description.substring(0, 20));
     
-    // Thông tin tài khoản ACB
     const bankInfo = {
-        bankCode: "970416", // Mã ngân hàng ACB
+        bankCode: "970416",
         accountNumber: "43146717",
         accountName: "DINH TAN HUY",
         amount: amount,
@@ -773,54 +1218,30 @@ function generateVietQR() {
         template: "compact2"
     };
     
-    // Hiển thị loading
     document.getElementById('vietqr-result').classList.remove('hidden');
     document.getElementById('qr-loading').style.display = 'block';
     document.getElementById('generated-qr').style.display = 'none';
     
-    // Cập nhật thông tin hiển thị
     document.getElementById('qr-amount-display').textContent = amount.toLocaleString();
     document.getElementById('qr-description-display').textContent = description;
     document.getElementById('qr-transaction-id').textContent = 'TX' + Date.now();
     
-    // Tạo QR code sử dụng API VietQR
     createVietQRCode(bankInfo);
     
-    // Cuộn đến phần kết quả
     document.getElementById('vietqr-result').scrollIntoView({ behavior: 'smooth' });
 }
 
 // Hàm tạo QR code bằng VietQR API
 function createVietQRCode(bankInfo) {
-    // URL API VietQR
-    const apiUrl = `https://api.vietqr.io/v2/generate`;
-    
-    // Dữ liệu gửi lên API
-    const requestData = {
-        accountNo: bankInfo.accountNumber,
-        accountName: bankInfo.accountName,
-        acqId: bankInfo.bankCode, // Mã ngân hàng
-        amount: bankInfo.amount,
-        addInfo: bankInfo.description,
-        format: "text", // text hoặc base64
-        template: bankInfo.template || "compact"
-    };
-    
-    // Tạo URL QR trực tiếp (phương pháp đơn giản)
-    // Hoặc có thể sử dụng: https://img.vietqr.io/image/ACB-43146717-compact2.jpg?amount=100000&addInfo=Thanh toan phong 101
     const qrImageUrl = `https://img.vietqr.io/image/ACB-${bankInfo.accountNumber}-${bankInfo.template || 'compact2'}.jpg?amount=${bankInfo.amount}&addInfo=${encodeURIComponent(bankInfo.description)}&accountName=${encodeURIComponent(bankInfo.accountName)}`;
     
-    // Hiển thị QR code
     const qrImg = document.getElementById('generated-qr');
     qrImg.src = qrImageUrl;
     qrImg.alt = `QR Thanh toán ${bankInfo.amount} VND`;
     
-    // Khi ảnh tải xong
     qrImg.onload = function() {
         document.getElementById('qr-loading').style.display = 'none';
         qrImg.style.display = 'block';
-        
-        // Lưu URL QR để tải về sau
         qrImg.dataset.qrUrl = qrImageUrl;
     };
     
@@ -833,47 +1254,6 @@ function createVietQRCode(bankInfo) {
             </div>
         `;
     };
-    
-    // Ngoài ra, có thể tạo QR code local bằng thư viện
-    createLocalQRCode(bankInfo);
-}
-
-// Tạo QR code local (fallback nếu API không hoạt động)
-function createLocalQRCode(bankInfo) {
-    // Tạo nội dung QR theo chuẩn VietQR
-    const qrContent = generateVietQRString(bankInfo);
-    
-    // Nếu có thư viện QR code (ví dụ: qrcode.js)
-    if (typeof QRCode !== 'undefined') {
-        const qrContainer = document.getElementById('real-qr-image');
-        qrContainer.innerHTML = '';
-        
-        new QRCode(qrContainer, {
-            text: qrContent,
-            width: 250,
-            height: 250,
-            colorDark: "#000000",
-            colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.H
-        });
-        
-        document.getElementById('qr-loading').style.display = 'none';
-    }
-}
-
-// Tạo chuỗi VietQR theo tiêu chuẩn
-function generateVietQRString(bankInfo) {
-    // Định dạng theo tiêu chuẩn VietQR
-    const data = {
-        bank: "ACB",
-        acc: bankInfo.accountNumber,
-        amount: bankInfo.amount,
-        desc: bankInfo.description,
-        template: "print"
-    };
-    
-    // Tạo URL deep link cho app ngân hàng
-    return `https://vietqr.net/transfer/ACB/${bankInfo.accountNumber}/${bankInfo.amount}/${encodeURIComponent(bankInfo.description)}`;
 }
 
 // Lưu thông tin QR
@@ -886,7 +1266,6 @@ function saveVietQR() {
         return;
     }
     
-    // Tạo QR code mới
     const newQRId = appData.qrCodes.length + 1;
     const transactionId = 'TX' + Date.now();
     
@@ -924,7 +1303,6 @@ function downloadQR() {
     const amount = document.getElementById('qr-amount-display').textContent;
     const description = document.getElementById('qr-description-display').textContent;
     
-    // Tạo link tải
     const link = document.createElement('a');
     link.href = qrImg.src;
     link.download = `VietQR_${amount}VND_${Date.now()}.png`;
@@ -944,10 +1322,8 @@ function shareQR() {
     const amount = document.getElementById('qr-amount-display').textContent;
     const description = document.getElementById('qr-description-display').textContent;
     
-    // Tạo nội dung chia sẻ
     const shareText = `Mã QR thanh toán ${amount} VND\nNội dung: ${description}\nTài khoản: 43146717 - ACB\nChủ TK: ĐINH TẤN HUY`;
     
-    // Kiểm tra Web Share API
     if (navigator.share) {
         navigator.share({
             title: 'Mã QR thanh toán Sunshine Hotel',
@@ -957,14 +1333,13 @@ function shareQR() {
         .then(() => console.log('Chia sẻ thành công'))
         .catch(error => console.log('Lỗi chia sẻ:', error));
     } else {
-        // Fallback: copy text
         navigator.clipboard.writeText(shareText + '\n' + qrImg.src)
             .then(() => alert('Đã sao chép thông tin mã QR vào clipboard!'))
             .catch(err => alert('Không thể sao chép: ' + err));
     }
 }
 
-// Xóa dấu tiếng Việt (cho nội dung QR)
+// Xóa dấu tiếng Việt
 function removeVietnameseTones(str) {
     str = str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     str = str.replace(/đ/g, 'd').replace(/Đ/g, 'D');
@@ -978,22 +1353,6 @@ function clearQRForm() {
     document.getElementById('vietqr-result').classList.add('hidden');
 }
 
-// ========== HÀM MỚI BỔ SUNG ==========
-
-// Kiểm tra trạng thái thanh toán (giả lập)
-function checkPaymentStatus(transactionId) {
-    // Giả lập kiểm tra thanh toán
-    const statuses = ['pending', 'completed', 'failed'];
-    const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-    
-    return {
-        transactionId: transactionId,
-        status: randomStatus,
-        checkedAt: new Date(),
-        amount: parseInt(document.getElementById('qr-amount').value) || 0
-    };
-}
-
 // Xem lịch sử QR đã tạo
 function showQRHistory() {
     if (!appData.qrCodes || appData.qrCodes.length === 0) {
@@ -1001,21 +1360,30 @@ function showQRHistory() {
         return;
     }
     
-    const historyHTML = appData.qrCodes.map(qr => `
-        <div style="border: 1px solid #ddd; padding: 1rem; margin-bottom: 1rem; border-radius: 8px;">
-            <p><strong>Mã giao dịch:</strong> ${qr.transactionId || 'N/A'}</p>
-            <p><strong>Số tiền:</strong> ${formatCurrency(qr.totalAmount)}</p>
-            <p><strong>Nội dung:</strong> ${qr.content}</p>
-            <p><strong>Ngày tạo:</strong> ${formatDateTime(qr.createdDate)}</p>
-            <p><strong>Trạng thái:</strong> <span class="status-${qr.status}">${qr.status}</span></p>
+    const historyHTML = appData.qrCodes.slice().reverse().map(qr => `
+        <div style="border: 1px solid #ddd; padding: 1rem; margin-bottom: 1rem; border-radius: 8px; background: white;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <p style="margin: 0;"><strong>Mã giao dịch:</strong> ${qr.transactionId || 'N/A'}</p>
+                    <p style="margin: 5px 0;"><strong>Số tiền:</strong> <span style="color: #e74c3c;">${formatCurrency(qr.totalAmount)}</span></p>
+                    <p style="margin: 0;"><strong>Nội dung:</strong> ${qr.content}</p>
+                    <p style="margin: 5px 0;"><strong>Ngày tạo:</strong> ${formatDateTime(qr.createdDate)}</p>
+                </div>
+                <span class="status-badge ${qr.status}" style="padding: 3px 10px; border-radius: 20px; font-size: 0.8em;">
+                    ${qr.status === 'generated' ? 'Đã tạo' : 
+                      qr.status === 'paid' ? 'Đã thanh toán' : 'Chờ thanh toán'}
+                </span>
+            </div>
         </div>
     `).join('');
     
     alertHTML(`
-        <div style="max-width: 500px; max-height: 400px; overflow-y: auto;">
-            <h3>Lịch sử mã QR</h3>
-            <p>Tổng số: ${appData.qrCodes.length} mã QR</p>
-            ${historyHTML}
+        <div style="max-width: 600px; max-height: 500px; overflow-y: auto;">
+            <h3 style="margin-bottom: 1rem; color: #2c3e50;">Lịch sử mã QR</h3>
+            <p style="color: #7f8c8d;">Tổng số: ${appData.qrCodes.length} mã QR</p>
+            <div style="margin-top: 1rem;">
+                ${historyHTML}
+            </div>
         </div>
     `);
 }
@@ -1044,6 +1412,7 @@ function alertHTML(html) {
         max-width: 90%;
         max-height: 90%;
         overflow: auto;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.2);
     `;
     content.innerHTML = html;
     
@@ -1051,12 +1420,13 @@ function alertHTML(html) {
     closeBtn.textContent = 'Đóng';
     closeBtn.style.cssText = `
         margin-top: 1rem;
-        padding: 0.5rem 1rem;
-        background: #f44336;
+        padding: 0.5rem 1.5rem;
+        background: #3498db;
         color: white;
         border: none;
         border-radius: 5px;
         cursor: pointer;
+        font-size: 1em;
     `;
     closeBtn.onclick = () => modal.remove();
     
@@ -1094,4 +1464,55 @@ function isValidPhone(phone) {
 function isValidCCCD(cccd) {
     const cccdRegex = /^[0-9]{12}$/;
     return cccdRegex.test(cccd);
+}
+
+// Thêm CSS cho status badges
+document.head.insertAdjacentHTML('beforeend', `
+    <style>
+        .status-badge {
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        .status-badge.generated {
+            background-color: #3498db;
+            color: white;
+        }
+        .status-badge.paid {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .status-badge.pending {
+            background-color: #f39c12;
+            color: white;
+        }
+        .hidden {
+            display: none !important;
+        }
+    </style>
+`);
+
+// Khởi tạo dữ liệu mẫu nếu chưa có
+if (!appData) {
+    var appData = {
+        rooms: [],
+        bookings: [],
+        bills: [],
+        qrCodes: []
+    };
+}
+
+if (!APP_CONFIG) {
+    var APP_CONFIG = {
+        hotel: {
+            floors: 3
+        }
+    };
+}
+
+if (!currentUser) {
+    var currentUser = {
+        name: "Nhân viên quầy"
+    };
 }

@@ -1,21 +1,13 @@
 // script.js - FILE CHÍNH HOÀN CHỈNH
 
 // ========== KHAI BÁO BIẾN (CHỈ KHI CHƯA TỒN TẠI) ==========
-if (typeof currentUser === 'undefined') {
-    let currentUser = null;
-}
+var currentUser = null;
+var currentView = 'welcome';
+var staffPressCount = 0;
+var staffTimer = null;
+var ctrlPressCount = 0;
+var ctrlPressTimer = null;
 
-if (typeof currentView === 'undefined') {
-    let currentView = 'welcome';
-}
-
-if (typeof staffPressCount === 'undefined') {
-    let staffPressCount = 0;
-}
-
-if (typeof staffTimer === 'undefined') {
-    let staffTimer = null;
-}
 
 // ========== KHỞI TẠO ỨNG DỤNG ==========
 document.addEventListener('DOMContentLoaded', function() {

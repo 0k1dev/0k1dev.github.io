@@ -242,15 +242,6 @@ function generateRandomServices() {
     return selectedServices;
 }
 
-// Biến toàn cục
-let currentUser = null;
-let currentView = 'welcome';
-let appData = {
-    rooms: [],
-    bookings: [],
-    bills: [],
-    qrCodes: []
-};
 
 // Khởi tạo dữ liệu
 function initializeApp() {

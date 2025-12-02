@@ -1,6 +1,6 @@
-// Tích hợp: Quản lý phòng, Check-in, Order, Check-out, QR, Chấm công, Lọc phòng
+// staff.js - FILE ĐÃ SỬA LỖI HOÀN CHỈNH
 
-// ========== BIẾN TOÀN CỤC ==========
+// ========== BIẾN TOÀN CỤC RIÊNG CỦA STAFF.JS ==========
 let currentOrder = {
     roomNumber: null,
     items: [],
@@ -20,54 +20,59 @@ let currentShift = {
     isActive: false
 };
 
-let shiftHistory = JSON.parse(localStorage.getItem('staff_shifts')) || [];
-
-// ========== KHỞI TẠO DỮ LIỆU ==========
-if (!currentUser) {
-    var currentUser = {
-        id: 1,
-        name: "Nhân viên quầy",
-        role: "staff"
-    };
-}
+let shiftHistory = [];
 
 // ========== HÀM TIỆN ÍCH ==========
 
 // Định dạng tiền tệ
 function formatCurrency(amount) {
-    if (!amount) return '0đ';
+    if (!amount && amount !== 0) return '0đ';
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 }
 
 // Định dạng ngày tháng
 function formatDate(date) {
     if (!date) return '-';
-    const d = new Date(date);
-    return d.toLocaleDateString('vi-VN');
+    try {
+        const d = new Date(date);
+        return d.toLocaleDateString('vi-VN');
+    } catch (e) {
+        return '-';
+    }
 }
 
 // Định dạng ngày giờ
 function formatDateTime(date) {
     if (!date) return '-';
-    const d = new Date(date);
-    return d.toLocaleString('vi-VN');
+    try {
+        const d = new Date(date);
+        return d.toLocaleString('vi-VN');
+    } catch (e) {
+        return '-';
+    }
 }
 
 // Định dạng thời gian
 function formatTime(date) {
     if (!date) return '-';
-    const d = new Date(date);
-    return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    try {
+        const d = new Date(date);
+        return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+        return '-';
+    }
 }
 
 // Kiểm tra số điện thoại hợp lệ
 function isValidPhone(phone) {
+    if (!phone) return false;
     const phoneRegex = /^(09|03|07|08|05)[0-9]{8}$/;
     return phoneRegex.test(phone);
 }
 
 // Kiểm tra CCCD hợp lệ
 function isValidCCCD(cccd) {
+    if (!cccd) return false;
     const cccdRegex = /^[0-9]{12}$/;
     return cccdRegex.test(cccd);
 }
@@ -81,7 +86,14 @@ function showNotification(message, type) {
         info: '#2196F3'
     };
     
+    // Kiểm tra nếu đã có thông báo
+    const existingNotification = document.querySelector('.notification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+    
     const notification = document.createElement('div');
+    notification.className = 'notification';
     notification.style.cssText = `
         position: fixed;
         top: 20px;
@@ -94,11 +106,16 @@ function showNotification(message, type) {
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         animation: slideIn 0.3s ease;
         max-width: 300px;
+        font-family: Arial, sans-serif;
     `;
+    
+    const icon = type === 'success' ? 'check-circle' : 
+                 type === 'error' ? 'exclamation-circle' : 
+                 type === 'warning' ? 'exclamation-triangle' : 'info-circle';
     
     notification.innerHTML = `
         <div style="display: flex; align-items: center; gap: 10px;">
-            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+            <i class="fas fa-${icon}"></i>
             <span>${message}</span>
         </div>
     `;
@@ -107,7 +124,11 @@ function showNotification(message, type) {
     
     setTimeout(() => {
         notification.style.animation = 'slideOut 0.3s ease';
-        setTimeout(() => notification.remove(), 300);
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 300);
     }, 3000);
 }
 
@@ -132,28 +153,36 @@ if (!document.getElementById('notification-styles')) {
 
 // Tải dữ liệu chấm công
 function loadShiftData() {
-    const savedShift = localStorage.getItem('current_shift');
-    if (savedShift) {
-        const shift = JSON.parse(savedShift);
-        if (shift.isActive) {
-            currentShift = {
-                ...shift,
-                startTime: new Date(shift.startTime),
-                endTime: shift.endTime ? new Date(shift.endTime) : null
-            };
+    try {
+        const savedShift = localStorage.getItem('current_shift');
+        if (savedShift) {
+            const shift = JSON.parse(savedShift);
+            if (shift.isActive) {
+                currentShift = {
+                    ...shift,
+                    startTime: new Date(shift.startTime),
+                    endTime: shift.endTime ? new Date(shift.endTime) : null
+                };
+            }
         }
-    }
-    
-    const savedHistory = localStorage.getItem('staff_shifts');
-    if (savedHistory) {
-        shiftHistory = JSON.parse(savedHistory);
+        
+        const savedHistory = localStorage.getItem('staff_shifts');
+        if (savedHistory) {
+            shiftHistory = JSON.parse(savedHistory);
+        }
+    } catch (e) {
+        console.error('Lỗi tải dữ liệu chấm công:', e);
     }
 }
 
 // Lưu dữ liệu chấm công
 function saveShiftData() {
-    localStorage.setItem('staff_shifts', JSON.stringify(shiftHistory));
-    localStorage.setItem('current_shift', JSON.stringify(currentShift));
+    try {
+        localStorage.setItem('staff_shifts', JSON.stringify(shiftHistory));
+        localStorage.setItem('current_shift', JSON.stringify(currentShift));
+    } catch (e) {
+        console.error('Lỗi lưu dữ liệu chấm công:', e);
+    }
 }
 
 // Bắt đầu ca làm việc
@@ -164,7 +193,7 @@ function startShift() {
             endTime: null,
             duration: 0,
             isActive: true,
-            staffName: currentUser ? currentUser.name : 'Nhân viên'
+            staffName: window.currentUser ? window.currentUser.name : 'Nhân viên'
         };
         
         showNotification('Bắt đầu ca làm việc', 'success');
@@ -175,7 +204,7 @@ function startShift() {
 
 // Kết thúc ca làm việc
 function endShift() {
-    if (currentShift.isActive) {
+    if (currentShift.isActive && currentShift.startTime) {
         currentShift.endTime = new Date();
         currentShift.duration = (currentShift.endTime - currentShift.startTime) / (1000 * 60 * 60);
         currentShift.isActive = false;
@@ -219,6 +248,16 @@ function updateShiftDisplay() {
 
 // Render trang quản lý phòng
 function renderRoomManagement() {
+    // Đảm bảo dữ liệu tồn tại
+    const rooms = window.appData?.rooms || [];
+    const roomTypes = window.APP_CONFIG?.hotel?.roomTypes || {
+        "STANDARD": { name: "Phòng Tiêu Chuẩn", price: 500000 },
+        "DELUXE": { name: "Phòng Deluxe", price: 800000 },
+        "SUITE": { name: "Phòng Suite", price: 1200000 },
+        "PRESIDENTIAL": { name: "Phòng Tổng Thống", price: 3000000 }
+    };
+    const floors = window.APP_CONFIG?.hotel?.floors || 7;
+    
     return `
         <div class="room-management">
             <h2 class="section-title"><i class="fas fa-door-closed"></i> Quản lý phòng</h2>
@@ -263,10 +302,9 @@ function renderRoomManagement() {
                         <label style="display: block; margin-bottom: 5px; font-weight: bold;">Loại phòng</label>
                         <select id="filter-type" style="padding: 5px;" onchange="applyRoomFilters()">
                             <option value="">Tất cả</option>
-                            <option value="single">Phòng đơn</option>
-                            <option value="double">Phòng đôi</option>
-                            <option value="suite">Suite</option>
-                            <option value="vip">VIP</option>
+                            ${Object.keys(roomTypes).map(typeKey => `
+                                <option value="${typeKey}">${roomTypes[typeKey].name}</option>
+                            `).join('')}
                         </select>
                     </div>
                 </div>
@@ -335,18 +373,33 @@ function renderRoomManagement() {
     `;
 }
 
-// Lọc phòng
+// Lọc phòng (FIXED - kiểm tra DOM trước khi truy cập)
 function filterRooms() {
-    const statusAvailable = document.getElementById('filter-available').checked;
-    const statusOccupied = document.getElementById('filter-occupied').checked;
-    const statusReserved = document.getElementById('filter-reserved').checked;
+    // Kiểm tra nếu phần tử DOM chưa tồn tại
+    const filterAvailable = document.getElementById('filter-available');
+    const filterOccupied = document.getElementById('filter-occupied');
+    const filterReserved = document.getElementById('filter-reserved');
+    const filterPriceMin = document.getElementById('filter-price-min');
+    const filterPriceMax = document.getElementById('filter-price-max');
+    const filterType = document.getElementById('filter-type');
     
-    const minPrice = parseInt(document.getElementById('filter-price-min').value) || 0;
-    const maxPrice = parseInt(document.getElementById('filter-price-max').value) || 10000000;
+    // Nếu không có phần tử DOM, trả về tất cả phòng
+    if (!filterAvailable || !filterOccupied || !filterReserved) {
+        return window.appData?.rooms || [];
+    }
     
-    const roomType = document.getElementById('filter-type').value;
+    const statusAvailable = filterAvailable.checked;
+    const statusOccupied = filterOccupied.checked;
+    const statusReserved = filterReserved.checked;
     
-    return appData.rooms.filter(room => {
+    const minPrice = parseInt(filterPriceMin?.value) || 0;
+    const maxPrice = parseInt(filterPriceMax?.value) || 10000000;
+    
+    const roomType = filterType?.value || '';
+    
+    const rooms = window.appData?.rooms || [];
+    
+    return rooms.filter(room => {
         // Lọc theo trạng thái
         let statusMatch = false;
         if (room.status === 'available' && statusAvailable) statusMatch = true;
@@ -379,8 +432,10 @@ function renderFilteredRooms() {
         roomsByFloor[room.floor].push(room);
     });
     
+    const floors = window.APP_CONFIG?.hotel?.floors || 7;
     let floorsHTML = '';
-    for (let floor = 1; floor <= APP_CONFIG.hotel.floors; floor++) {
+    
+    for (let floor = 1; floor <= floors; floor++) {
         const floorRooms = roomsByFloor[floor] || [];
         
         if (floorRooms.length === 0) continue;
@@ -410,12 +465,16 @@ function renderFilteredRooms() {
                             cursorStyle = 'cursor: pointer;';
                         }
                         
+                        const roomTypeName = room.typeName || 
+                            (window.APP_CONFIG?.hotel?.roomTypes[room.type]?.name) || 
+                            'Unknown';
+                        
                         return `
                             <div class="room ${room.status}" ${clickHandler} style="${cursorStyle}; border: 1px solid #ddd; border-radius: 8px; padding: 1rem; background-color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                                 <div class="room-number" style="font-size: 1.2rem; font-weight: bold; color: #2c3e50;">${room.number}</div>
-                                <div class="room-type" style="color: #7f8c8d; font-size: 0.9em;">${room.typeName}</div>
+                                <div class="room-type" style="color: #7f8c8d; font-size: 0.9em;">${roomTypeName}</div>
                                 <div class="room-price" style="color: #e74c3c; font-weight: bold; margin: 5px 0;">
-                                    ${formatCurrency(room.price)}
+                                    ${formatCurrency(room.price || 0)}
                                 </div>
                                 <div class="room-status status-${room.status}" style="padding: 3px 8px; border-radius: 20px; font-size: 0.8em; display: inline-block; 
                                     ${room.status === 'available' ? 'background-color: #d4edda; color: #155724;' : 
@@ -471,20 +530,35 @@ function applyRoomFilters() {
 
 // Reset bộ lọc
 function resetRoomFilters() {
-    document.getElementById('filter-available').checked = true;
-    document.getElementById('filter-occupied').checked = true;
-    document.getElementById('filter-reserved').checked = true;
-    document.getElementById('filter-price-min').value = '';
-    document.getElementById('filter-price-max').value = '';
-    document.getElementById('filter-type').value = '';
+    const filterAvailable = document.getElementById('filter-available');
+    const filterOccupied = document.getElementById('filter-occupied');
+    const filterReserved = document.getElementById('filter-reserved');
+    const filterPriceMin = document.getElementById('filter-price-min');
+    const filterPriceMax = document.getElementById('filter-price-max');
+    const filterType = document.getElementById('filter-type');
+    
+    if (filterAvailable) filterAvailable.checked = true;
+    if (filterOccupied) filterOccupied.checked = true;
+    if (filterReserved) filterReserved.checked = true;
+    if (filterPriceMin) filterPriceMin.value = '';
+    if (filterPriceMax) filterPriceMax.value = '';
+    if (filterType) filterType.value = '';
     
     applyRoomFilters();
 }
 
 // Kiểm tra phòng trống theo ngày
 function checkRoomAvailability() {
-    const fromDate = new Date(document.getElementById('filter-date-from').value);
-    const toDate = new Date(document.getElementById('filter-date-to').value);
+    const fromDateInput = document.getElementById('filter-date-from');
+    const toDateInput = document.getElementById('filter-date-to');
+    
+    if (!fromDateInput || !toDateInput) {
+        alert('Không thể tìm thấy các trường ngày!');
+        return;
+    }
+    
+    const fromDate = new Date(fromDateInput.value);
+    const toDate = new Date(toDateInput.value);
     
     if (!fromDate || !toDate || fromDate > toDate) {
         alert('Vui lòng chọn khoảng ngày hợp lệ!');
@@ -492,8 +566,10 @@ function checkRoomAvailability() {
     }
     
     const unavailableRooms = [];
+    const rooms = window.appData?.rooms || [];
+    const bookings = window.appData?.bookings || [];
     
-    appData.rooms.forEach(room => {
+    rooms.forEach(room => {
         if (room.status === 'occupied' && room.checkInDate && room.checkOutDate) {
             const checkIn = new Date(room.checkInDate);
             const checkOut = new Date(room.checkOutDate);
@@ -510,7 +586,7 @@ function checkRoomAvailability() {
             }
         }
         
-        appData.bookings.forEach(booking => {
+        bookings.forEach(booking => {
             if (booking.roomNumber === room.number && booking.status !== 'cancelled') {
                 const checkIn = new Date(booking.checkInDate);
                 const checkOut = new Date(booking.checkOutDate);
@@ -529,12 +605,17 @@ function checkRoomAvailability() {
         });
     });
     
-    const totalRooms = appData.rooms.length;
+    const totalRooms = rooms.length;
     const uniqueUnavailableRooms = [...new Set(unavailableRooms.map(r => r.number))];
     const availableRooms = totalRooms - uniqueUnavailableRooms.length;
     
     const resultDiv = document.getElementById('availability-result');
     const messageDiv = document.getElementById('availability-message');
+    
+    if (!resultDiv || !messageDiv) {
+        alert('Không thể hiển thị kết quả!');
+        return;
+    }
     
     resultDiv.classList.remove('hidden');
     
@@ -575,7 +656,9 @@ function checkRoomAvailability() {
 
 // Hiển thị thông tin phòng đã đặt
 function showReservedRoomInfo(roomNumber) {
-    const room = appData.rooms.find(r => r.number === roomNumber);
+    const rooms = window.appData?.rooms || [];
+    const room = rooms.find(r => r.number === roomNumber);
+    
     if (!room || room.status !== 'reserved') return;
     
     alert(`Phòng ${room.number} - ĐÃ ĐẶT\nSố điện thoại nhân viên: ${room.staffPhone}\n\nĐối chiếu số điện thoại này với nhân viên để xác nhận.`);
@@ -583,10 +666,13 @@ function showReservedRoomInfo(roomNumber) {
 
 // Hiển thị thông tin phòng đã thuê
 function showOccupiedRoomInfo(roomNumber) {
-    const room = appData.rooms.find(r => r.number === roomNumber);
+    const rooms = window.appData?.rooms || [];
+    const bookings = window.appData?.bookings || [];
+    
+    const room = rooms.find(r => r.number === roomNumber);
     if (!room || room.status !== 'occupied') return;
     
-    const booking = appData.bookings.find(b => b.roomNumber === room.number && b.status === 'active');
+    const booking = bookings.find(b => b.roomNumber === room.number && b.status === 'active');
     
     let servicesHTML = '';
     if (room.services && room.services.length > 0) {
@@ -615,6 +701,9 @@ ${servicesHTML || 'Chưa gọi dịch vụ nào'}
 
 // Render trang check-in
 function renderCheckInProcess() {
+    const rooms = window.appData?.rooms || [];
+    const availableRooms = rooms.filter(room => room.status === 'available');
+    
     return `
         <div class="checkin-process">
             <h2 class="section-title"><i class="fas fa-user-check"></i> Check-in khách hàng</h2>
@@ -625,11 +714,9 @@ function renderCheckInProcess() {
                         <label for="checkin-room"><i class="fas fa-door-closed"></i> Số phòng</label>
                         <select id="checkin-room">
                             <option value="">-- Chọn phòng --</option>
-                            ${appData.rooms
-                                .filter(room => room.status === 'available')
-                                .map(room => `
-                                    <option value="${room.number}">${room.number} - ${room.typeName}</option>
-                                `).join('')}
+                            ${availableRooms.map(room => `
+                                <option value="${room.number}">${room.number} - ${room.typeName}</option>
+                            `).join('')}
                         </select>
                     </div>
                 </div>
@@ -705,17 +792,34 @@ function renderCheckInProcess() {
     `;
 }
 
-// Xử lý check-in
+// Xử lý check-in (FIXED - kiểm tra phần tử trước)
 function processCheckIn() {
-    const roomNumber = document.getElementById('checkin-room').value;
-    const customerName = document.getElementById('checkin-customer-name').value;
-    const customerPhone = document.getElementById('checkin-customer-phone').value;
-    const customerId = document.getElementById('checkin-customer-id').value;
-    const checkinDate = document.getElementById('checkin-date').value;
-    const checkoutDate = document.getElementById('checkout-date').value;
-    const guests = document.getElementById('checkin-guests').value;
-    const paymentMethod = document.getElementById('checkin-payment-method').value;
+    const roomNumberInput = document.getElementById('checkin-room');
+    const customerNameInput = document.getElementById('checkin-customer-name');
+    const customerPhoneInput = document.getElementById('checkin-customer-phone');
+    const customerIdInput = document.getElementById('checkin-customer-id');
+    const checkinDateInput = document.getElementById('checkin-date');
+    const checkoutDateInput = document.getElementById('checkout-date');
+    const guestsInput = document.getElementById('checkin-guests');
+    const paymentMethodInput = document.getElementById('checkin-payment-method');
     
+    // Kiểm tra tất cả các phần tử tồn tại
+    if (!roomNumberInput || !customerNameInput || !customerPhoneInput || !customerIdInput || 
+        !checkinDateInput || !checkoutDateInput || !guestsInput || !paymentMethodInput) {
+        alert('Không thể tìm thấy các trường dữ liệu!');
+        return;
+    }
+    
+    const roomNumber = roomNumberInput.value;
+    const customerName = customerNameInput.value;
+    const customerPhone = customerPhoneInput.value;
+    const customerId = customerIdInput.value;
+    const checkinDate = checkinDateInput.value;
+    const checkoutDate = checkoutDateInput.value;
+    const guests = guestsInput.value;
+    const paymentMethod = paymentMethodInput.value;
+    
+    // Kiểm tra thông tin
     if (!roomNumber || !customerName || !customerPhone || !customerId || !checkinDate || !checkoutDate) {
         alert('Vui lòng điền đầy đủ thông tin bắt buộc!');
         return;
@@ -731,7 +835,14 @@ function processCheckIn() {
         return;
     }
     
-    const room = appData.rooms.find(r => r.number == roomNumber);
+    // Đảm bảo appData tồn tại
+    if (!window.appData) window.appData = { rooms: [], bookings: [] };
+    if (!window.appData.rooms) window.appData.rooms = [];
+    if (!window.appData.bookings) window.appData.bookings = [];
+    
+    const rooms = window.appData.rooms;
+    const room = rooms.find(r => r.number == roomNumber);
+    
     if (!room) {
         alert('Không tìm thấy phòng!');
         return;
@@ -752,9 +863,9 @@ function processCheckIn() {
     room.services = [];
     
     // Tạo booking mới
-    const newBookingId = appData.bookings.length + 1;
+    const newBookingId = window.appData.bookings.length + 1;
     
-    appData.bookings.push({
+    window.appData.bookings.push({
         id: newBookingId,
         customerName: customerName,
         customerPhone: customerPhone,
@@ -769,44 +880,78 @@ function processCheckIn() {
         totalAmount: 0,
         services: [],
         paymentMethod: paymentMethod,
-        staffName: currentUser ? currentUser.name : 'Nhân viên',
+        staffName: window.currentUser ? window.currentUser.name : 'Nhân viên',
         createdDate: new Date()
     });
     
     // Hiển thị kết quả
-    document.getElementById('checkin-success-message').innerHTML = `
-        <p>Đã check-in thành công cho khách <strong>${customerName}</strong></p>
-        <p>Phòng: <strong>${roomNumber}</strong> - ${room.typeName}</p>
-        <p>Ngày nhận: ${checkinDate} | Ngày trả: ${checkoutDate}</p>
-        <p>Số điện thoại: ${customerPhone} | CCCD: ${customerId}</p>
-        <p>Mã đặt phòng: #${newBookingId}</p>
-        <p>Nhân viên thực hiện: ${currentUser ? currentUser.name : 'Nhân viên'}</p>
-    `;
-    document.getElementById('checkin-result').classList.remove('hidden');
+    const successMessage = document.getElementById('checkin-success-message');
+    const resultDiv = document.getElementById('checkin-result');
+    
+    if (successMessage) {
+        successMessage.innerHTML = `
+            <p>Đã check-in thành công cho khách <strong>${customerName}</strong></p>
+            <p>Phòng: <strong>${roomNumber}</strong> - ${room.typeName}</p>
+            <p>Ngày nhận: ${checkinDate} | Ngày trả: ${checkoutDate}</p>
+            <p>Số điện thoại: ${customerPhone} | CCCD: ${customerId}</p>
+            <p>Mã đặt phòng: #${newBookingId}</p>
+            <p>Nhân viên thực hiện: ${window.currentUser ? window.currentUser.name : 'Nhân viên'}</p>
+        `;
+    }
+    
+    if (resultDiv) {
+        resultDiv.classList.remove('hidden');
+    }
     
     setTimeout(() => {
         clearCheckInForm();
-        document.getElementById('checkin-result').classList.add('hidden');
+        if (resultDiv) {
+            resultDiv.classList.add('hidden');
+        }
     }, 5000);
 }
 
-// Xóa form check-in
+// Xóa form check-in (FIXED - kiểm tra phần tử trước)
 function clearCheckInForm() {
-    document.getElementById('checkin-room').value = '';
-    document.getElementById('checkin-customer-name').value = '';
-    document.getElementById('checkin-customer-phone').value = '';
-    document.getElementById('checkin-customer-id').value = '';
-    document.getElementById('checkin-date').value = new Date().toISOString().split('T')[0];
-    document.getElementById('checkout-date').value = new Date(Date.now() + 86400000).toISOString().split('T')[0];
-    document.getElementById('checkin-guests').value = '2';
-    document.getElementById('checkin-payment-method').value = 'cash';
+    const inputs = [
+        'checkin-room',
+        'checkin-customer-name', 
+        'checkin-customer-phone',
+        'checkin-customer-id',
+        'checkin-date',
+        'checkout-date',
+        'checkin-guests',
+        'checkin-payment-method'
+    ];
+    
+    inputs.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            if (element.type === 'select-one') {
+                element.value = '';
+            } else if (element.type === 'date') {
+                if (id === 'checkin-date') {
+                    element.value = new Date().toISOString().split('T')[0];
+                } else if (id === 'checkout-date') {
+                    element.value = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+                }
+            } else if (id === 'checkin-guests') {
+                element.value = '2';
+            } else if (id === 'checkin-payment-method') {
+                element.value = 'cash';
+            } else {
+                element.value = '';
+            }
+        }
+    });
 }
 
 // ========== ORDER DỊCH VỤ ==========
 
 // Render trang order dịch vụ
 function renderOrderService() {
-    const occupiedRooms = appData.rooms.filter(room => room.status === 'occupied');
+    const rooms = window.appData?.rooms || [];
+    const occupiedRooms = rooms.filter(room => room.status === 'occupied');
     
     return `
         <div class="order-service">
@@ -977,24 +1122,36 @@ function renderMenuItem(name, description, price) {
 
 // Cập nhật thông tin khách hàng khi chọn phòng
 function updateOrderCustomerInfo() {
-    const roomNumber = document.getElementById('order-room').value;
+    const roomNumberInput = document.getElementById('order-room');
+    const customerInfoDiv = document.getElementById('order-customer-info');
+    
+    if (!roomNumberInput || !customerInfoDiv) return;
+    
+    const roomNumber = roomNumberInput.value;
     if (!roomNumber) {
-        document.getElementById('order-customer-info').classList.add('hidden');
+        customerInfoDiv.classList.add('hidden');
         return;
     }
     
-    const room = appData.rooms.find(r => r.number == roomNumber);
+    const rooms = window.appData?.rooms || [];
+    const room = rooms.find(r => r.number == roomNumber);
     if (!room) return;
     
-    document.getElementById('order-customer-name').textContent = room.customerName;
-    document.getElementById('order-customer-phone').textContent = room.customerPhone;
-    document.getElementById('order-room-info').textContent = room.number + ' - ' + room.typeName;
+    const customerName = document.getElementById('order-customer-name');
+    const customerPhone = document.getElementById('order-customer-phone');
+    const roomInfo = document.getElementById('order-room-info');
+    const currentTotal = document.getElementById('order-current-total');
+    
+    if (customerName) customerName.textContent = room.customerName;
+    if (customerPhone) customerPhone.textContent = room.customerPhone;
+    if (roomInfo) roomInfo.textContent = room.number + ' - ' + room.typeName;
     
     const currentServiceTotal = room.services ? 
         room.services.reduce((sum, service) => sum + service.total, 0) : 0;
-    document.getElementById('order-current-total').textContent = formatCurrency(currentServiceTotal);
     
-    document.getElementById('order-customer-info').classList.remove('hidden');
+    if (currentTotal) currentTotal.textContent = formatCurrency(currentServiceTotal);
+    
+    customerInfoDiv.classList.remove('hidden');
     
     currentOrder = {
         roomNumber: roomNumber,
@@ -1007,7 +1164,13 @@ function updateOrderCustomerInfo() {
 
 // Thêm món vào order
 function addToOrder(itemName, itemPrice) {
-    const roomNumber = document.getElementById('order-room').value;
+    const roomNumberInput = document.getElementById('order-room');
+    if (!roomNumberInput) {
+        alert('Không thể tìm thấy trường chọn phòng!');
+        return;
+    }
+    
+    const roomNumber = roomNumberInput.value;
     if (!roomNumber) {
         alert('Vui lòng chọn phòng trước khi thêm món!');
         return;
@@ -1033,15 +1196,30 @@ function addToOrder(itemName, itemPrice) {
 
 // Thêm dịch vụ tùy chỉnh
 function addCustomToOrder() {
-    const roomNumber = document.getElementById('order-room').value;
+    const roomNumberInput = document.getElementById('order-room');
+    if (!roomNumberInput) {
+        alert('Không thể tìm thấy trường chọn phòng!');
+        return;
+    }
+    
+    const roomNumber = roomNumberInput.value;
     if (!roomNumber) {
         alert('Vui lòng chọn phòng trước!');
         return;
     }
     
-    const serviceName = document.getElementById('custom-service-name').value;
-    const servicePrice = parseInt(document.getElementById('custom-service-price').value);
-    const serviceQuantity = parseInt(document.getElementById('custom-service-quantity').value);
+    const serviceNameInput = document.getElementById('custom-service-name');
+    const servicePriceInput = document.getElementById('custom-service-price');
+    const serviceQuantityInput = document.getElementById('custom-service-quantity');
+    
+    if (!serviceNameInput || !servicePriceInput || !serviceQuantityInput) {
+        alert('Không thể tìm thấy các trường dịch vụ!');
+        return;
+    }
+    
+    const serviceName = serviceNameInput.value;
+    const servicePrice = parseInt(servicePriceInput.value);
+    const serviceQuantity = parseInt(serviceQuantityInput.value);
     
     if (!serviceName || !servicePrice || servicePrice < 1000) {
         alert('Vui lòng nhập đầy đủ thông tin dịch vụ!');
@@ -1057,9 +1235,10 @@ function addCustomToOrder() {
     
     currentOrder.total = currentOrder.items.reduce((sum, item) => sum + item.total, 0);
     
-    document.getElementById('custom-service-name').value = '';
-    document.getElementById('custom-service-price').value = '';
-    document.getElementById('custom-service-quantity').value = 1;
+    // Xóa form
+    serviceNameInput.value = '';
+    servicePriceInput.value = '';
+    serviceQuantityInput.value = 1;
     
     updateOrderDisplay();
 }
@@ -1112,7 +1291,13 @@ function removeOrderItem(index) {
 
 // Xác nhận order
 function confirmOrder() {
-    const roomNumber = document.getElementById('order-room').value;
+    const roomNumberInput = document.getElementById('order-room');
+    if (!roomNumberInput) {
+        alert('Không thể tìm thấy trường chọn phòng!');
+        return;
+    }
+    
+    const roomNumber = roomNumberInput.value;
     if (!roomNumber) {
         alert('Vui lòng chọn phòng!');
         return;
@@ -1123,7 +1308,8 @@ function confirmOrder() {
         return;
     }
     
-    const room = appData.rooms.find(r => r.number == roomNumber);
+    const rooms = window.appData?.rooms || [];
+    const room = rooms.find(r => r.number == roomNumber);
     if (!room) {
         alert('Không tìm thấy phòng!');
         return;
@@ -1140,7 +1326,7 @@ function confirmOrder() {
             quantity: item.quantity,
             total: item.total,
             orderDate: new Date(),
-            staffName: currentUser ? currentUser.name : 'Nhân viên'
+            staffName: window.currentUser ? window.currentUser.name : 'Nhân viên'
         });
     });
     
@@ -1185,9 +1371,15 @@ function clearOrder() {
     alert('Đã xóa đơn hàng hiện tại');
 }
 
-// Tạo hóa đơn ngay từ order
+// Tạo hóa đơn ngay từ order (FIXED - kiểm tra switchView tồn tại)
 function createBillFromOrder() {
-    const roomNumber = document.getElementById('order-room').value;
+    const roomNumberInput = document.getElementById('order-room');
+    if (!roomNumberInput) {
+        alert('Không thể tìm thấy trường chọn phòng!');
+        return;
+    }
+    
+    const roomNumber = roomNumberInput.value;
     if (!roomNumber) {
         alert('Vui lòng chọn phòng!');
         return;
@@ -1198,7 +1390,8 @@ function createBillFromOrder() {
         return;
     }
     
-    const room = appData.rooms.find(r => r.number == roomNumber);
+    const rooms = window.appData?.rooms || [];
+    const room = rooms.find(r => r.number == roomNumber);
     if (!room) {
         alert('Không tìm thấy phòng!');
         return;
@@ -1216,27 +1409,37 @@ function createBillFromOrder() {
             quantity: item.quantity,
             total: item.total,
             orderDate: new Date(),
-            staffName: currentUser ? currentUser.name : 'Nhân viên'
+            staffName: window.currentUser ? window.currentUser.name : 'Nhân viên'
         });
     });
     
     // Chuyển sang trang check-out với phòng đã chọn
-    switchView('check-out');
-    
-    // Đợi DOM load xong
-    setTimeout(() => {
-        const checkoutRoom = document.getElementById('checkout-room');
-        if (checkoutRoom) {
-            checkoutRoom.value = roomNumber;
-        }
-        loadCheckoutInfo();
-    }, 100);
+    if (typeof switchView === 'function') {
+        switchView('check-out');
+        
+        // Đợi DOM load xong
+        setTimeout(() => {
+            const checkoutRoom = document.getElementById('checkout-room');
+            if (checkoutRoom) {
+                checkoutRoom.value = roomNumber;
+            }
+            // Kiểm tra hàm loadCheckoutInfo tồn tại
+            if (typeof loadCheckoutInfo === 'function') {
+                loadCheckoutInfo();
+            }
+        }, 100);
+    } else {
+        alert('Không thể chuyển trang!');
+    }
 }
 
 // ========== CHECK-OUT & XUẤT BILL ==========
 
 // Render trang check-out
 function renderCheckOutProcess() {
+    const rooms = window.appData?.rooms || [];
+    const occupiedRooms = rooms.filter(room => room.status === 'occupied');
+    
     return `
         <div class="checkout-process">
             <h2 class="section-title"><i class="fas fa-file-invoice-dollar"></i> Check-out & Xuất hóa đơn</h2>
@@ -1246,11 +1449,9 @@ function renderCheckOutProcess() {
                     <label for="checkout-room"><i class="fas fa-door-closed"></i> Số phòng</label>
                     <select id="checkout-room">
                         <option value="">-- Chọn phòng --</option>
-                        ${appData.rooms
-                            .filter(room => room.status === 'occupied')
-                            .map(room => `
-                                <option value="${room.number}">${room.number} - ${room.customerName}</option>
-                            `).join('')}
+                        ${occupiedRooms.map(room => `
+                            <option value="${room.number}">${room.number} - ${room.customerName}</option>
+                        `).join('')}
                     </select>
                 </div>
                 <div class="form-control">
@@ -1261,324 +1462,18 @@ function renderCheckOutProcess() {
             </div>
             
             <div id="checkout-info" class="hidden" style="margin-top: 2rem;">
-                <div class="customer-info" style="background-color: #f0f5ff; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
-                    <h4><i class="fas fa-user"></i> Thông tin khách hàng</h4>
-                    <div class="form-row">
-                        <div class="form-control">
-                            <strong>Họ tên:</strong> <span id="checkout-customer-name">-</span>
-                        </div>
-                        <div class="form-control">
-                            <strong>Số điện thoại:</strong> <span id="checkout-customer-phone">-</span>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-control">
-                            <strong>CCCD:</strong> <span id="checkout-customer-id">-</span>
-                        </div>
-                        <div class="form-control">
-                            <strong>Ngày nhận phòng:</strong> <span id="checkout-checkin">-</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Dịch vụ đã gọi -->
-                <div class="service-section" style="margin-bottom: 2rem;">
-                    <h4><i class="fas fa-utensils"></i> Dịch vụ đã gọi</h4>
-                    <div id="checkout-services-list" style="margin-top: 1rem;"></div>
-                    <div style="text-align: right; margin-top: 1rem;">
-                        <strong>Tổng dịch vụ:</strong> <span id="service-total-amount">0đ</span>
-                    </div>
-                </div>
-                
-                <div class="bill-details">
-                    <div class="bill-header" style="text-align: center; margin-bottom: 2rem;">
-                        <h3>HÓA ĐƠN THANH TOÁN</h3>
-                        <h4>Sunshine Hotel</h4>
-                        <p>Ngày xuất: ${new Date().toLocaleDateString('vi-VN')}</p>
-                    </div>
-                    
-                    <div class="bill-info">
-                        <div class="form-row">
-                            <div class="form-control">
-                                <strong>Số phòng:</strong> <span id="bill-room-number">-</span>
-                            </div>
-                            <div class="form-control">
-                                <strong>Loại phòng:</strong> <span id="bill-room-type">-</span>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-control">
-                                <strong>Số ngày thuê:</strong> <span id="bill-days">-</span>
-                            </div>
-                            <div class="form-control">
-                                <strong>Đơn giá phòng:</strong> <span id="bill-room-price">-</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="table-container">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>STT</th>
-                                    <th>Mục</th>
-                                    <th>Số lượng</th>
-                                    <th>Đơn giá</th>
-                                    <th>Thành tiền</th>
-                                </tr>
-                            </thead>
-                            <tbody id="bill-items"></tbody>
-                            <tfoot>
-                                <tr>
-                                    <td colspan="4" style="text-align: right;"><strong>Tổng tiền phòng:</strong></td>
-                                    <td id="bill-room-total">0đ</td>
-                                </tr>
-                                <tr>
-                                    <td colspan="4" style="text-align: right;"><strong>Tổng tiền dịch vụ:</strong></td>
-                                    <td id="bill-services-total">0đ</td>
-                                </tr>
-                                <tr style="background-color: #f0f5ff;">
-                                    <td colspan="4" style="text-align: right;"><strong>TỔNG CỘNG:</strong></td>
-                                    <td id="bill-grand-total" style="font-weight: bold; font-size: 1.2rem;">0đ</td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                    
-                    <div class="form-row" style="margin-top: 2rem;">
-                        <div class="form-control">
-                            <label for="payment-method-final"><i class="fas fa-credit-card"></i> Phương thức thanh toán</label>
-                            <select id="payment-method-final">
-                                <option value="cash">Tiền mặt</option>
-                                <option value="banking">Chuyển khoản</option>
-                                <option value="credit">Thẻ tín dụng</option>
-                                <option value="qr">QR Code</option>
-                            </select>
-                        </div>
-                        <div class="form-control">
-                            <label for="payment-status"><i class="fas fa-check-circle"></i> Trạng thái thanh toán</label>
-                            <select id="payment-status">
-                                <option value="paid">Đã thanh toán</option>
-                                <option value="pending">Chờ thanh toán</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="form-actions" style="text-align: center; margin-top: 2rem;">
-                        <button class="btn btn-success" onclick="createBill()">
-                            <i class="fas fa-save"></i> Tạo hóa đơn
-                        </button>
-                        <button class="btn btn-primary" onclick="printBill()" style="margin-left: 10px;">
-                            <i class="fas fa-print"></i> In hóa đơn
-                        </button>
-                        <button class="btn btn-info" onclick="generateQRForBill()" style="margin-left: 10px;">
-                            <i class="fas fa-qrcode"></i> Tạo QR thanh toán
-                        </button>
-                    </div>
-                </div>
+                <!-- Nội dung check-out sẽ được thêm bởi loadCheckoutInfo -->
             </div>
         </div>
     `;
-}
-
-// Tải thông tin check-out
-function loadCheckoutInfo() {
-    const roomNumber = document.getElementById('checkout-room').value;
-    if (!roomNumber) {
-        alert('Vui lòng chọn phòng!');
-        return;
-    }
-    
-    const room = appData.rooms.find(r => r.number == roomNumber);
-    if (!room || room.status !== 'occupied') {
-        alert('Phòng này không có khách hoặc đã trả!');
-        return;
-    }
-    
-    // Hiển thị thông tin khách hàng
-    document.getElementById('checkout-customer-name').textContent = room.customerName;
-    document.getElementById('checkout-customer-phone').textContent = room.customerPhone;
-    document.getElementById('checkout-customer-id').textContent = room.customerId;
-    document.getElementById('checkout-checkin').textContent = formatDate(room.checkInDate);
-    
-    // Thông tin phòng
-    document.getElementById('bill-room-number').textContent = room.number;
-    document.getElementById('bill-room-type').textContent = room.typeName;
-    
-    // Tính số ngày
-    const checkIn = new Date(room.checkInDate);
-    const checkOut = new Date();
-    const days = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24)) || 1;
-    document.getElementById('bill-days').textContent = days;
-    
-    // Tính tiền phòng
-    document.getElementById('bill-room-price').textContent = formatCurrency(room.price);
-    const roomTotal = room.price * days;
-    document.getElementById('bill-room-total').textContent = formatCurrency(roomTotal);
-    
-    // Hiển thị dịch vụ đã gọi
-    const servicesList = document.getElementById('checkout-services-list');
-    const billItems = document.getElementById('bill-items');
-    
-    if (room.services && room.services.length > 0) {
-        servicesList.innerHTML = room.services.map(service => `
-            <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #eee;">
-                <span>${service.name} x${service.quantity}</span>
-                <span>${formatCurrency(service.total)}</span>
-            </div>
-        `).join('');
-        
-        billItems.innerHTML = `
-            <tr>
-                <td>1</td>
-                <td>Tiền phòng (${days} ngày)</td>
-                <td>${days}</td>
-                <td>${formatCurrency(room.price)}</td>
-                <td>${formatCurrency(roomTotal)}</td>
-            </tr>
-            ${room.services.map((service, index) => `
-                <tr>
-                    <td>${index + 2}</td>
-                    <td>${service.name}</td>
-                    <td>${service.quantity}</td>
-                    <td>${formatCurrency(service.price)}</td>
-                    <td>${formatCurrency(service.total)}</td>
-                </tr>
-            `).join('')}
-        `;
-        
-        const serviceTotal = room.services.reduce((sum, service) => sum + service.total, 0);
-        document.getElementById('service-total-amount').textContent = formatCurrency(serviceTotal);
-        document.getElementById('bill-services-total').textContent = formatCurrency(serviceTotal);
-    } else {
-        servicesList.innerHTML = '<p style="color: #999; font-style: italic;">Không có dịch vụ nào</p>';
-        billItems.innerHTML = `
-            <tr>
-                <td>1</td>
-                <td>Tiền phòng (${days} ngày)</td>
-                <td>${days}</td>
-                <td>${formatCurrency(room.price)}</td>
-                <td>${formatCurrency(roomTotal)}</td>
-            </tr>
-        `;
-        document.getElementById('service-total-amount').textContent = '0đ';
-        document.getElementById('bill-services-total').textContent = '0đ';
-    }
-    
-    const serviceTotal = room.services ? room.services.reduce((sum, service) => sum + service.total, 0) : 0;
-    const grandTotal = roomTotal + serviceTotal;
-    document.getElementById('bill-grand-total').textContent = formatCurrency(grandTotal);
-    
-    document.getElementById('checkout-info').classList.remove('hidden');
-}
-
-// Tạo hóa đơn
-function createBill() {
-    const roomNumber = document.getElementById('checkout-room').value;
-    const paymentMethod = document.getElementById('payment-method-final').value;
-    const paymentStatus = document.getElementById('payment-status').value;
-    
-    if (!roomNumber) {
-        alert('Vui lòng chọn phòng trước!');
-        return;
-    }
-    
-    const room = appData.rooms.find(r => r.number == roomNumber);
-    const booking = appData.bookings.find(b => b.roomNumber == roomNumber && b.status === 'active');
-    
-    if (!room || !booking) {
-        alert('Không tìm thấy thông tin!');
-        return;
-    }
-    
-    const checkIn = new Date(room.checkInDate);
-    const checkOut = new Date();
-    const days = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24)) || 1;
-    const roomTotal = room.price * days;
-    const serviceTotal = room.services ? room.services.reduce((sum, service) => sum + service.total, 0) : 0;
-    const totalAmount = roomTotal + serviceTotal;
-    
-    // Tạo bill mới
-    const newBillId = appData.bills.length + 1;
-    const newBill = {
-        id: newBillId,
-        billNumber: `HD${1000 + newBillId}`,
-        roomNumber: room.number,
-        customerName: room.customerName,
-        customerId: room.customerId,
-        checkInDate: room.checkInDate,
-        checkOutDate: checkOut,
-        days: days,
-        roomType: room.typeName,
-        roomPrice: room.price,
-        roomTotal: roomTotal,
-        services: room.services || [],
-        serviceTotal: serviceTotal,
-        totalAmount: totalAmount,
-        paymentMethod: paymentMethod,
-        status: paymentStatus === 'paid' ? 'paid' : 'pending',
-        staffName: currentUser ? currentUser.name : 'Nhân viên',
-        createdDate: new Date()
-    };
-    
-    appData.bills.push(newBill);
-    
-    // Cập nhật trạng thái phòng
-    room.status = 'available';
-    room.customerName = null;
-    room.customerPhone = null;
-    room.customerId = null;
-    room.checkInDate = null;
-    room.checkOutDate = null;
-    room.services = [];
-    
-    // Cập nhật booking
-    booking.status = 'completed';
-    booking.actualCheckOutDate = checkOut;
-    booking.totalAmount = totalAmount;
-    
-    alert(`Đã tạo hóa đơn #${newBill.billNumber} thành công!\nSố tiền: ${formatCurrency(totalAmount)}`);
-    
-    // Reset và quay về trang quản lý phòng
-    document.getElementById('checkout-info').classList.add('hidden');
-    document.getElementById('checkout-room').value = '';
-    switchView('room-management');
-}
-
-// Tạo QR cho bill hiện tại
-function generateQRForBill() {
-    const roomNumber = document.getElementById('checkout-room').value;
-    if (!roomNumber) {
-        alert('Vui lòng chọn phòng và tải thông tin trước!');
-        return;
-    }
-    
-    const totalAmount = parseFloat(document.getElementById('bill-grand-total').textContent.replace(/[^0-9]/g, ''));
-    if (!totalAmount || totalAmount === 0) {
-        alert('Không có số tiền để tạo QR!');
-        return;
-    }
-    
-    // Chuyển sang trang tạo QR
-    switchView('qr-generator');
-    
-    // Đợi DOM load xong
-    setTimeout(() => {
-        document.getElementById('qr-amount').value = totalAmount;
-        document.getElementById('qr-description').value = `Thanh toán phòng ${roomNumber}`;
-        generateVietQR();
-    }, 100);
-}
-
-// In hóa đơn
-function printBill() {
-    alert('In hóa đơn... (Trong thực tế sẽ gọi window.print())');
 }
 
 // ========== CHẤM CÔNG ==========
 
 // Render trang chấm công
 function renderTimeClock() {
+    loadShiftData();
+    
     const today = new Date();
     const currentMonth = today.getMonth() + 1;
     const currentYear = today.getFullYear();
@@ -1694,48 +1589,18 @@ function renderTimeClock() {
 document.addEventListener('DOMContentLoaded', function() {
     loadShiftData();
     
-    // Tự động bắt đầu ca nếu chưa có
-    if (!currentShift.isActive) {
-        setTimeout(() => {
-            if (confirm('Bạn có muốn bắt đầu ca làm việc không?')) {
-                startShift();
-            }
-        }, 1000);
-    }
-    
     // Cập nhật thời gian mỗi phút
     setInterval(updateShiftDisplay, 60000);
 });
 
 // Thêm CSS
-document.head.insertAdjacentHTML('beforeend', `
-    <style>
+if (!document.getElementById('staff-styles')) {
+    const style = document.createElement('style');
+    style.id = 'staff-styles';
+    style.textContent = `
         .status-badge {
             padding: 3px 10px;
             border-radius: 20px;
             font-size: 0.8em;
             font-weight: bold;
-            display: inline-block;
-        }
-        .status-badge.completed {
-            background-color: #2ecc71;
-            color: white;
-        }
-        .hidden {
-            display: none !important;
-        }
-        
-        .room.available:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .room.occupied:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .room.reserved:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-    </style>
-`);
+            display: inline-block

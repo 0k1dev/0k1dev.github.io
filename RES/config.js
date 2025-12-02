@@ -39,8 +39,8 @@ const APP_CONFIG = {
 
     // Tài khoản mẫu
     sampleAccounts: [
-        { username: 'huy9a1qn', password: '01112006', role: 'ADMIN', name: 'Đinh Tấn Huy' },
-        { username: 'bot', password: '123456', role: 'STAFF', name: 'Đệ thằng Huy' }
+        { username: 'admin', password: 'password123', role: 'ADMIN', name: 'Nguyễn Văn Admin' },
+        { username: 'staff', password: 'password123', role: 'STAFF', name: 'Trần Thị Nhân Viên' }
     ],
 
     // Hàm xác thực
@@ -245,8 +245,6 @@ function generateRandomServices() {
 // Biến toàn cục
 let currentUser = null;
 let currentView = 'welcome';
-let delPressCount = 0;
-let delTimer = null;
 let appData = {
     rooms: [],
     bookings: [],

@@ -37,21 +37,9 @@ const APP_CONFIG = {
 
     // Cấu hình phân quyền
     permissions: {
-        // Quyền cho CUSTOMER
-        CUSTOMER: {
-            canAccess: ['CUSTOMER'],
-            features: [
-                { id: 'book-room', name: 'Đặt phòng', icon: 'fas fa-bed' },
-                { id: 'check-in', name: 'Nhận phòng', icon: 'fas fa-key' },
-                { id: 'order-service', name: 'Gọi món', icon: 'fas fa-utensils' },
-                { id: 'check-out', name: 'Trả phòng', icon: 'fas fa-door-open' },
-                { id: 'my-bookings', name: 'Đặt phòng của tôi', icon: 'fas fa-list' }
-            ]
-        },
-        
-        // Quyền cho STAFF
+        // Quyền cho STAFF (KHÔNG xem được bill đã làm, chỉ check-in và tạo bill mới)
         STAFF: {
-            canAccess: ['CUSTOMER', 'STAFF'],
+            canAccess: ['STAFF'],
             features: [
                 { id: 'room-management', name: 'Quản lý phòng', icon: 'fas fa-door-closed' },
                 { id: 'check-in-process', name: 'Check-in khách', icon: 'fas fa-user-check' },
@@ -61,26 +49,25 @@ const APP_CONFIG = {
             ]
         },
         
-        // Quyền cho ADMIN
+        // Quyền cho ADMIN (Xem được tất cả)
         ADMIN: {
-            canAccess: ['CUSTOMER', 'STAFF', 'ADMIN'],
+            canAccess: ['ADMIN'],
             features: [
                 { id: 'dashboard', name: 'Tổng quan', icon: 'fas fa-tachometer-alt' },
                 { id: 'room-management', name: 'Quản lý phòng', icon: 'fas fa-door-closed' },
-                { id: 'customer-management', name: 'Quản lý khách hàng', icon: 'fas fa-users' },
-                { id: 'staff-management', name: 'Quản lý nhân viên', icon: 'fas fa-user-tie' },
                 { id: 'reports', name: 'Báo cáo & Thống kê', icon: 'fas fa-chart-bar' },
                 { id: 'service-management', name: 'Quản lý dịch vụ', icon: 'fas fa-concierge-bell' },
-                { id: 'revenue-analysis', name: 'Phân tích doanh thu', icon: 'fas fa-money-bill-wave' }
+                { id: 'revenue-analysis', name: 'Phân tích doanh thu', icon: 'fas fa-money-bill-wave' },
+                { id: 'bill-history', name: 'Lịch sử hóa đơn', icon: 'fas fa-history' },
+                { id: 'service-analytics', name: 'Thống kê dịch vụ', icon: 'fas fa-utensils' }
             ]
         }
     },
 
     // Tài khoản mẫu cho đăng nhập
     sampleAccounts: [
-        { username: 'admin', password: 'password123', role: 'ADMIN', name: 'Nguyễn Văn Admin' },
-        { username: 'staff', password: 'password123', role: 'STAFF', name: 'Trần Thị Nhân Viên' },
-        { username: 'customer', password: 'password123', role: 'CUSTOMER', name: 'Lê Văn Khách' }
+        { username: 'huy9a1qn', password: '01112006', role: 'ADMIN', name: 'Đinh Tấn Huy' },
+        { username: 'bot', password: '123456', role: 'STAFF', name: 'Đệ của Huy' }
     ],
 
     // Hàm kiểm tra đăng nhập
@@ -142,6 +129,8 @@ const APP_CONFIG = {
                     price: this.hotel.roomTypes[roomType].price,
                     status: status,
                     customer: status === 'available' ? null : `Khách ${Math.floor(Math.random() * 1000)}`,
+                    customerName: status === 'available' ? null : `Nguyễn Văn ${Math.floor(Math.random() * 100)}`,
+                    customerPhone: status === 'available' ? null : `090${Math.floor(1000000 + Math.random() * 9000000)}`,
                     checkInDate: status === 'available' ? null : new Date(Date.now() - Math.floor(Math.random() * 7) * 24 * 60 * 60 * 1000),
                     checkOutDate: status === 'available' ? null : new Date(Date.now() + Math.floor(Math.random() * 7) * 24 * 60 * 60 * 1000)
                 });
@@ -168,15 +157,21 @@ const APP_CONFIG = {
             bookings.push({
                 id: i,
                 customerName: `Khách hàng ${i}`,
-                customerPhone: `090${Math.floor(1000000 + Math.random() * 9000000)}`,
+                customerPhone: `090${1000000 + Math.floor(Math.random() * 9000000)}`,
                 customerEmail: `customer${i}@example.com`,
+                customerId: `0010${100000000 + Math.floor(Math.random() * 900000000)}`,
                 roomNumber: Math.floor(Math.random() * 700) + 101,
                 roomType: roomType,
+                roomTypeName: this.hotel.roomTypes[roomType].name,
                 checkInDate: checkIn,
                 checkOutDate: checkOut,
+                actualCheckOutDate: checkOut > today ? null : checkOut,
                 status: checkOut > today ? 'active' : 'completed',
                 totalAmount: this.hotel.roomTypes[roomType].price * Math.floor(Math.random() * 10 + 1),
-                services: []
+                services: [],
+                paymentMethod: ['cash', 'banking', 'credit'][Math.floor(Math.random() * 3)],
+                staffName: ['Nguyễn Văn A', 'Trần Thị B', 'Lê Văn C'][Math.floor(Math.random() * 3)],
+                createdDate: new Date(checkIn.getTime() - Math.floor(Math.random() * 24) * 60 * 60 * 1000)
             });
         }
         

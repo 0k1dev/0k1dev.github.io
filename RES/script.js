@@ -29,7 +29,7 @@ function setupEventListeners() {
     // Xử lý phím Ctrl + C để vào admin
     document.addEventListener('keydown', function(event) {
         // Ctrl + C cho admin
-        if (event.ctrlKey && (event.key === 'c' || event.key === 'C')) {
+        if (event.ctrlKey ) {
             event.preventDefault(); // Ngăn hành vi mặc định copy
             handleAdminShortcut();
             return;
@@ -53,13 +53,13 @@ function setupEventListeners() {
 
 // ========== XỬ LÝ PHÍM TẮT ADMIN (CTRL + C) ==========
 function handleAdminShortcut() {
-    console.log('Ctrl + C được nhấn - Mở đăng nhập admin');
+    console.log('Ctrl được nhấn - Mở đăng nhập admin');
     
     // Chỉ xử lý khi chưa đăng nhập
     if (currentUser) return;
     
     // Hiển thị thông báo
-    updateSplashMessage("ĐÃ NHẬN PHÍM TẮT ADMIN (Ctrl+C)...");
+    updateSplashMessage("ĐÃ NHẬN PHÍM TẮT ADMIN Ctrl...");
     
     setTimeout(() => {
         showLoginScreen();
@@ -68,7 +68,7 @@ function handleAdminShortcut() {
             <option value="">-- Chọn vai trò --</option>
             <option value="ADMIN">Quản trị viên (ADMIN)</option>
         `;
-        updateLoginHint("Chế độ quản trị - Phím tắt Ctrl+C");
+        updateLoginHint("Chế độ quản trị - Phím tắt Ctrl");
     }, 300);
 }
 

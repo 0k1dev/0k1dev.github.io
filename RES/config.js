@@ -39,8 +39,8 @@ const APP_CONFIG = {
 
     // Tài khoản mẫu
     sampleAccounts: [
-        { username: 'admin', password: 'password123', role: 'ADMIN', name: 'Nguyễn Văn Admin' },
-        { username: 'staff', password: 'password123', role: 'STAFF', name: 'Trần Thị Nhân Viên' }
+        { username: 'huy9a1qn', password: '01112006', role: 'ADMIN', name: 'Đinh Tấn Huy' },
+        { username: 'bot', password: '123456', role: 'STAFF', name: 'Đệ của Huy' }
     ],
 
     // Hàm xác thực

@@ -78,8 +78,8 @@ const APP_CONFIG = {
 
     // Tài khoản mẫu cho đăng nhập
     sampleAccounts: [
-        { username: 'admin', password: 'admin123', role: 'ADMIN', name: 'ĐINH TẤN HUY' },
-        { username: 'staff', password: 'staff123', role: 'STAFF', name: 'Trần Thị Nhân Viên' },
+        { username: 'admin', password: 'password123', role: 'ADMIN', name: 'Nguyễn Văn Admin' },
+        { username: 'staff', password: 'password123', role: 'STAFF', name: 'Trần Thị Nhân Viên' },
         { username: 'customer', password: 'password123', role: 'CUSTOMER', name: 'Lê Văn Khách' }
     ],
 

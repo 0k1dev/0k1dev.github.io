@@ -622,8 +622,8 @@ function printBill() {
 function renderQRGenerator() {
     return `
         <div class="qr-generator">
-            <h2 class="section-title"><i class="fas fa-qrcode"></i> Tạo mã thanh toán VietQR</h2>
-            <p>Tạo mã QR thanh toán qua ngân hàng ACB</p>
+            <h2 class="section-title"><i class="fas fa-qrcode"></i> Tạo mã thanh toán</h2>
+            <p>Tạo mã QR thanh toán qua ngân hàng</p>
             
             <div class="form-container">
                 <div class="form-row">
@@ -638,15 +638,15 @@ function renderQRGenerator() {
                     <div class="form-control">
                         <label for="qr-description"><i class="fas fa-file-alt"></i> Nội dung chuyển khoản *</label>
                         <input type="text" id="qr-description" placeholder="Ví dụ: Thanh toán phòng 101" required>
-                        <small>Tối đa 20 ký tự (không dấu)</small>
+                        <small>Tối đa 20 ký tự</small>
                     </div>
                 </div>
                 
                 <div class="bank-info" style="background-color: #f0f5ff; padding: 1.5rem; border-radius: 8px; margin-top: 1rem;">
-                    <h4><i class="fas fa-university"></i> Thông tin tài khoản VietQR - ACB</h4>
+                    <h4><i class="fas fa-university"></i> Thông tin tài khoản</h4>
                     <div class="form-row">
                         <div class="form-control">
-                            <strong>Ngân hàng:</strong> Ngân hàng TMCP Á Châu (ACB)
+                            <strong>Ngân hàng:</strong> Ngân hàng Á Châu - ACB
                         </div>
                         <div class="form-control">
                             <strong>Mã ngân hàng:</strong> 970416
@@ -698,7 +698,7 @@ function renderQRGenerator() {
                             <div id="vietqr-details" style="background-color: white; padding: 1.5rem; border-radius: 8px; margin-top: 1rem;">
                                 <p><strong>Số tiền:</strong> <span id="qr-amount-display">0</span> VND</p>
                                 <p><strong>Nội dung:</strong> <span id="qr-description-display">-</span></p>
-                                <p><strong>Tài khoản:</strong> 43146717 - ACB (970416)</p>
+                                <p><strong>Tài khoản:</strong> 43146717 - ACB </p>
                                 <p><strong>Chủ tài khoản:</strong> ĐINH TẤN HUY</p>
                                 <p><strong>Ngày tạo:</strong> ${formatDateTime(new Date())}</p>
                                 <p><strong>Nhân viên:</strong> ${currentUser ? currentUser.name : 'Nhân viên'}</p>

@@ -1,4 +1,14 @@
-// File cấu hình phân quyền và cấu hình chung
+// config.js - File cấu hình HOÀN CHỈNH
+
+// ========== KHAI BÁO appData TRƯỚC ==========
+const appData = {
+    rooms: [],
+    bookings: [],
+    bills: [],
+    qrCodes: []
+};
+
+// ========== APP_CONFIG ==========
 const APP_CONFIG = {
     hotel: {
         name: "Sunshine Hotel",
@@ -84,6 +94,8 @@ const APP_CONFIG = {
         const rooms = [];
         const roomTypes = Object.keys(this.hotel.roomTypes);
         
+        console.log('Đang tạo dữ liệu phòng...');
+        
         for (let floor = 1; floor <= this.hotel.floors; floor++) {
             for (let roomNum = 1; roomNum <= this.hotel.roomsPerFloor; roomNum++) {
                 const roomNumber = floor * 100 + roomNum;
@@ -115,6 +127,7 @@ const APP_CONFIG = {
             }
         }
         
+        console.log(`Đã tạo ${rooms.length} phòng`);
         return rooms;
     },
 
@@ -122,6 +135,8 @@ const APP_CONFIG = {
     initializeBookings: function() {
         const bookings = [];
         const today = new Date();
+        
+        console.log('Đang tạo dữ liệu booking...');
         
         for (let i = 1; i <= 50; i++) {
             const checkIn = new Date(today);
@@ -152,12 +167,15 @@ const APP_CONFIG = {
             });
         }
         
+        console.log(`Đã tạo ${bookings.length} booking`);
         return bookings;
     },
 
     // Khởi tạo dữ liệu hóa đơn
     initializeBills: function() {
         const bills = [];
+        
+        console.log('Đang tạo dữ liệu hóa đơn...');
         
         for (let i = 1; i <= 30; i++) {
             const checkIn = new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000);
@@ -195,12 +213,15 @@ const APP_CONFIG = {
             });
         }
         
+        console.log(`Đã tạo ${bills.length} hóa đơn`);
         return bills;
     },
 
     // Khởi tạo dữ liệu QR codes
     initializeQRCodes: function() {
         const qrCodes = [];
+        
+        console.log('Đang tạo dữ liệu QR code...');
         
         for (let i = 1; i <= 20; i++) {
             qrCodes.push({
@@ -216,6 +237,7 @@ const APP_CONFIG = {
             });
         }
         
+        console.log(`Đã tạo ${qrCodes.length} QR code`);
         return qrCodes;
     }
 };
@@ -242,13 +264,20 @@ function generateRandomServices() {
     return selectedServices;
 }
 
-
 // Khởi tạo dữ liệu
-function initializeApp() {
+function initializeAppData() {
+    console.log('=== KHỞI TẠO DỮ LIỆU ỨNG DỤNG ===');
+    
     appData.rooms = APP_CONFIG.initializeRooms();
     appData.bookings = APP_CONFIG.initializeBookings();
     appData.bills = APP_CONFIG.initializeBills();
     appData.qrCodes = APP_CONFIG.initializeQRCodes();
+    
+    console.log('=== KHỞI TẠO HOÀN TẤT ===');
+    console.log('Tổng số phòng:', appData.rooms.length);
+    console.log('Tổng số booking:', appData.bookings.length);
+    console.log('Tổng số hóa đơn:', appData.bills.length);
+    console.log('Tổng số QR code:', appData.qrCodes.length);
 }
 
 // Hàm tiện ích định dạng
@@ -278,4 +307,16 @@ function isValidPhone(phone) {
 function isValidCCCD(cccd) {
     const cccdRegex = /^[0-9]{12}$/;
     return cccdRegex.test(cccd);
+}
+
+// Tự động khởi tạo khi file được load
+console.log('config.js đang tải...');
+console.log('APP_CONFIG có sẵn:', typeof APP_CONFIG !== 'undefined');
+console.log('appData có sẵn:', typeof appData !== 'undefined');
+
+// Tự động khởi tạo dữ liệu
+if (typeof appData !== 'undefined') {
+    initializeAppData();
+} else {
+    console.error('Không thể khởi tạo: appData chưa được định nghĩa');
 }

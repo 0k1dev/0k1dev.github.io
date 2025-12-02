@@ -1,175 +1,4 @@
-// admin.js - Chỉ dành cho quản trị viên
-
-// Khởi tạo ứng dụng cho admin
-document.addEventListener('DOMContentLoaded', function() {
-    initializeApp();
-    setupEventListeners();
-    startSplashScreen();
-});
-
-// Thiết lập event listeners
-function setupEventListeners() {
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Delete' || event.key === 'Del') {
-            handleDelKeyPress();
-        }
-    });
-    
-    document.getElementById('login-form').addEventListener('submit', handleLogin);
-    document.getElementById('cancel-login').addEventListener('click', cancelLogin);
-    document.getElementById('logout-btn').addEventListener('click', handleLogout);
-}
-
-// Xử lý phím DEL
-function handleDelKeyPress() {
-    delPressCount++;
-    
-    if (delPressCount === 1) {
-        delTimer = setTimeout(() => {
-            delPressCount = 0;
-        }, 500);
-    } else if (delPressCount === 2) {
-        clearTimeout(delTimer);
-        delPressCount = 0;
-        showLoginScreen();
-    }
-}
-
-// Hiển thị màn hình đăng nhập
-function showLoginScreen() {
-    if (!currentUser) {
-        document.getElementById('splash-screen').classList.add('hidden');
-        document.getElementById('login-screen').classList.remove('hidden');
-    }
-}
-
-function hideLoginScreen() {
-    document.getElementById('login-screen').classList.add('hidden');
-}
-
-function cancelLogin() {
-    hideLoginScreen();
-    if (!currentUser) {
-        document.getElementById('splash-screen').classList.remove('hidden');
-    }
-}
-
-// Xử lý đăng nhập
-function handleLogin(event) {
-    event.preventDefault();
-    
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
-    const role = document.getElementById('role').value;
-    
-    const result = APP_CONFIG.authenticate(username, password, role);
-    
-    if (result.success) {
-        currentUser = result.user;
-        if (currentUser.role !== 'ADMIN') {
-            alert('Quản trị viên không được truy cập hệ thống này!');
-            currentUser = null;
-            return;
-        }
-        startApp();
-    } else {
-        alert(result.message);
-    }
-}
-
-// Bắt đầu ứng dụng
-function startApp() {
-    hideLoginScreen();
-    document.getElementById('main-app').classList.remove('hidden');
-    
-    document.getElementById('current-user').textContent = currentUser.name;
-    document.getElementById('current-role').textContent = currentUser.role;
-    
-    createNavigationMenu();
-    showDefaultView();
-}
-
-// Tạo menu điều hướng
-function createNavigationMenu() {
-    const nav = document.getElementById('main-nav');
-    nav.innerHTML = '';
-    
-    const menuItems = APP_CONFIG.getMenuForRole(currentUser.role);
-    
-    menuItems.forEach(item => {
-        const navItem = document.createElement('div');
-        navItem.className = 'nav-item';
-        navItem.id = `nav-${item.id}`;
-        navItem.innerHTML = `<i class="${item.icon}"></i> ${item.name}`;
-        navItem.addEventListener('click', () => switchView(item.id));
-        
-        nav.appendChild(navItem);
-    });
-}
-
-// Hiển thị trang mặc định
-function showDefaultView() {
-    const defaultView = APP_CONFIG.getMenuForRole(currentUser.role)[0].id;
-    switchView(defaultView);
-}
-
-// Chuyển view
-function switchView(viewId) {
-    currentView = viewId;
-    
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-    });
-    document.getElementById(`nav-${viewId}`).classList.add('active');
-    
-    const contentArea = document.getElementById('content-area');
-    
-    switch(viewId) {
-        case 'dashboard':
-            contentArea.innerHTML = renderAdminDashboard();
-            break;
-        case 'room-management':
-            contentArea.innerHTML = renderRoomManagementAdmin();
-            break;
-        case 'reports':
-            contentArea.innerHTML = renderReports();
-            break;
-        case 'revenue-analysis':
-            contentArea.innerHTML = renderRevenueAnalysis();
-            break;
-        case 'bill-history':
-            contentArea.innerHTML = renderBillHistory();
-            break;
-        case 'service-analytics':
-            contentArea.innerHTML = renderServiceAnalytics();
-            break;
-        default:
-            contentArea.innerHTML = `<div class="welcome-message">
-                <h1>Chào mừng ${currentUser.name}</h1>
-                <p>Vai trò: ${currentUser.role}</p>
-                <p>Vui lòng chọn một chức năng từ menu để bắt đầu</p>
-            </div>`;
-    }
-}
-
-// Xử lý đăng xuất
-function handleLogout() {
-    currentUser = null;
-    currentView = 'welcome';
-    
-    document.getElementById('main-app').classList.add('hidden');
-    document.getElementById('splash-screen').classList.remove('hidden');
-    document.getElementById('login-form').reset();
-}
-
-// Màn hình khởi động
-function startSplashScreen() {
-    setTimeout(() => {
-        if (!currentUser) {
-            document.getElementById('splash-screen').classList.add('hidden');
-        }
-    }, 5000);
-}
+// admin.js - CHỈ CHỨA CHỨC NĂNG QUẢN TRỊ VIÊN (KHÔNG CÓ ĐĂNG NHẬP)
 
 // ========== RENDER FUNCTIONS - ADMIN ==========
 
@@ -425,7 +254,7 @@ function getRecentActivities() {
             time: booking.createdDate,
             type: 'checkin',
             details: `Check-in phòng ${booking.roomNumber} - ${booking.customerName}`,
-            staff: booking.staffName
+            staff: booking.staffName || 'Nhân viên'
         });
     });
     
@@ -435,7 +264,7 @@ function getRecentActivities() {
             time: bill.createdDate,
             type: 'checkout',
             details: `Check-out phòng ${bill.roomNumber} - ${formatCurrency(bill.totalAmount)}`,
-            staff: bill.staffName
+            staff: bill.staffName || 'Nhân viên'
         });
     });
     
@@ -445,7 +274,7 @@ function getRecentActivities() {
             time: qr.createdDate,
             type: 'qr',
             details: `Tạo mã QR - ${formatCurrency(qr.totalAmount)}`,
-            staff: qr.staffName
+            staff: qr.staffName || 'Nhân viên'
         });
     });
     
@@ -519,7 +348,7 @@ function showRoomDetailsAdmin(roomNumber) {
     
     if (room.status === 'reserved') {
         detailsHTML = `
-            <p><strong>Số điện thoại nhân viên:</strong> ${room.staffPhone}</p>
+            <p><strong>Số điện thoại nhân viên:</strong> ${room.staffPhone || 'Chưa có'}</p>
             <p><strong>Trạng thái:</strong> Đã đặt</p>
             <p><strong>Nhân viên cần đối chiếu số điện thoại này</strong></p>
         `;
@@ -543,12 +372,12 @@ function showRoomDetailsAdmin(roomNumber) {
         }
         
         detailsHTML = `
-            <p><strong>Khách hàng:</strong> ${room.customerName}</p>
-            <p><strong>Số điện thoại:</strong> ${room.customerPhone}</p>
-            <p><strong>CCCD:</strong> ${room.customerId}</p>
+            <p><strong>Khách hàng:</strong> ${room.customerName || 'Chưa có'}</p>
+            <p><strong>Số điện thoại:</strong> ${room.customerPhone || 'Chưa có'}</p>
+            <p><strong>CCCD:</strong> ${room.customerId || 'Chưa có'}</p>
             <p><strong>Ngày nhận phòng:</strong> ${formatDateTime(room.checkInDate)}</p>
             <p><strong>Ngày trả phòng dự kiến:</strong> ${formatDate(room.checkOutDate)}</p>
-            ${booking ? `<p><strong>Nhân viên check-in:</strong> ${booking.staffName}</p>` : ''}
+            ${booking ? `<p><strong>Nhân viên check-in:</strong> ${booking.staffName || 'Nhân viên'}</p>` : ''}
             ${servicesHTML}
         `;
     } else {
@@ -652,7 +481,7 @@ function renderBillHistory() {
                                           bill.paymentMethod === 'banking' ? 'Chuyển khoản' : 'Thẻ tín dụng'}
                                     </span>
                                 </td>
-                                <td>${bill.staffName}</td>
+                                <td>${bill.staffName || 'Nhân viên'}</td>
                                 <td>
                                     <button class="btn btn-secondary btn-sm" onclick="viewBillDetailsAdmin(${bill.id})">
                                         <i class="fas fa-eye"></i>
@@ -737,7 +566,7 @@ function searchBillsAdmin() {
                           bill.paymentMethod === 'banking' ? 'Chuyển khoản' : 'Thẻ tín dụng'}
                     </span>
                 </td>
-                <td>${bill.staffName}</td>
+                <td>${bill.staffName || 'Nhân viên'}</td>
                 <td>
                     <button class="btn btn-secondary btn-sm" onclick="viewBillDetailsAdmin(${bill.id})">
                         <i class="fas fa-eye"></i>
@@ -775,7 +604,7 @@ function viewBillDetailsAdmin(billId) {
                     <div class="bill-details">
                         <div style="margin-bottom: 1.5rem;">
                             <p><strong>Ngày xuất:</strong> ${formatDateTime(bill.createdDate)}</p>
-                            <p><strong>Nhân viên:</strong> ${bill.staffName}</p>
+                            <p><strong>Nhân viên:</strong> ${bill.staffName || 'Nhân viên'}</p>
                         </div>
                         
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
@@ -966,7 +795,7 @@ function renderServiceAnalytics() {
             // Vẽ biểu đồ loại dịch vụ
             setTimeout(() => {
                 const ctx = document.getElementById('serviceCategoryChart').getContext('2d');
-                const serviceStats = calculateServiceStats([]); // Thay bằng dữ liệu thực
+                const serviceStats = calculateServiceStats([]);
                 
                 new Chart(ctx, {
                     type: 'bar',
@@ -1075,11 +904,167 @@ function calculateServiceStats(services) {
     return stats;
 }
 
-// Các trang khác (giữ nguyên cấu trúc)
+// Các trang khác
 function renderReports() {
-    return `<h2>Trang Báo cáo (ADMIN)</h2><p>Chức năng chi tiết...</p>`;
+    return `
+        <div class="reports">
+            <h2 class="section-title"><i class="fas fa-chart-pie"></i> Báo cáo tổng hợp</h2>
+            <div class="dashboard-section">
+                <h3><i class="fas fa-chart-line"></i> Doanh thu theo tháng</h3>
+                <canvas id="revenueChart" width="400" height="200"></canvas>
+            </div>
+            
+            <div class="dashboard-section">
+                <h3><i class="fas fa-chart-bar"></i> Tỷ lệ lấp đầy phòng</h3>
+                <div style="height: 300px;">
+                    <canvas id="occupancyChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="dashboard-section">
+                <h3><i class="fas fa-file-export"></i> Xuất báo cáo</h3>
+                <div class="form-actions">
+                    <button class="btn btn-primary" onclick="exportReport('daily')">
+                        <i class="fas fa-download"></i> Xuất báo cáo ngày
+                    </button>
+                    <button class="btn btn-success" onclick="exportReport('monthly')" style="margin-left: 10px;">
+                        <i class="fas fa-download"></i> Xuất báo cáo tháng
+                    </button>
+                    <button class="btn btn-warning" onclick="exportReport('yearly')" style="margin-left: 10px;">
+                        <i class="fas fa-download"></i> Xuất báo cáo năm
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <script>
+            setTimeout(() => {
+                // Biểu đồ doanh thu
+                const ctx1 = document.getElementById('revenueChart').getContext('2d');
+                new Chart(ctx1, {
+                    type: 'line',
+                    data: {
+                        labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'],
+                        datasets: [{
+                            label: 'Doanh thu (triệu VND)',
+                            data: [45, 52, 48, 60, 55, 65, 70, 68, 75, 80, 85, 90],
+                            borderColor: '#2196f3',
+                            backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true
+                    }
+                });
+                
+                // Biểu đồ tỷ lệ lấp đầy
+                const ctx2 = document.getElementById('occupancyChart').getContext('2d');
+                new Chart(ctx2, {
+                    type: 'bar',
+                    data: {
+                        labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6'],
+                        datasets: [{
+                            label: 'Tỷ lệ lấp đầy (%)',
+                            data: [65, 70, 75, 80, 85, 90],
+                            backgroundColor: '#4caf50'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100
+                            }
+                        }
+                    }
+                });
+            }, 100);
+        </script>
+    `;
 }
 
 function renderRevenueAnalysis() {
-    return `<h2>Trang Phân tích doanh thu (ADMIN)</h2><p>Chức năng chi tiết...</p>`;
+    return `
+        <div class="revenue-analysis">
+            <h2 class="section-title"><i class="fas fa-chart-line"></i> Phân tích doanh thu</h2>
+            <div class="dashboard-section">
+                <h3><i class="fas fa-money-bill-wave"></i> So sánh doanh thu</h3>
+                <div class="revenue-comparison">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                        <div style="background-color: #e8f5e9; padding: 1.5rem; border-radius: 8px; text-align: center;">
+                            <h4>Hôm nay</h4>
+                            <p style="font-size: 1.5rem; font-weight: bold; color: #2e7d32;">${formatCurrency(1500000)}</p>
+                        </div>
+                        <div style="background-color: #fff3e0; padding: 1.5rem; border-radius: 8px; text-align: center;">
+                            <h4>Tuần này</h4>
+                            <p style="font-size: 1.5rem; font-weight: bold; color: #ff9800;">${formatCurrency(10500000)}</p>
+                        </div>
+                        <div style="background-color: #fce4ec; padding: 1.5rem; border-radius: 8px; text-align: center;">
+                            <h4>Tháng này</h4>
+                            <p style="font-size: 1.5rem; font-weight: bold; color: #e91e63;">${formatCurrency(45000000)}</p>
+                        </div>
+                        <div style="background-color: #e3f2fd; padding: 1.5rem; border-radius: 8px; text-align: center;">
+                            <h4>Năm nay</h4>
+                            <p style="font-size: 1.5rem; font-weight: bold; color: #2196f3;">${formatCurrency(540000000)}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3><i class="fas fa-chart-pie"></i> Phân bố nguồn thu</h3>
+                <div style="height: 400px;">
+                    <canvas id="revenueDistributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <script>
+            setTimeout(() => {
+                const ctx = document.getElementById('revenueDistributionChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Tiền phòng', 'Dịch vụ ăn uống', 'Dịch vụ khác', 'Phụ thu'],
+                        datasets: [{
+                            data: [70, 15, 10, 5],
+                            backgroundColor: ['#4caf50', '#2196f3', '#ff9800', '#e91e63']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }, 100);
+        </script>
+    `;
+}
+
+// Xuất báo cáo
+function exportReport(type) {
+    alert(`Đang xuất báo cáo ${type === 'daily' ? 'ngày' : type === 'monthly' ? 'tháng' : 'năm'}...\nTrong thực tế sẽ tạo file Excel/PDF để tải về.`);
+}
+
+// ========== HÀM CHỨC NĂNG BỔ SUNG ==========
+
+// Định dạng tiền tệ
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+}
+
+// Định dạng ngày tháng
+function formatDate(date) {
+    if (!date) return '-';
+    return new Date(date).toLocaleDateString('vi-VN');
+}
+
+// Định dạng ngày giờ
+function formatDateTime(date) {
+    if (!date) return '-';
+    return new Date(date).toLocaleString('vi-VN');
 }

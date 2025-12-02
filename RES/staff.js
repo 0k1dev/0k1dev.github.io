@@ -646,15 +646,15 @@ function renderQRGenerator() {
                             <strong>Ngân hàng:</strong> Ngân hàng TMCP Á Châu (ACB)
                         </div>
                         <div class="form-control">
-                            <strong>Số tài khoản:</strong> 123456789
+                            <strong>Số tài khoản:</strong> 43146717
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-control">
-                            <strong>Tên chủ tài khoản:</strong> CÔNG TY TNHH SUNSHINE HOTEL
+                            <strong>Tên chủ tài khoản:</strong> ĐINH TẤN HUY
                         </div>
                         <div class="form-control">
-                            <strong>Chi nhánh:</strong> Hồ Chí Minh
+                            <strong>Chi nhánh:</strong> QUY NHƠN
                         </div>
                     </div>
                 </div>
@@ -680,10 +680,10 @@ function renderQRGenerator() {
                                 <div style="text-align: center;">
                                     <div style="font-size: 4rem; margin-bottom: 10px; color: #0066CC;">QR</div>
                                     <div style="font-weight: bold; color: #0066CC;">VIETQR</div>
-                                    <div style="font-size: 0.9rem; margin-top: 5px; color: #333;">ACB Bank</div>
+                                    <div style="font-size: 0.9rem; margin-top: 5px; color: #333;">ACB</div>
                                 </div>
                             </div>
-                            <p style="margin-top: 1rem; font-size: 0.9rem; color: #666;">Quét mã QR để thanh toán qua ACB</p>
+                            <p style="margin-top: 1rem; font-size: 0.9rem; color: #666;">Quét mã QR để thanh toán</p>
                         </div>
                         
                         <div class="qr-details" style="flex: 1; min-width: 300px; text-align: left;">
@@ -691,8 +691,8 @@ function renderQRGenerator() {
                             <div id="vietqr-details" style="background-color: white; padding: 1.5rem; border-radius: 8px; margin-top: 1rem;">
                                 <p><strong>Số tiền:</strong> <span id="qr-amount-display">0</span> VND</p>
                                 <p><strong>Mô tả:</strong> <span id="qr-description-display">-</span></p>
-                                <p><strong>Tài khoản:</strong> 123456789 - ACB</p>
-                                <p><strong>Chủ tài khoản:</strong> CÔNG TY TNHH SUNSHINE HOTEL</p>
+                                <p><strong>Tài khoản:</strong> 43146717 - ACB</p>
+                                <p><strong>Chủ tài khoản:</strong> ĐINH TẤN HUY</p>
                                 <p><strong>Ngày tạo:</strong> ${formatDateTime(new Date())}</p>
                                 <p><strong>Nhân viên:</strong> ${currentUser ? currentUser.name : 'Nhân viên'}</p>
                             </div>

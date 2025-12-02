@@ -1,55 +1,68 @@
-// script.js - File chính để điều phối giữa staff và admin
+// script.js - FILE CHÍNH
 
-// Biến toàn cục
-let currentUser = null;
-let currentView = 'welcome';
-let staffPressCount = 0;
-let staffTimer = null;
-let adminHoldTimer = null;
-let adminHoldStartTime = null;
-let adminHoldProgress = 0;
+// ========== KHAI BÁO BIẾN (CHỈ KHI CHƯA TỒN TẠI) ==========
+if (typeof currentUser === 'undefined') {
+    let currentUser = null;
+}
 
-// Khởi tạo ứng dụng
+if (typeof currentView === 'undefined') {
+    let currentView = 'welcome';
+}
+
+if (typeof staffPressCount === 'undefined') {
+    let staffPressCount = 0;
+}
+
+if (typeof staffTimer === 'undefined') {
+    let staffTimer = null;
+}
+
+if (typeof adminHoldTimer === 'undefined') {
+    let adminHoldTimer = null;
+}
+
+if (typeof adminHoldStartTime === 'undefined') {
+    let adminHoldStartTime = null;
+}
+
+if (typeof adminHoldProgress === 'undefined') {
+    let adminHoldProgress = 0;
+}
+
+// ========== KHỞI TẠO ỨNG DỤNG ==========
 document.addEventListener('DOMContentLoaded', function() {
-    initializeApp();
+    console.log('Ứng dụng khởi động...');
     setupEventListeners();
     startSplashScreen();
 });
 
-// Thiết lập event listeners
+// ========== XỬ LÝ PHÍM ==========
 function setupEventListeners() {
-    // Xử lý đăng nhập
-    document.getElementById('login-form').addEventListener('submit', handleLogin);
-    document.getElementById('cancel-login').addEventListener('click', cancelLogin);
-    document.getElementById('logout-btn').addEventListener('click', handleLogout);
+    // Form đăng nhập
+    const loginForm = document.getElementById('login-form');
+    const cancelBtn = document.getElementById('cancel-login');
+    const logoutBtn = document.getElementById('logout-btn');
     
-    // Xử lý phím DEL cho nhân viên (nhấn 2 lần cách nhau 2s)
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Delete' || event.key === 'Del') {
-            handleStaffDelKeyPress();
-        }
-    });
+    if (loginForm) loginForm.addEventListener('submit', handleLogin);
+    if (cancelBtn) cancelBtn.addEventListener('click', cancelLogin);
+    if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
     
-    // Xử lý giữ phím DEL cho admin (giữ 5s)
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Delete' || event.key === 'Del') {
-            handleAdminDelKeyPress(event);
-        }
-    });
-    
-    document.addEventListener('keyup', function(event) {
-        if (event.key === 'Delete' || event.key === 'Del') {
-            handleAdminDelKeyRelease();
-        }
-    });
+    // Xử lý phím DEL
+    document.addEventListener('keydown', handleKeyPress);
 }
 
-// Xử lý phím DEL cho nhân viên (nhấn 2 lần cách nhau 2s)
-function handleStaffDelKeyPress() {
+function handleKeyPress(event) {
+    if (event.key === 'Delete' || event.key === 'Del') {
+        handleDelKeyPress();
+    }
+}
+
+function handleDelKeyPress() {
+    if (!staffPressCount) staffPressCount = 0;
+    
     staffPressCount++;
     
     if (staffPressCount === 1) {
-        // Bắt đầu đếm thời gian giữa hai lần nhấn (2 giây)
         staffTimer = setTimeout(() => {
             staffPressCount = 0;
             updateSplashMessage("Nhấn DEL lần nữa để đăng nhập nhân viên");
@@ -72,115 +85,7 @@ function handleStaffDelKeyPress() {
     }
 }
 
-// Xử lý giữ phím DEL cho admin
-function handleAdminDelKeyPress(event) {
-    if (!adminHoldStartTime) {
-        adminHoldStartTime = Date.now();
-        adminHoldProgress = 0;
-        
-        // Bắt đầu hiệu ứng giữ
-        adminHoldTimer = setInterval(() => {
-            const currentTime = Date.now();
-            const elapsed = currentTime - adminHoldStartTime;
-            adminHoldProgress = Math.min(elapsed / 5000, 1); // 5 giây
-            
-            // Cập nhật thanh tiến trình
-            updateAdminHoldProgress(adminHoldProgress);
-            
-            // Nếu đủ 5 giây
-            if (elapsed >= 5000) {
-                handleAdminHoldComplete();
-            }
-        }, 50);
-        
-        updateSplashMessage("ĐANG GIỮ PHÍM DEL... (5 giây cho admin)");
-    }
-    
-    // Ngăn hành vi mặc định
-    event.preventDefault();
-}
-
-// Xử lý nhả phím DEL
-function handleAdminDelKeyRelease() {
-    if (adminHoldTimer) {
-        clearInterval(adminHoldTimer);
-        adminHoldTimer = null;
-    }
-    
-    if (adminHoldStartTime) {
-        const elapsed = Date.now() - adminHoldStartTime;
-        
-        if (elapsed < 5000) {
-            updateSplashMessage("Chưa đủ 5 giây! Giữ lâu hơn để vào admin");
-            // Reset progress bar
-            updateAdminHoldProgress(0);
-        }
-        
-        adminHoldStartTime = null;
-        adminHoldProgress = 0;
-    }
-}
-
-// Xử lý khi giữ đủ 5 giây
-function handleAdminHoldComplete() {
-    clearInterval(adminHoldTimer);
-    adminHoldTimer = null;
-    adminHoldStartTime = null;
-    
-    updateSplashMessage("ĐÃ GIỮ ĐỦ 5 GIÂY! Mở đăng nhập admin...");
-    
-    // Reset progress bar
-    updateAdminHoldProgress(1);
-    
-    setTimeout(() => {
-        showLoginScreen();
-        // Chỉ hiển thị option ADMIN
-        document.getElementById('role').innerHTML = `
-            <option value="">-- Chọn vai trò --</option>
-            <option value="ADMIN">Quản trị viên (ADMIN)</option>
-        `;
-        updateLoginHint("Chế độ quản trị - Giữ DEL 5 giây");
-        updateAdminHoldProgress(0);
-    }, 500);
-}
-
-// Cập nhật thanh tiến trình giữ phím
-function updateAdminHoldProgress(progress) {
-    const loadingBar = document.querySelector('.loading-bar');
-    if (loadingBar) {
-        loadingBar.style.width = `${progress * 100}%`;
-        loadingBar.style.backgroundColor = progress >= 1 ? '#28a745' : '#FFD700';
-    }
-}
-
-// Cập nhật thông báo splash
-function updateSplashMessage(message) {
-    const hintElement = document.querySelector('.splash-message .hint');
-    if (hintElement) {
-        hintElement.textContent = message;
-    }
-}
-
-// Cập nhật gợi ý đăng nhập
-function updateLoginHint(message) {
-    const loginFooter = document.querySelector('.login-footer');
-    if (loginFooter) {
-        const existingHint = loginFooter.querySelector('.login-hint');
-        if (existingHint) {
-            existingHint.remove();
-        }
-        
-        const hintElement = document.createElement('p');
-        hintElement.className = 'login-hint';
-        hintElement.style.color = '#e91e63';
-        hintElement.style.fontWeight = 'bold';
-        hintElement.style.marginTop = '10px';
-        hintElement.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
-        loginFooter.appendChild(hintElement);
-    }
-}
-
-// Hiển thị màn hình đăng nhập
+// ========== ĐĂNG NHẬP ==========
 function showLoginScreen() {
     if (!currentUser) {
         document.getElementById('splash-screen').classList.add('hidden');
@@ -200,13 +105,17 @@ function cancelLogin() {
     }
 }
 
-// Xử lý đăng nhập
 function handleLogin(event) {
     event.preventDefault();
     
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
     const role = document.getElementById('role').value;
+    
+    if (!APP_CONFIG || !APP_CONFIG.authenticate) {
+        alert('Hệ thống chưa được cấu hình đúng!');
+        return;
+    }
     
     const result = APP_CONFIG.authenticate(username, password, role);
     
@@ -218,7 +127,7 @@ function handleLogin(event) {
     }
 }
 
-// Bắt đầu ứng dụng
+// ========== BẮT ĐẦU APP ==========
 function startApp() {
     hideLoginScreen();
     document.getElementById('main-app').classList.remove('hidden');
@@ -228,52 +137,18 @@ function startApp() {
     
     createNavigationMenu();
     showDefaultView();
-    
-    // Load script tương ứng với vai trò
-    loadRoleScript(currentUser.role);
 }
 
-// Load script theo vai trò
-function loadRoleScript(role) {
-    // Xóa script cũ nếu có
-    const oldScript = document.getElementById('role-script');
-    if (oldScript) {
-        oldScript.remove();
-    }
-    
-    // Thêm script mới
-    const script = document.createElement('script');
-    script.id = 'role-script';
-    
-    if (role === 'STAFF') {
-        script.src = 'staff.js';
-        script.onload = function() {
-            console.log('Staff script loaded');
-            // Khởi tạo staff functions
-            if (typeof createNavigationMenu === 'function') {
-                createNavigationMenu();
-                showDefaultView();
-            }
-        };
-    } else if (role === 'ADMIN') {
-        script.src = 'admin.js';
-        script.onload = function() {
-            console.log('Admin script loaded');
-            // Khởi tạo admin functions
-            if (typeof createNavigationMenu === 'function') {
-                createNavigationMenu();
-                showDefaultView();
-            }
-        };
-    }
-    
-    document.head.appendChild(script);
-}
-
-// Tạo menu điều hướng (tạm thời, sẽ được ghi đè bởi script vai trò)
 function createNavigationMenu() {
     const nav = document.getElementById('main-nav');
+    if (!nav) return;
+    
     nav.innerHTML = '';
+    
+    if (!APP_CONFIG || !APP_CONFIG.getMenuForRole) {
+        console.error('APP_CONFIG không tồn tại!');
+        return;
+    }
     
     const menuItems = APP_CONFIG.getMenuForRole(currentUser.role);
     
@@ -288,32 +163,108 @@ function createNavigationMenu() {
     });
 }
 
-// Hiển thị trang mặc định (tạm thời)
 function showDefaultView() {
-    const defaultView = APP_CONFIG.getMenuForRole(currentUser.role)[0].id;
-    switchView(defaultView);
+    if (!APP_CONFIG || !currentUser) return;
+    
+    const menuItems = APP_CONFIG.getMenuForRole(currentUser.role);
+    if (menuItems.length > 0) {
+        const defaultView = menuItems[0].id;
+        switchView(defaultView);
+    }
 }
 
-// Chuyển view (tạm thời)
+// ========== CHUYỂN VIEW ==========
 function switchView(viewId) {
+    if (!currentUser) return;
+    
     currentView = viewId;
     
+    // Cập nhật menu active
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('active');
     });
+    
     const activeNav = document.getElementById(`nav-${viewId}`);
     if (activeNav) {
         activeNav.classList.add('active');
     }
     
     const contentArea = document.getElementById('content-area');
-    contentArea.innerHTML = `<div class="welcome-message">
-        <h1>Đang tải ${viewId}...</h1>
-        <p>Vui lòng chờ trong giây lát</p>
-    </div>`;
+    if (!contentArea) return;
+    
+    // Nếu là STAFF, gọi hàm từ staff.js
+    if (currentUser.role === 'STAFF') {
+        switch(viewId) {
+            case 'room-management':
+                if (typeof renderRoomManagement === 'function') {
+                    contentArea.innerHTML = renderRoomManagement();
+                }
+                break;
+            case 'check-in-process':
+                if (typeof renderCheckInProcess === 'function') {
+                    contentArea.innerHTML = renderCheckInProcess();
+                }
+                break;
+            case 'check-out-process':
+                if (typeof renderCheckOutProcess === 'function') {
+                    contentArea.innerHTML = renderCheckOutProcess();
+                }
+                break;
+            case 'qr-generator':
+                if (typeof renderQRGenerator === 'function') {
+                    contentArea.innerHTML = renderQRGenerator();
+                }
+                break;
+            default:
+                contentArea.innerHTML = `<div class="welcome-message">
+                    <h1>Chào mừng ${currentUser.name}</h1>
+                    <p>Vai trò: ${currentUser.role}</p>
+                </div>`;
+        }
+    }
+    // Nếu là ADMIN, gọi hàm từ admin.js
+    else if (currentUser.role === 'ADMIN') {
+        switch(viewId) {
+            case 'dashboard':
+                if (typeof renderAdminDashboard === 'function') {
+                    contentArea.innerHTML = renderAdminDashboard();
+                }
+                break;
+            case 'room-management':
+                if (typeof renderRoomManagementAdmin === 'function') {
+                    contentArea.innerHTML = renderRoomManagementAdmin();
+                }
+                break;
+            case 'reports':
+                if (typeof renderReports === 'function') {
+                    contentArea.innerHTML = renderReports();
+                }
+                break;
+            case 'revenue-analysis':
+                if (typeof renderRevenueAnalysis === 'function') {
+                    contentArea.innerHTML = renderRevenueAnalysis();
+                }
+                break;
+            case 'bill-history':
+                if (typeof renderBillHistory === 'function') {
+                    contentArea.innerHTML = renderBillHistory();
+                }
+                break;
+            case 'service-analytics':
+                if (typeof renderServiceAnalytics === 'function') {
+                    contentArea.innerHTML = renderServiceAnalytics();
+                }
+                break;
+            default:
+                contentArea.innerHTML = `<div class="welcome-message">
+                    <h1>Chào mừng ${currentUser.name}</h1>
+                    <p>Vai trò: ${currentUser.role}</p>
+                </div>`;
+        }
+    }
 }
 
-// Xử lý đăng xuất
+// ========== XỬ LÝ ĐĂNG XUẤT ==========
 function handleLogout() {
     currentUser = null;
     currentView = 'welcome';
@@ -322,23 +273,43 @@ function handleLogout() {
     document.getElementById('splash-screen').classList.remove('hidden');
     document.getElementById('login-form').reset();
     
-    // Xóa script vai trò
-    const roleScript = document.getElementById('role-script');
-    if (roleScript) {
-        roleScript.remove();
-    }
-    
     // Reset splash message
-    updateSplashMessage("Nhấn DEL hai lần cách nhau 2s cho nhân viên, giữ 5s cho admin");
+    updateSplashMessage("Nhấn DEL hai lần để đăng nhập nhân viên");
 }
 
-// Màn hình khởi động
+// ========== MÀN HÌNH KHỞI ĐỘNG ==========
 function startSplashScreen() {
-    updateSplashMessage("Nhấn DEL hai lần cách nhau 2s cho nhân viên, giữ 5s cho admin");
+    updateSplashMessage("Nhấn DEL hai lần để đăng nhập nhân viên");
     
     setTimeout(() => {
         if (!currentUser) {
             document.getElementById('splash-screen').classList.add('hidden');
         }
     }, 5000);
+}
+
+// ========== HÀM TIỆN ÍCH ==========
+function updateSplashMessage(message) {
+    const hintElement = document.querySelector('.splash-message .hint');
+    if (hintElement) {
+        hintElement.textContent = message;
+    }
+}
+
+function updateLoginHint(message) {
+    const loginFooter = document.querySelector('.login-footer');
+    if (loginFooter) {
+        const existingHint = loginFooter.querySelector('.login-hint');
+        if (existingHint) {
+            existingHint.remove();
+        }
+        
+        const hintElement = document.createElement('p');
+        hintElement.className = 'login-hint';
+        hintElement.style.color = '#e91e63';
+        hintElement.style.fontWeight = 'bold';
+        hintElement.style.marginTop = '10px';
+        hintElement.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
+        loginFooter.appendChild(hintElement);
+    }
 }

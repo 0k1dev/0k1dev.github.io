@@ -1,169 +1,4 @@
-// staff.js - Chỉ dành cho nhân viên
-
-// Khởi tạo ứng dụng cho staff
-document.addEventListener('DOMContentLoaded', function() {
-    initializeApp();
-    setupEventListeners();
-    startSplashScreen();
-});
-
-// Thiết lập event listeners
-function setupEventListeners() {
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Delete' || event.key === 'Del') {
-            handleDelKeyPress();
-        }
-    });
-    
-    document.getElementById('login-form').addEventListener('submit', handleLogin);
-    document.getElementById('cancel-login').addEventListener('click', cancelLogin);
-    document.getElementById('logout-btn').addEventListener('click', handleLogout);
-}
-
-// Xử lý phím DEL
-function handleDelKeyPress() {
-    delPressCount++;
-    
-    if (delPressCount === 1) {
-        delTimer = setTimeout(() => {
-            delPressCount = 0;
-        }, 500);
-    } else if (delPressCount === 2) {
-        clearTimeout(delTimer);
-        delPressCount = 0;
-        showLoginScreen();
-    }
-}
-
-// Hiển thị màn hình đăng nhập
-function showLoginScreen() {
-    if (!currentUser) {
-        document.getElementById('splash-screen').classList.add('hidden');
-        document.getElementById('login-screen').classList.remove('hidden');
-    }
-}
-
-function hideLoginScreen() {
-    document.getElementById('login-screen').classList.add('hidden');
-}
-
-function cancelLogin() {
-    hideLoginScreen();
-    if (!currentUser) {
-        document.getElementById('splash-screen').classList.remove('hidden');
-    }
-}
-
-// Xử lý đăng nhập
-function handleLogin(event) {
-    event.preventDefault();
-    
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
-    const role = document.getElementById('role').value;
-    
-    const result = APP_CONFIG.authenticate(username, password, role);
-    
-    if (result.success) {
-        currentUser = result.user;
-        if (currentUser.role !== 'STAFF') {
-            alert('Nhân viên không được truy cập hệ thống này!');
-            currentUser = null;
-            return;
-        }
-        startApp();
-    } else {
-        alert(result.message);
-    }
-}
-
-// Bắt đầu ứng dụng
-function startApp() {
-    hideLoginScreen();
-    document.getElementById('main-app').classList.remove('hidden');
-    
-    document.getElementById('current-user').textContent = currentUser.name;
-    document.getElementById('current-role').textContent = currentUser.role;
-    
-    createNavigationMenu();
-    showDefaultView();
-}
-
-// Tạo menu điều hướng
-function createNavigationMenu() {
-    const nav = document.getElementById('main-nav');
-    nav.innerHTML = '';
-    
-    const menuItems = APP_CONFIG.getMenuForRole(currentUser.role);
-    
-    menuItems.forEach(item => {
-        const navItem = document.createElement('div');
-        navItem.className = 'nav-item';
-        navItem.id = `nav-${item.id}`;
-        navItem.innerHTML = `<i class="${item.icon}"></i> ${item.name}`;
-        navItem.addEventListener('click', () => switchView(item.id));
-        
-        nav.appendChild(navItem);
-    });
-}
-
-// Hiển thị trang mặc định
-function showDefaultView() {
-    const defaultView = APP_CONFIG.getMenuForRole(currentUser.role)[0].id;
-    switchView(defaultView);
-}
-
-// Chuyển view
-function switchView(viewId) {
-    currentView = viewId;
-    
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-    });
-    document.getElementById(`nav-${viewId}`).classList.add('active');
-    
-    const contentArea = document.getElementById('content-area');
-    
-    switch(viewId) {
-        case 'room-management':
-            contentArea.innerHTML = renderRoomManagement();
-            break;
-        case 'check-in-process':
-            contentArea.innerHTML = renderCheckInProcess();
-            break;
-        case 'check-out-process':
-            contentArea.innerHTML = renderCheckOutProcess();
-            break;
-        case 'qr-generator':
-            contentArea.innerHTML = renderQRGenerator();
-            break;
-        default:
-            contentArea.innerHTML = `<div class="welcome-message">
-                <h1>Chào mừng ${currentUser.name}</h1>
-                <p>Vai trò: ${currentUser.role}</p>
-                <p>Vui lòng chọn một chức năng từ menu để bắt đầu</p>
-            </div>`;
-    }
-}
-
-// Xử lý đăng xuất
-function handleLogout() {
-    currentUser = null;
-    currentView = 'welcome';
-    
-    document.getElementById('main-app').classList.add('hidden');
-    document.getElementById('splash-screen').classList.remove('hidden');
-    document.getElementById('login-form').reset();
-}
-
-// Màn hình khởi động
-function startSplashScreen() {
-    setTimeout(() => {
-        if (!currentUser) {
-            document.getElementById('splash-screen').classList.add('hidden');
-        }
-    }, 5000);
-}
+// staff.js - CHỈ CHỨA CHỨC NĂNG NHÂN VIÊN (KHÔNG CÓ ĐĂNG NHẬP)
 
 // ========== RENDER FUNCTIONS - STAFF ==========
 
@@ -432,7 +267,7 @@ function processCheckIn() {
         totalAmount: 0,
         services: [],
         paymentMethod: paymentMethod,
-        staffName: currentUser.name,
+        staffName: currentUser ? currentUser.name : 'Nhân viên',
         createdDate: new Date()
     });
     
@@ -443,7 +278,7 @@ function processCheckIn() {
         <p>Ngày nhận: ${checkinDate} | Ngày trả: ${checkoutDate}</p>
         <p>Số điện thoại: ${customerPhone} | CCCD: ${customerId}</p>
         <p>Mã đặt phòng: #${newBookingId}</p>
-        <p>Nhân viên thực hiện: ${currentUser.name}</p>
+        <p>Nhân viên thực hiện: ${currentUser ? currentUser.name : 'Nhân viên'}</p>
     `;
     document.getElementById('checkin-result').classList.remove('hidden');
     
@@ -750,7 +585,7 @@ function createBill() {
         totalAmount: totalAmount,
         paymentMethod: paymentMethod,
         status: paymentStatus === 'paid' ? 'paid' : 'pending',
-        staffName: currentUser.name,
+        staffName: currentUser ? currentUser.name : 'Nhân viên',
         createdDate: new Date()
     };
     
@@ -859,7 +694,7 @@ function renderQRGenerator() {
                                 <p><strong>Tài khoản:</strong> 123456789 - ACB</p>
                                 <p><strong>Chủ tài khoản:</strong> CÔNG TY TNHH SUNSHINE HOTEL</p>
                                 <p><strong>Ngày tạo:</strong> ${formatDateTime(new Date())}</p>
-                                <p><strong>Nhân viên:</strong> ${currentUser.name}</p>
+                                <p><strong>Nhân viên:</strong> ${currentUser ? currentUser.name : 'Nhân viên'}</p>
                             </div>
                         </div>
                     </div>
@@ -921,7 +756,7 @@ function saveVietQR() {
         bank: "ACB",
         accountNumber: "123456789",
         createdDate: new Date(),
-        staffName: currentUser.name,
+        staffName: currentUser ? currentUser.name : 'Nhân viên',
         status: 'generated'
     };
     
@@ -942,4 +777,35 @@ function clearQRForm() {
     document.getElementById('qr-amount').value = '';
     document.getElementById('qr-description').value = '';
     document.getElementById('vietqr-result').classList.add('hidden');
+}
+
+// ========== HÀM CHỨC NĂNG BỔ SUNG ==========
+
+// Định dạng tiền tệ
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+}
+
+// Định dạng ngày tháng
+function formatDate(date) {
+    if (!date) return '-';
+    return new Date(date).toLocaleDateString('vi-VN');
+}
+
+// Định dạng ngày giờ
+function formatDateTime(date) {
+    if (!date) return '-';
+    return new Date(date).toLocaleString('vi-VN');
+}
+
+// Kiểm tra số điện thoại hợp lệ
+function isValidPhone(phone) {
+    const phoneRegex = /^(09|03|07|08|05)[0-9]{8}$/;
+    return phoneRegex.test(phone);
+}
+
+// Kiểm tra CCCD hợp lệ
+function isValidCCCD(cccd) {
+    const cccdRegex = /^[0-9]{12}$/;
+    return cccdRegex.test(cccd);
 }

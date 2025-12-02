@@ -1,4 +1,3 @@
-// staff.js - CHỨC NĂNG NHÂN VIÊN HOÀN CHỈNH
 // Tích hợp: Quản lý phòng, Check-in, Order, Check-out, QR, Chấm công, Lọc phòng
 
 // ========== BIẾN TOÀN CỤC ==========
@@ -24,29 +23,6 @@ let currentShift = {
 let shiftHistory = JSON.parse(localStorage.getItem('staff_shifts')) || [];
 
 // ========== KHỞI TẠO DỮ LIỆU ==========
-if (!appData) {
-    var appData = {
-        rooms: [],
-        bookings: [],
-        bills: [],
-        qrCodes: []
-    };
-}
-
-if (!APP_CONFIG) {
-    var APP_CONFIG = {
-        hotel: {
-            floors: 3,
-            roomTypes: [
-                { id: 'single', name: 'Phòng đơn', price: 300000 },
-                { id: 'double', name: 'Phòng đôi', price: 500000 },
-                { id: 'suite', name: 'Suite', price: 800000 },
-                { id: 'vip', name: 'VIP', price: 1200000 }
-            ]
-        }
-    };
-}
-
 if (!currentUser) {
     var currentUser = {
         id: 1,

@@ -618,24 +618,27 @@ function printBill() {
 }
 
 // Render trang tạo mã thanh toán (STAFF) - CHỈ NHẬP SỐ TIỀN
+// Render trang tạo mã thanh toán (STAFF) - SỬ DỤNG VIETQR API
 function renderQRGenerator() {
     return `
         <div class="qr-generator">
-            <h2 class="section-title"><i class="fas fa-qrcode"></i> Tạo mã thanh toán</h2>
-            <p>Tạo mã QR thanh toán cho khách hàng</p>
+            <h2 class="section-title"><i class="fas fa-qrcode"></i> Tạo mã thanh toán VietQR</h2>
+            <p>Tạo mã QR thanh toán qua ngân hàng ACB</p>
             
             <div class="form-container">
                 <div class="form-row">
                     <div class="form-control">
                         <label for="qr-amount"><i class="fas fa-money-bill-wave"></i> Số tiền (VND) *</label>
                         <input type="number" id="qr-amount" placeholder="Nhập số tiền" min="1000" required>
+                        <small>Tối thiểu 1,000 VND</small>
                     </div>
                 </div>
                 
                 <div class="form-row">
                     <div class="form-control">
-                        <label for="qr-description"><i class="fas fa-file-alt"></i> Mô tả (tùy chọn)</label>
-                        <input type="text" id="qr-description" placeholder="Ví dụ: Thanh toán phòng 101">
+                        <label for="qr-description"><i class="fas fa-file-alt"></i> Nội dung chuyển khoản *</label>
+                        <input type="text" id="qr-description" placeholder="Ví dụ: Thanh toán phòng 101" required>
+                        <small>Tối đa 20 ký tự (không dấu)</small>
                     </div>
                 </div>
                 
@@ -646,15 +649,20 @@ function renderQRGenerator() {
                             <strong>Ngân hàng:</strong> Ngân hàng TMCP Á Châu (ACB)
                         </div>
                         <div class="form-control">
+                            <strong>Mã ngân hàng:</strong> 970416
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-control">
                             <strong>Số tài khoản:</strong> 43146717
+                        </div>
+                        <div class="form-control">
+                            <strong>Chi nhánh:</strong> QUY NHƠN
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-control">
                             <strong>Tên chủ tài khoản:</strong> ĐINH TẤN HUY
-                        </div>
-                        <div class="form-control">
-                            <strong>Chi nhánh:</strong> QUY NHƠN
                         </div>
                     </div>
                 </div>
@@ -671,16 +679,15 @@ function renderQRGenerator() {
             
             <div id="vietqr-result" class="hidden" style="margin-top: 2rem;">
                 <div class="qr-result-container" style="text-align: center; padding: 2rem; background-color: #f9f9f9; border-radius: 8px;">
-                    <h4><i class="fas fa-qrcode"></i> Mã QR thanh toán VietQR - ACB</h4>
+                    <h4><i class="fas fa-qrcode"></i> Mã QR thanh toán VietQR</h4>
                     
                     <div style="display: flex; gap: 2rem; margin-top: 1.5rem; flex-wrap: wrap; justify-content: center;">
                         <div class="qr-display" style="flex: 1; min-width: 300px;">
-                            <div class="qr-image" id="vietqr-image" 
-                                 style="margin: 0 auto; width: 250px; height: 250px; background-color: white; border: 2px solid #ddd; display: flex; align-items: center; justify-content: center;">
-                                <div style="text-align: center;">
-                                    <div style="font-size: 4rem; margin-bottom: 10px; color: #0066CC;">QR</div>
-                                    <div style="font-weight: bold; color: #0066CC;">VIETQR</div>
-                                    <div style="font-size: 0.9rem; margin-top: 5px; color: #333;">ACB</div>
+                            <div id="real-qr-image" style="margin: 0 auto; width: 250px; height: 250px; background-color: white; border: 2px solid #ddd; display: flex; align-items: center; justify-content: center;">
+                                <img id="generated-qr" src="" alt="QR Code" style="max-width: 100%; max-height: 100%; display: none;">
+                                <div id="qr-loading" style="text-align: center;">
+                                    <div class="spinner" style="font-size: 3rem; margin-bottom: 10px;">⌛</div>
+                                    <div>Đang tạo mã QR...</div>
                                 </div>
                             </div>
                             <p style="margin-top: 1rem; font-size: 0.9rem; color: #666;">Quét mã QR để thanh toán</p>
@@ -690,30 +697,55 @@ function renderQRGenerator() {
                             <h5>Thông tin thanh toán</h5>
                             <div id="vietqr-details" style="background-color: white; padding: 1.5rem; border-radius: 8px; margin-top: 1rem;">
                                 <p><strong>Số tiền:</strong> <span id="qr-amount-display">0</span> VND</p>
-                                <p><strong>Mô tả:</strong> <span id="qr-description-display">-</span></p>
-                                <p><strong>Tài khoản:</strong> 43146717 - ACB</p>
+                                <p><strong>Nội dung:</strong> <span id="qr-description-display">-</span></p>
+                                <p><strong>Tài khoản:</strong> 43146717 - ACB (970416)</p>
                                 <p><strong>Chủ tài khoản:</strong> ĐINH TẤN HUY</p>
                                 <p><strong>Ngày tạo:</strong> ${formatDateTime(new Date())}</p>
                                 <p><strong>Nhân viên:</strong> ${currentUser ? currentUser.name : 'Nhân viên'}</p>
+                                <p><strong>Mã giao dịch:</strong> <span id="qr-transaction-id">-</span></p>
+                            </div>
+                            
+                            <div class="qr-instructions" style="margin-top: 1rem; padding: 1rem; background-color: #fff8e1; border-radius: 8px;">
+                                <h6><i class="fas fa-info-circle"></i> Hướng dẫn thanh toán:</h6>
+                                <ol style="text-align: left; margin-left: 1.5rem; font-size: 0.9rem;">
+                                    <li>Mở app ngân hàng trên điện thoại</li>
+                                    <li>Chọn tính năng "Quét mã QR"</li>
+                                    <li>Quét mã QR bên trái</li>
+                                    <li>Kiểm tra thông tin và xác nhận thanh toán</li>
+                                </ol>
                             </div>
                         </div>
                     </div>
                     
                     <div class="qr-actions" style="margin-top: 2rem;">
                         <button class="btn btn-success" onclick="saveVietQR()">
-                            <i class="fas fa-save"></i> Lưu mã QR
+                            <i class="fas fa-save"></i> Lưu thông tin
                         </button>
-                        <button class="btn btn-primary" onclick="printQR()" style="margin-left: 10px;">
-                            <i class="fas fa-print"></i> In mã QR
+                        <button class="btn btn-primary" onclick="downloadQR()" style="margin-left: 10px;">
+                            <i class="fas fa-download"></i> Tải mã QR
+                        </button>
+                        <button class="btn btn-info" onclick="shareQR()" style="margin-left: 10px;">
+                            <i class="fas fa-share-alt"></i> Chia sẻ
                         </button>
                     </div>
                 </div>
             </div>
         </div>
+        
+        <style>
+            .spinner {
+                animation: spin 1s linear infinite;
+            }
+            
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        </style>
     `;
 }
 
-// Tạo VietQR
+// Tạo VietQR sử dụng API thực
 function generateVietQR() {
     const amount = parseInt(document.getElementById('qr-amount').value);
     const description = document.getElementById('qr-description').value;
@@ -723,18 +755,128 @@ function generateVietQR() {
         return;
     }
     
+    if (!description || description.trim().length === 0) {
+        alert('Vui lòng nhập nội dung chuyển khoản!');
+        return;
+    }
+    
+    // Loại bỏ dấu và giới hạn ký tự
+    const cleanDescription = removeVietnameseTones(description.substring(0, 20));
+    
+    // Thông tin tài khoản ACB
+    const bankInfo = {
+        bankCode: "970416", // Mã ngân hàng ACB
+        accountNumber: "43146717",
+        accountName: "DINH TAN HUY",
+        amount: amount,
+        description: cleanDescription,
+        template: "compact2"
+    };
+    
+    // Hiển thị loading
+    document.getElementById('vietqr-result').classList.remove('hidden');
+    document.getElementById('qr-loading').style.display = 'block';
+    document.getElementById('generated-qr').style.display = 'none';
+    
     // Cập nhật thông tin hiển thị
     document.getElementById('qr-amount-display').textContent = amount.toLocaleString();
-    document.getElementById('qr-description-display').textContent = description || 'Không có mô tả';
+    document.getElementById('qr-description-display').textContent = description;
+    document.getElementById('qr-transaction-id').textContent = 'TX' + Date.now();
     
-    // Hiển thị kết quả
-    document.getElementById('vietqr-result').classList.remove('hidden');
+    // Tạo QR code sử dụng API VietQR
+    createVietQRCode(bankInfo);
     
     // Cuộn đến phần kết quả
     document.getElementById('vietqr-result').scrollIntoView({ behavior: 'smooth' });
 }
 
-// Lưu mã QR
+// Hàm tạo QR code bằng VietQR API
+function createVietQRCode(bankInfo) {
+    // URL API VietQR
+    const apiUrl = `https://api.vietqr.io/v2/generate`;
+    
+    // Dữ liệu gửi lên API
+    const requestData = {
+        accountNo: bankInfo.accountNumber,
+        accountName: bankInfo.accountName,
+        acqId: bankInfo.bankCode, // Mã ngân hàng
+        amount: bankInfo.amount,
+        addInfo: bankInfo.description,
+        format: "text", // text hoặc base64
+        template: bankInfo.template || "compact"
+    };
+    
+    // Tạo URL QR trực tiếp (phương pháp đơn giản)
+    // Hoặc có thể sử dụng: https://img.vietqr.io/image/ACB-43146717-compact2.jpg?amount=100000&addInfo=Thanh toan phong 101
+    const qrImageUrl = `https://img.vietqr.io/image/ACB-${bankInfo.accountNumber}-${bankInfo.template || 'compact2'}.jpg?amount=${bankInfo.amount}&addInfo=${encodeURIComponent(bankInfo.description)}&accountName=${encodeURIComponent(bankInfo.accountName)}`;
+    
+    // Hiển thị QR code
+    const qrImg = document.getElementById('generated-qr');
+    qrImg.src = qrImageUrl;
+    qrImg.alt = `QR Thanh toán ${bankInfo.amount} VND`;
+    
+    // Khi ảnh tải xong
+    qrImg.onload = function() {
+        document.getElementById('qr-loading').style.display = 'none';
+        qrImg.style.display = 'block';
+        
+        // Lưu URL QR để tải về sau
+        qrImg.dataset.qrUrl = qrImageUrl;
+    };
+    
+    qrImg.onerror = function() {
+        document.getElementById('qr-loading').innerHTML = `
+            <div style="color: #f44336;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 3rem;"></i>
+                <p>Không thể tạo mã QR</p>
+                <p>Vui lòng thử lại sau</p>
+            </div>
+        `;
+    };
+    
+    // Ngoài ra, có thể tạo QR code local bằng thư viện
+    createLocalQRCode(bankInfo);
+}
+
+// Tạo QR code local (fallback nếu API không hoạt động)
+function createLocalQRCode(bankInfo) {
+    // Tạo nội dung QR theo chuẩn VietQR
+    const qrContent = generateVietQRString(bankInfo);
+    
+    // Nếu có thư viện QR code (ví dụ: qrcode.js)
+    if (typeof QRCode !== 'undefined') {
+        const qrContainer = document.getElementById('real-qr-image');
+        qrContainer.innerHTML = '';
+        
+        new QRCode(qrContainer, {
+            text: qrContent,
+            width: 250,
+            height: 250,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+        
+        document.getElementById('qr-loading').style.display = 'none';
+    }
+}
+
+// Tạo chuỗi VietQR theo tiêu chuẩn
+function generateVietQRString(bankInfo) {
+    // Định dạng theo tiêu chuẩn VietQR
+    const data = {
+        bank: "ACB",
+        acc: bankInfo.accountNumber,
+        amount: bankInfo.amount,
+        desc: bankInfo.description,
+        template: "print"
+    };
+    
+    // Tạo URL deep link cho app ngân hàng
+    return `https://vietqr.net/transfer/ACB/${bankInfo.accountNumber}/${bankInfo.amount}/${encodeURIComponent(bankInfo.description)}`;
+}
+
+// Lưu thông tin QR
 function saveVietQR() {
     const amount = parseInt(document.getElementById('qr-amount').value);
     const description = document.getElementById('qr-description').value;
@@ -746,37 +888,181 @@ function saveVietQR() {
     
     // Tạo QR code mới
     const newQRId = appData.qrCodes.length + 1;
+    const transactionId = 'TX' + Date.now();
+    
     const newQR = {
         id: newQRId,
+        transactionId: transactionId,
         billId: null,
         roomNumber: null,
         customerName: "Khách thanh toán QR",
         totalAmount: amount,
         content: description || `Thanh toán ${amount} VND`,
         bank: "ACB",
-        accountNumber: "123456789",
+        accountNumber: "43146717",
+        accountName: "ĐINH TẤN HUY",
+        bankCode: "970416",
         createdDate: new Date(),
         staffName: currentUser ? currentUser.name : 'Nhân viên',
-        status: 'generated'
+        status: 'generated',
+        qrUrl: document.getElementById('generated-qr')?.src || ''
     };
     
     appData.qrCodes.push(newQR);
     
-    alert(`Đã lưu mã QR #${newQRId} thành công!\nSố tiền: ${formatCurrency(amount)}`);
-    
-    // Reset form
-    clearQRForm();
-    document.getElementById('vietqr-result').classList.add('hidden');
+    alert(`Đã lưu thông tin QR #${newQRId} thành công!\nMã giao dịch: ${transactionId}\nSố tiền: ${formatCurrency(amount)}`);
 }
 
-function printQR() {
-    alert('In mã QR...');
+// Tải mã QR về máy
+function downloadQR() {
+    const qrImg = document.getElementById('generated-qr');
+    if (!qrImg.src) {
+        alert('Chưa có mã QR để tải!');
+        return;
+    }
+    
+    const amount = document.getElementById('qr-amount-display').textContent;
+    const description = document.getElementById('qr-description-display').textContent;
+    
+    // Tạo link tải
+    const link = document.createElement('a');
+    link.href = qrImg.src;
+    link.download = `VietQR_${amount}VND_${Date.now()}.png`;
+    link.click();
+    
+    alert('Đang tải mã QR về máy...');
+}
+
+// Chia sẻ mã QR
+function shareQR() {
+    const qrImg = document.getElementById('generated-qr');
+    if (!qrImg.src) {
+        alert('Chưa có mã QR để chia sẻ!');
+        return;
+    }
+    
+    const amount = document.getElementById('qr-amount-display').textContent;
+    const description = document.getElementById('qr-description-display').textContent;
+    
+    // Tạo nội dung chia sẻ
+    const shareText = `Mã QR thanh toán ${amount} VND\nNội dung: ${description}\nTài khoản: 43146717 - ACB\nChủ TK: ĐINH TẤN HUY`;
+    
+    // Kiểm tra Web Share API
+    if (navigator.share) {
+        navigator.share({
+            title: 'Mã QR thanh toán Sunshine Hotel',
+            text: shareText,
+            url: qrImg.src
+        })
+        .then(() => console.log('Chia sẻ thành công'))
+        .catch(error => console.log('Lỗi chia sẻ:', error));
+    } else {
+        // Fallback: copy text
+        navigator.clipboard.writeText(shareText + '\n' + qrImg.src)
+            .then(() => alert('Đã sao chép thông tin mã QR vào clipboard!'))
+            .catch(err => alert('Không thể sao chép: ' + err));
+    }
+}
+
+// Xóa dấu tiếng Việt (cho nội dung QR)
+function removeVietnameseTones(str) {
+    str = str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    str = str.replace(/đ/g, 'd').replace(/Đ/g, 'D');
+    str = str.replace(/[^a-zA-Z0-9 ]/g, '');
+    return str.toUpperCase();
 }
 
 function clearQRForm() {
     document.getElementById('qr-amount').value = '';
     document.getElementById('qr-description').value = '';
     document.getElementById('vietqr-result').classList.add('hidden');
+}
+
+// ========== HÀM MỚI BỔ SUNG ==========
+
+// Kiểm tra trạng thái thanh toán (giả lập)
+function checkPaymentStatus(transactionId) {
+    // Giả lập kiểm tra thanh toán
+    const statuses = ['pending', 'completed', 'failed'];
+    const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+    
+    return {
+        transactionId: transactionId,
+        status: randomStatus,
+        checkedAt: new Date(),
+        amount: parseInt(document.getElementById('qr-amount').value) || 0
+    };
+}
+
+// Xem lịch sử QR đã tạo
+function showQRHistory() {
+    if (!appData.qrCodes || appData.qrCodes.length === 0) {
+        alert('Chưa có mã QR nào được tạo!');
+        return;
+    }
+    
+    const historyHTML = appData.qrCodes.map(qr => `
+        <div style="border: 1px solid #ddd; padding: 1rem; margin-bottom: 1rem; border-radius: 8px;">
+            <p><strong>Mã giao dịch:</strong> ${qr.transactionId || 'N/A'}</p>
+            <p><strong>Số tiền:</strong> ${formatCurrency(qr.totalAmount)}</p>
+            <p><strong>Nội dung:</strong> ${qr.content}</p>
+            <p><strong>Ngày tạo:</strong> ${formatDateTime(qr.createdDate)}</p>
+            <p><strong>Trạng thái:</strong> <span class="status-${qr.status}">${qr.status}</span></p>
+        </div>
+    `).join('');
+    
+    alertHTML(`
+        <div style="max-width: 500px; max-height: 400px; overflow-y: auto;">
+            <h3>Lịch sử mã QR</h3>
+            <p>Tổng số: ${appData.qrCodes.length} mã QR</p>
+            ${historyHTML}
+        </div>
+    `);
+}
+
+// Hiển thị alert với HTML
+function alertHTML(html) {
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    `;
+    
+    const content = document.createElement('div');
+    content.style.cssText = `
+        background: white;
+        padding: 2rem;
+        border-radius: 10px;
+        max-width: 90%;
+        max-height: 90%;
+        overflow: auto;
+    `;
+    content.innerHTML = html;
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Đóng';
+    closeBtn.style.cssText = `
+        margin-top: 1rem;
+        padding: 0.5rem 1rem;
+        background: #f44336;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    `;
+    closeBtn.onclick = () => modal.remove();
+    
+    content.appendChild(closeBtn);
+    modal.appendChild(content);
+    document.body.appendChild(modal);
 }
 
 // ========== HÀM CHỨC NĂNG BỔ SUNG ==========

@@ -1,6 +1,7 @@
-// script.js - FILE CHÍNH HOÀN CHỈNH
+// script.js - FILE CHÍNH (FIXED)
 
-// ========== KHAI BÁO BIẾN (CHỈ KHI CHƯA TỒN TẠI) ==========
+// ========== KHAI BÁO BIẾN TOÀN CỤC ==========
+// KHAI BÁO TRƯỚC TẤT CẢ CÁC HÀM
 var currentUser = null;
 var currentView = 'welcome';
 var staffPressCount = 0;
@@ -8,71 +9,38 @@ var staffTimer = null;
 var ctrlPressCount = 0;
 var ctrlPressTimer = null;
 
-
-// ========== KHỞI TẠO ỨNG DỤNG ==========
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Ứng dụng khởi động...');
-    setupEventListeners();
-    startSplashScreen();
-});
-
-// ========== THIẾT LẬP EVENT LISTENERS ==========
-function setupEventListeners() {
-    // Xử lý phím Ctrl + C để vào admin
-    document.addEventListener('keydown', function(event) {
-        // Ctrl + C cho admin
-        if (event.ctrlKey ) {
-            event.preventDefault(); // Ngăn hành vi mặc định copy
-            handleAdminShortcut();
-            return;
-        }
-        
-        // DEL cho nhân viên (chỉ khi chưa đăng nhập)
-        if (!currentUser && (event.key === 'Delete' || event.key === 'Del')) {
-            handleStaffDelKeyPress();
-        }
-    });
-    
-    // Form đăng nhập
-    const loginForm = document.getElementById('login-form');
-    const cancelBtn = document.getElementById('cancel-login');
-    const logoutBtn = document.getElementById('logout-btn');
-    
-    if (loginForm) loginForm.addEventListener('submit', handleLogin);
-    if (cancelBtn) cancelBtn.addEventListener('click', cancelLogin);
-    if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
+// ========== HÀM TIỆN ÍCH (KHAI BÁO TRƯỚC) ==========
+function updateSplashMessage(message) {
+    const hintElement = document.querySelector('.splash-message .hint');
+    if (hintElement) {
+        hintElement.textContent = message;
+    }
 }
 
-// ========== XỬ LÝ PHÍM TẮT ADMIN (CTRL + C) ==========
-function handleAdminShortcut() {
-    console.log('Ctrl được nhấn - Mở đăng nhập admin');
-    
-    // Chỉ xử lý khi chưa đăng nhập
-    if (currentUser) return;
-    
-    // Hiển thị thông báo
-    updateSplashMessage("ĐÃ NHẬN PHÍM TẮT ADMIN Ctrl...");
-    
-    setTimeout(() => {
-        showLoginScreen();
-        // Chỉ hiển thị option ADMIN
-        document.getElementById('role').innerHTML = `
-            <option value="">-- Chọn vai trò --</option>
-            <option value="ADMIN">Quản trị viên (ADMIN)</option>
-        `;
-        updateLoginHint("Chế độ quản trị - Phím tắt Ctrl");
-    }, 300);
+function updateLoginHint(message) {
+    const loginFooter = document.querySelector('.login-footer');
+    if (loginFooter) {
+        const existingHint = loginFooter.querySelector('.login-hint');
+        if (existingHint) {
+            existingHint.remove();
+        }
+        
+        const hintElement = document.createElement('p');
+        hintElement.className = 'login-hint';
+        hintElement.style.color = '#e91e63';
+        hintElement.style.fontWeight = 'bold';
+        hintElement.style.marginTop = '10px';
+        hintElement.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
+        loginFooter.appendChild(hintElement);
+    }
 }
 
 // ========== XỬ LÝ PHÍM DEL CHO NHÂN VIÊN ==========
 function handleStaffDelKeyPress() {
-    // Chỉ xử lý khi chưa đăng nhập
-    if (currentUser) return;
-    
     staffPressCount++;
+    console.log('DEL nhấn lần:', staffPressCount);
     
     if (staffPressCount === 1) {
-        // Bắt đầu đếm thời gian
         staffTimer = setTimeout(() => {
             staffPressCount = 0;
             updateSplashMessage("Nhấn DEL lần nữa để đăng nhập nhân viên");
@@ -83,10 +51,11 @@ function handleStaffDelKeyPress() {
         clearTimeout(staffTimer);
         staffPressCount = 0;
         
-        updateSplashMessage("Mở đăng nhập nhân viên...");
+        console.log('Mở đăng nhập nhân viên...');
+        updateSplashMessage("Đang mở đăng nhập nhân viên...");
+        
         setTimeout(() => {
             showLoginScreen();
-            // Chỉ hiển thị option STAFF
             document.getElementById('role').innerHTML = `
                 <option value="">-- Chọn vai trò --</option>
                 <option value="STAFF">Nhân viên (STAFF)</option>
@@ -113,7 +82,7 @@ function cancelLogin() {
     hideLoginScreen();
     if (!currentUser) {
         document.getElementById('splash-screen').classList.remove('hidden');
-        updateSplashMessage("Nhấn DEL hai lần cho nhân viên | Ctrl+C cho admin");
+        updateSplashMessage("Nhấn DEL 2 lần cho nhân viên | Ctrl 2 lần cho admin");
     }
 }
 
@@ -189,7 +158,10 @@ function showDefaultView() {
 
 // ========== CHUYỂN VIEW ==========
 function switchView(viewId) {
-    if (!currentUser) return;
+    if (!currentUser) {
+        console.error('currentUser không tồn tại khi switchView');
+        return;
+    }
     
     currentView = viewId;
     
@@ -289,18 +261,19 @@ function handleLogout() {
     currentUser = null;
     currentView = 'welcome';
     staffPressCount = 0;
+    ctrlPressCount = 0;
     
     document.getElementById('main-app').classList.add('hidden');
     document.getElementById('splash-screen').classList.remove('hidden');
     document.getElementById('login-form').reset();
     
     // Reset splash message
-    updateSplashMessage("Nhấn DEL hai lần cho nhân viên | Ctrl+C cho admin");
+    updateSplashMessage("Nhấn DEL 2 lần cho nhân viên | Ctrl 2 lần cho admin");
 }
 
 // ========== MÀN HÌNH KHỞI ĐỘNG ==========
 function startSplashScreen() {
-    updateSplashMessage("Nhấn DEL hai lần cho nhân viên | Ctrl+C cho admin");
+    updateSplashMessage("Nhấn DEL 2 lần cho nhân viên | Ctrl 2 lần cho admin");
     
     setTimeout(() => {
         if (!currentUser) {
@@ -309,47 +282,95 @@ function startSplashScreen() {
     }, 5000);
 }
 
-// ========== HÀM TIỆN ÍCH ==========
-function updateSplashMessage(message) {
-    const hintElement = document.querySelector('.splash-message .hint');
-    if (hintElement) {
-        hintElement.textContent = message;
-    }
-}
-
-function updateLoginHint(message) {
-    const loginFooter = document.querySelector('.login-footer');
-    if (loginFooter) {
-        const existingHint = loginFooter.querySelector('.login-hint');
-        if (existingHint) {
-            existingHint.remove();
-        }
-        
-        const hintElement = document.createElement('p');
-        hintElement.className = 'login-hint';
-        hintElement.style.color = '#e91e63';
-        hintElement.style.fontWeight = 'bold';
-        hintElement.style.marginTop = '10px';
-        hintElement.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
-        loginFooter.appendChild(hintElement);
-    }
-}
-
-// ========== HÀM KHỞI TẠO (TÙY CHỌN) ==========
+// ========== KHỞI TẠO ỨNG DỤNG ==========
 function initializeApp() {
     console.log('Khởi tạo ứng dụng...');
-    
-    // Kiểm tra dữ liệu
-    if (typeof appData === 'undefined') {
-        console.warn('appData chưa được khai báo');
-    }
-    
-    if (typeof APP_CONFIG === 'undefined') {
-        console.warn('APP_CONFIG chưa được khai báo');
-    }
-    
-    console.log('App đã sẵn sàng!');
+    console.log('currentUser:', currentUser);
+    console.log('APP_CONFIG:', APP_CONFIG ? 'Có' : 'Không có');
+    console.log('appData:', appData ? 'Có' : 'Không có');
 }
 
-// Gọi khởi tạo (có thể gọi từ đây hoặc từ DOMContentLoaded)
-initializeApp();
+// ========== THIẾT LẬP EVENT LISTENERS ==========
+function setupEventListeners() {
+    console.log('Thiết lập event listeners...');
+    
+    // Xử lý phím Ctrl 2 lần để vào admin
+    document.addEventListener('keydown', function(event) {
+        // Kiểm tra phím Ctrl
+        if (event.key === 'Control' || event.key === 'Ctrl') {
+            event.preventDefault(); // Ngăn menu trình duyệt
+            
+            ctrlPressCount++;
+            console.log('Ctrl nhấn lần:', ctrlPressCount);
+            
+            if (ctrlPressCount === 1) {
+                ctrlPressTimer = setTimeout(() => {
+                    ctrlPressCount = 0;
+                    updateSplashMessage("Nhấn Ctrl lần nữa để vào admin");
+                }, 2000);
+                
+                updateSplashMessage("Đã nhấn Ctrl lần 1, nhấn lần nữa trong 2 giây");
+            } else if (ctrlPressCount === 2) {
+                clearTimeout(ctrlPressTimer);
+                ctrlPressCount = 0;
+                
+                // Chỉ xử lý khi chưa đăng nhập
+                if (!currentUser) {
+                    console.log('Mở đăng nhập admin...');
+                    updateSplashMessage("Đang mở đăng nhập admin...");
+                    
+                    setTimeout(() => {
+                        showLoginScreen();
+                        document.getElementById('role').innerHTML = `
+                            <option value="">-- Chọn vai trò --</option>
+                            <option value="ADMIN">Quản trị viên (ADMIN)</option>
+                        `;
+                        updateLoginHint("Chế độ quản trị - Nhấn Ctrl 2 lần");
+                    }, 300);
+                }
+            }
+            return;
+        }
+        
+        // DEL cho nhân viên (chỉ khi chưa đăng nhập)
+        if (!currentUser && (event.key === 'Delete' || event.key === 'Del')) {
+            handleStaffDelKeyPress();
+        }
+    });
+    
+    // Form đăng nhập
+    const loginForm = document.getElementById('login-form');
+    const cancelBtn = document.getElementById('cancel-login');
+    const logoutBtn = document.getElementById('logout-btn');
+    
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+        console.log('Đã thêm listener cho login form');
+    } else {
+        console.warn('Không tìm thấy login form');
+    }
+    
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', cancelLogin);
+        console.log('Đã thêm listener cho cancel button');
+    }
+    
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout);
+        console.log('Đã thêm listener cho logout button');
+    }
+}
+
+// ========== BẮT ĐẦU KHI DOM SẴN SÀNG ==========
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM đã sẵn sàng');
+    console.log('Biến currentUser hiện tại:', currentUser);
+    
+    initializeApp();
+    setupEventListeners();
+    startSplashScreen();
+});
+
+// ========== CÁC HÀM KHÔNG SỬ DỤNG ==========
+// Xóa các hàm không sử dụng trong config.js hoặc file khác
+// KHÔNG để hàm initializeApp() trong config.js

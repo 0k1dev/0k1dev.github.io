@@ -23,9 +23,18 @@
             </div>
         </div>
     </div>
-<audio controls loop style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
+<audio id="player" controls loop autoplay muted style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
   <source src="1.mp3" type="audio/mpeg">
 </audio>
+
+<script>
+  // Sau khi trang load, thử bật tiếng (nếu được)
+  window.addEventListener('click', function () {
+    const audio = document.getElementById('player');
+    audio.muted = false;      // mở tiếng
+    audio.play();             // play
+  });
+</script>
     <!-- Màn hình đăng nhập -->
     <div id="login-screen" class="login-screen hidden">
         <div class="login-container">

@@ -1,0 +1,29 @@
+body {
+  background: #0f172a;
+  color: #e5e7eb;
+  font-family: monospace;
+  text-align: center;
+}
+
+header {
+  padding: 30px;
+}
+
+.btn {
+  display: inline-block;
+  padding: 15px 30px;
+  background: #38bdf8;
+  color: black;
+  font-weight: bold;
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.whitepaper {
+  text-align: left;
+  background: #020617;
+  padding: 30px;
+  margin: 30px;
+  border-radius: 12px;
+  white-space: pre-wrap;
+}

@@ -1,47 +1,160 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>HKT Token Whitepaper</title>
-<link rel="stylesheet" href="assets/css/style.css">
+  <meta charset="UTF-8">
+  <title>HKT Token Whitepaper</title>
+  <style>
+    body {
+      background: #ffffff;
+      color: #000000;
+      font-family: "Times New Roman", serif;
+      line-height: 1.6;
+      margin: 60px;
+    }
+    h1, h2, h3 {
+      font-weight: normal;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    h2 {
+      margin-top: 50px;
+      border-bottom: 1px solid #000;
+      padding-bottom: 5px;
+    }
+    p {
+      text-align: justify;
+    }
+    ul {
+      margin-left: 40px;
+    }
+    .abstract {
+      font-style: italic;
+      margin-bottom: 40px;
+    }
+    .footer {
+      margin-top: 80px;
+      font-size: 14px;
+      color: #333;
+    }
+  </style>
 </head>
 <body>
 
-<pre class="whitepaper">
-1. Introduction
-HKT Token is a digital asset designed for mining-based distribution and community growth.
+<h1>HKT Token: A Peer-to-Peer Mining-Based Digital Asset System</h1>
 
-2. Token Information
-Name: HKT Token
-Symbol: HKT
-Total Supply: 100,000,000,000 HKT
+<div class="abstract">
+<p><strong>Abstract.</strong> This paper introduces HKT Token, a peer-to-peer digital asset system designed for gradual issuance through mining, without reliance on centralized authorities. Inspired by the original Bitcoin whitepaper (2008), HKT Token emphasizes simplicity, deterministic rules, and cryptographic verification to enable a transparent and sustainable digital value system.</p>
+</div>
 
-3. Distribution
-- Mining: 70%
-- Ecosystem Development: 20%
-- Burn Reserve: 10%
+<h2>1. Introduction</h2>
+<p>
+Commerce on the Internet has come to rely almost exclusively on financial institutions serving as trusted third parties to process electronic payments. While these systems function adequately, they suffer from inherent weaknesses of trust-based models. Bitcoin demonstrated that cryptographic proof, instead of trust, could enable secure peer-to-peer value transfer.
+</p>
+<p>
+HKT Token follows this foundational approach by proposing a mining-based digital asset system where issuance, validation, and accounting are governed by deterministic rules rather than centralized control.
+</p>
 
-4. Mining Mechanism
-Users can mine up to 300 HKT per day.
-Mining speed can be increased by purchasing mining packages in the app.
+<h2>2. Design Philosophy</h2>
+<ul>
+  <li>Decentralization: No single authority controls issuance or balances.</li>
+  <li>Deterministic Issuance: Token creation follows predefined and predictable rules.</li>
+  <li>Transparency: System logic and documentation are publicly verifiable.</li>
+  <li>Minimalism: Reduced complexity to limit attack surfaces.</li>
+</ul>
 
-5. Burn Mechanism
-Tokens will be burned periodically to reduce circulating supply.
+<h2>3. Token Specification</h2>
+<ul>
+  <li><strong>Name:</strong> HKT Token</li>
+  <li><strong>Symbol:</strong> HKT</li>
+  <li><strong>Total Supply:</strong> 100,000,000,000 HKT</li>
+  <li><strong>Divisibility:</strong> 8 decimal places</li>
+  <li><strong>Initial Supply:</strong> 0</li>
+</ul>
 
-6. Use Cases
-- App Mining
-- AI Ecosystem
-- Digital Rewards
-- Community Incentives
+<h2>4. Issuance Mechanism</h2>
+<h3>4.1 Mining Model</h3>
+<p>
+Participants operate an official mining client to receive rewards under protocol-defined conditions.
+</p>
+<ul>
+  <li>Maximum reward: 300 HKT per participant per 24-hour period</li>
+  <li>No pre-mined allocation</li>
+  <li>Rewards are rate-limited and verifiable</li>
+</ul>
 
-7. Roadmap
-Phase 1: Mining App Release
-Phase 2: Wallet & Transfer System
-Phase 3: Node & Blockchain Expansion
+<h3>4.2 Mining Efficiency Adjustment</h3>
+<p>
+Optional efficiency mechanisms may allow participants to reach daily limits faster without altering total supply or issuance rules.
+</p>
 
-8. Disclaimer
-HKT Token is an experimental digital asset and does not represent any financial security.
-</pre>
+<h2>5. Supply Reduction (Burn Mechanism)</h2>
+<ul>
+  <li>Burned tokens are permanently removed from circulation</li>
+  <li>Burn events are irreversible and publicly documented</li>
+</ul>
+
+<h2>6. Formal Protocol Rules</h2>
+<h3>6.1 Monetary Rules</h3>
+<ul>
+  <li>Total supply is strictly capped at 100,000,000,000 HKT</li>
+  <li>No mechanism exists to exceed this limit</li>
+  <li>Tokens are created exclusively through mining</li>
+</ul>
+
+<h3>6.2 Issuance Rules</h3>
+<ul>
+  <li>Maximum issuance of 300 HKT per participant per 24 hours</li>
+  <li>Duplicate reward claims are invalid</li>
+  <li>All issuance events are deterministic and verifiable</li>
+</ul>
+
+<h3>6.3 Burn Rules</h3>
+<ul>
+  <li>Burn events permanently reduce circulating supply</li>
+  <li>Burned tokens cannot be recovered</li>
+</ul>
+
+<h3>6.4 Validity Rules</h3>
+<p>
+A reward or transaction is valid if and only if it complies with all monetary, issuance, and integrity rules. Invalid events are rejected by protocol logic.
+</p>
+
+<h2>7. Technical Architecture</h2>
+<ul>
+  <li>Mining client (desktop-based)</li>
+  <li>Local wallet with encrypted key storage</li>
+  <li>Ledger and verification logic</li>
+</ul>
+
+<h2>8. Security Considerations</h2>
+<ul>
+  <li>Local wallet encryption</li>
+  <li>Hash-based verification</li>
+  <li>Protection against duplicate issuance</li>
+</ul>
+
+<h2>9. Use Cases</h2>
+<ul>
+  <li>Mining-based reward systems</li>
+  <li>Application-level utility</li>
+  <li>Experimental blockchain research</li>
+</ul>
+
+<h2>10. Governance</h2>
+<p>
+Protocol changes are implemented conservatively and documented publicly, prioritizing long-term stability over rapid iteration.
+</p>
+
+<h2>11. Disclaimer</h2>
+<p>
+HKT Token is an experimental digital system intended for research and educational purposes. It does not represent equity, securities, or investment products.
+</p>
+
+<div class="footer">
+<p>© 2025 HKT Token Project</p>
+</div>
 
 </body>
 </html>

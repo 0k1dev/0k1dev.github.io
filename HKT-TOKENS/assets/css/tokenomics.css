@@ -1,1 +1,73 @@
 
+body {
+  background: #0b0b0b;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  margin: 0;
+}
+
+#tokenomics {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.circle-container {
+  position: relative;
+  width: 260px;
+  height: 260px;
+  margin: 30px auto;
+}
+
+svg {
+  transform: rotate(-90deg);
+}
+
+circle {
+  fill: none;
+  stroke-width: 18;
+}
+
+circle.bg {
+  stroke: #222;
+}
+
+.progress {
+  stroke-linecap: round;
+  stroke-dasharray: 691;
+  stroke-dashoffset: 691;
+  transition: stroke-dashoffset 1.8s ease;
+}
+
+.mining { stroke: #00ffcc; }
+.listing { stroke: #ffaa00; }
+.burning { stroke: #ff3366; }
+
+.center-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.center-text span {
+  font-size: 36px;
+  font-weight: bold;
+}
+
+.legend {
+  list-style: none;
+  padding: 0;
+}
+
+.legend li {
+  margin: 8px 0;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 8px;
+}

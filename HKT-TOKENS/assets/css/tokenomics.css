@@ -5,16 +5,11 @@ body {
   margin: 0;
 }
 
-#tokenomics {
-  text-align: center;
-  padding: 40px 20px;
-}
-
 .circle-container {
   position: relative;
   width: 260px;
   height: 260px;
-  margin: 30px auto;
+  margin: auto;
 }
 
 svg {
@@ -24,36 +19,47 @@ svg {
 circle {
   fill: none;
   stroke-width: 18;
-}
-
-circle.bg {
-  stroke: #222;
-}
-
-/* === VÒNG TOKENOMICS NHIỀU MÀU === */
-circle.multi {
   stroke-linecap: round;
-
-  /* Chu vi ~ 691 */
-  stroke-dasharray:
-    415  /* Mining 60% */
-    173  /* Listing 25% */
-    103; /* Burning 15% */
-
-  stroke-dashoffset: 691;
-  animation: drawCircle 2s ease forwards;
-
-  /* Gradient chia màu */
-  stroke: url(#tokenGradient);
 }
 
-/* Text giữa vòng */
+/* Chu vi = 2πr ≈ 691 */
+.bg {
+  stroke: #222;
+  stroke-dasharray: 691;
+}
+
+/* Mining – 60% */
+.mining {
+  stroke: #00ffcc;
+  stroke-dasharray: 415 276;
+  stroke-dashoffset: 0;
+  animation: draw 1.5s ease forwards;
+}
+
+/* Listing – 25% */
+.listing {
+  stroke: #ffaa00;
+  stroke-dasharray: 173 518;
+  stroke-dashoffset: -415;
+  animation: draw 1.5s ease forwards;
+}
+
+/* Burning – 15% */
+.burning {
+  stroke: #ff3366;
+  stroke-dasharray: 103 588;
+  stroke-dashoffset: -588;
+  animation: draw 1.5s ease forwards;
+}
+
+/* Text giữa */
 .center-text {
   position: absolute;
   inset: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
 }
 
 .center-text span {
@@ -61,19 +67,12 @@ circle.multi {
   font-weight: bold;
 }
 
-.center-text small {
-  opacity: 0.7;
-}
-
 /* Legend */
 .legend {
   list-style: none;
   padding: 0;
   margin-top: 20px;
-}
-
-.legend li {
-  margin: 8px 0;
+  text-align: center;
 }
 
 .dot {
@@ -81,7 +80,7 @@ circle.multi {
   height: 12px;
   border-radius: 50%;
   display: inline-block;
-  margin-right: 8px;
+  margin-right: 6px;
 }
 
 .dot.mining { background: #00ffcc; }
@@ -89,12 +88,7 @@ circle.multi {
 .dot.burning { background: #ff3366; }
 
 /* Animation */
-@keyframes drawCircle {
-  from {
-    stroke-dashoffset: 691;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
+@keyframes draw {
+  from { stroke-dashoffset: 691; }
+  to { stroke-dashoffset: inherit; }
 }
-

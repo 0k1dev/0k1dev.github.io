@@ -1,50 +1,272 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>HKT Tokenomics</title>
-  <link rel="stylesheet" href="css/tokenomics.css">
+<meta charset="UTF-8">
+<title>HKT Tokenomics</title>
+
+<style>
+/* ================== GLOBAL ================== */
+body {
+  background: #0b0b0b;
+  color: #ffffff;
+  font-family: Arial, sans-serif;
+  margin: 0;
+}
+
+section {
+  padding: 60px 40px;
+  max-width: 1100px;
+  margin: auto;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+/* ================== TOKENOMICS CIRCLE ================== */
+.circle-container {
+  position: relative;
+  width: 260px;
+  height: 260px;
+  margin: auto;
+}
+
+svg {
+  transform: rotate(-90deg);
+}
+
+circle {
+  fill: none;
+  stroke-width: 18;
+  stroke-linecap: round;
+}
+
+.bg {
+  stroke: #222;
+}
+
+.mining  { stroke: #00ffcc; }
+.listing { stroke: #ffaa00; }
+.burning { stroke: #ff3366; }
+
+.center-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.center-text span {
+  font-size: 42px;
+  font-weight: bold;
+}
+
+/* ================== LEGEND ================== */
+.legend {
+  list-style: none;
+  padding: 0;
+  margin: 20px auto 0;
+  max-width: 260px;
+}
+
+.legend li {
+  margin: 8px 0;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.dot.mining  { background: #00ffcc; }
+.dot.listing { background: #ffaa00; }
+.dot.burning { background: #ff3366; }
+
+/* ================== TIMELINE ================== */
+.timeline {
+  border-left: 2px solid #333;
+  padding-left: 30px;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 40px;
+}
+
+.timeline-item .dot {
+  position: absolute;
+  left: -41px;
+  top: 8px;
+}
+
+.timeline-item .content {
+  background: #111;
+  padding: 18px 22px;
+  border-radius: 12px;
+}
+
+/* ================== PACKAGES ================== */
+.packages {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.pack {
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 14px;
+  padding: 24px;
+  width: 240px;
+  text-align: center;
+}
+
+.pack.highlight {
+  border-color: #00ffcc;
+  box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
+}
+
+.pack .price {
+  font-size: 26px;
+  color: #00ffcc;
+  margin: 10px 0;
+}
+</style>
 </head>
+
 <body>
 
-<section id="tokenomics">
-  <h2>📊 HKT Token Distribution</h2>
+<!-- ================== TOKENOMICS ================== -->
+<section>
+  <h2>📊 HKT Tokenomics</h2>
 
-  <div class="tokenomics-wrap">
-    <div class="spacer"></div>
+  <div class="circle-container">
+    <svg width="260" height="260">
+      <circle class="bg" cx="130" cy="130" r="110" />
+      <circle class="mining"  cx="130" cy="130" r="110" />
+      <circle class="listing" cx="130" cy="130" r="110" />
+      <circle class="burning" cx="130" cy="130" r="110" />
+    </svg>
 
-    <div class="circle-box">
-      <div class="circle-container">
-        <svg width="260" height="260">
-          <!-- background -->
-          <circle class="bg" cx="130" cy="130" r="110" />
+    <div class="center-text">
+      <span id="percent">0%</span>
+      <small>Total Supply</small>
+    </div>
+  </div>
 
-          <!-- Mining 60% -->
-          <circle class="mining" cx="130" cy="130" r="110" />
+  <ul class="legend">
+    <li><span class="dot mining"></span> Mining – 60%</li>
+    <li><span class="dot listing"></span> Listing – 25%</li>
+    <li><span class="dot burning"></span> Burning – 15%</li>
+  </ul>
+</section>
 
-          <!-- Listing 25% -->
-          <circle class="listing" cx="130" cy="130" r="110" />
+<!-- ================== TIMELINE ================== -->
+<section>
+  <h2>🧭 Roadmap & Timeline</h2>
 
-          <!-- Burning 15% -->
-          <circle class="burning" cx="130" cy="130" r="110" />
-        </svg>
-
-        <div class="center-text">
-          <span>100%</span>
-          <small>Total Supply</small>
-        </div>
+  <div class="timeline">
+    <div class="timeline-item">
+      <span class="dot mining"></span>
+      <div class="content">
+        <h3>⛏️ Mining Phase</h3>
+        <p>300 HKT/day • Halving mỗi năm • Boost bằng gói đào</p>
       </div>
+    </div>
 
-      <ul class="legend">
-        <li><span class="dot mining"></span> Mining – 60%</li>
-        <li><span class="dot listing"></span> Listing – 25%</li>
-        <li><span class="dot burning"></span> Burning – 15%</li>
-      </ul>
+    <div class="timeline-item">
+      <span class="dot burning"></span>
+      <div class="content">
+        <h3>🔥 Burning Events</h3>
+        <p>Burn hàng quý từ phí • Burn lớn sau mỗi lần listing</p>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <span class="dot listing"></span>
+      <div class="content">
+        <h3>📈 Exchange Listing</h3>
+        <p>DEX → CEX Tier 2 → CEX Tier 1</p>
+      </div>
     </div>
   </div>
 </section>
 
+<!-- ================== PACKAGES ================== -->
+<section>
+  <h2>⚡ Mining Packages</h2>
 
-<script src="js/tokenomics.js"></script>
+  <div class="packages">
+    <div class="pack">
+      <h3>Free</h3>
+      <div class="price">$0</div>
+      <p>300 HKT / day<br>Standard speed</p>
+    </div>
+
+    <div class="pack highlight">
+      <h3>Starter</h3>
+      <div class="price">$29</div>
+      <p>1,200 HKT / day<br>4x speed • 30 days</p>
+    </div>
+
+    <div class="pack">
+      <h3>Pro</h3>
+      <div class="price">$99</div>
+      <p>5,000 HKT / day<br>16x speed • 90 days</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================== SCRIPT ================== -->
+<script>
+const radius = 110;
+const circumference = 2 * Math.PI * radius;
+
+const data = {
+  mining: 0.6,
+  listing: 0.25,
+  burning: 0.15
+};
+
+const mining  = document.querySelector('.mining');
+const listing = document.querySelector('.listing');
+const burning = document.querySelector('.burning');
+const percent = document.getElementById('percent');
+
+[mining, listing, burning].forEach(c => {
+  c.style.strokeDasharray = circumference;
+  c.style.strokeDashoffset = circumference;
+});
+
+setTimeout(() => {
+  mining.style.strokeDashoffset =
+    circumference * (1 - data.mining);
+}, 300);
+
+setTimeout(() => {
+  listing.style.strokeDashoffset =
+    circumference * (1 - (data.mining + data.listing));
+}, 800);
+
+setTimeout(() => {
+  burning.style.strokeDashoffset =
+    circumference * (1 - (data.mining + data.listing + data.burning));
+}, 1300);
+
+// Counter %
+let p = 0;
+const timer = setInterval(() => {
+  percent.innerText = p + '%';
+  if (p++ >= 100) clearInterval(timer);
+}, 20);
+</script>
+
 </body>
 </html>

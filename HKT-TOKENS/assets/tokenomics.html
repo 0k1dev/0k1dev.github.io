@@ -257,34 +257,42 @@ circle{
 </section>
 
 <script>
-const HOUR = 3600000;
-const INCREASE = 100000;
+/* ===== CONFIG ===== */
+const THREE_HOURS = 3 * 60 * 60 * 1000; // 3 giờ
+const INCREASE = 100000;               // +100k USD
+const START_AMOUNT = 100000;           // vốn ban đầu
+const START_TIME = new Date("2025-01-01T00:00:00Z").getTime(); 
+// 👉 có thể đổi mốc này nếu muốn
 
+/* ===== LOAD DATA ===== */
 let data = JSON.parse(localStorage.getItem("hkt_raised"));
 
-if(!data){
+if (!data) {
   data = {
-    amount: Math.floor(Math.random() * 900000) + 100000,
-    last: Date.now()
+    amount: START_AMOUNT,
+    lastUpdate: START_TIME
   };
+  localStorage.setItem("hkt_raised", JSON.stringify(data));
 }
 
-function updateRaised(){
+/* ===== UPDATE LOGIC ===== */
+function updateRaised() {
   const now = Date.now();
-  const hoursPassed = Math.floor((now - data.last) / HOUR);
+  const periodsPassed = Math.floor((now - data.lastUpdate) / THREE_HOURS);
 
-  if(hoursPassed > 0){
-    data.amount += hoursPassed * INCREASE;
-    data.last += hoursPassed * HOUR;
+  if (periodsPassed > 0) {
+    data.amount += periodsPassed * INCREASE;
+    data.lastUpdate += periodsPassed * THREE_HOURS;
     localStorage.setItem("hkt_raised", JSON.stringify(data));
   }
 
   document.getElementById("raised").innerText =
-    "$" + data.amount.toLocaleString();
+    "$" + data.amount.toLocaleString("en-US");
 }
 
+/* ===== INIT ===== */
 updateRaised();
-setInterval(updateRaised, 60000);
+setInterval(updateRaised, 60000); // check mỗi phút
 </script>
 
 </body>

@@ -10,27 +10,40 @@
 <section id="tokenomics">
   <h2>📊 HKT Token Distribution</h2>
 
-  <div class="circle-container">
-    <svg width="260" height="260" viewBox="0 0 260 260">
-      <circle cx="130" cy="130" r="110" class="bg" />
+  <div class="tokenomics-wrap">
+    <div class="spacer"></div>
 
-      <circle cx="130" cy="130" r="110" class="progress mining" />
-      <circle cx="130" cy="130" r="110" class="progress listing" />
-      <circle cx="130" cy="130" r="110" class="progress burning" />
-    </svg>
+    <div class="circle-box">
+      <div class="circle-container">
+        <svg width="260" height="260">
+          <!-- background -->
+          <circle class="bg" cx="130" cy="130" r="110" />
 
-    <div class="center-text">
-      <span id="percent">0%</span>
-      <small>Total Supply</small>
+          <!-- Mining 60% -->
+          <circle class="mining" cx="130" cy="130" r="110" />
+
+          <!-- Listing 25% -->
+          <circle class="listing" cx="130" cy="130" r="110" />
+
+          <!-- Burning 15% -->
+          <circle class="burning" cx="130" cy="130" r="110" />
+        </svg>
+
+        <div class="center-text">
+          <span>100%</span>
+          <small>Total Supply</small>
+        </div>
+      </div>
+
+      <ul class="legend">
+        <li><span class="dot mining"></span> Mining – 60%</li>
+        <li><span class="dot listing"></span> Listing – 25%</li>
+        <li><span class="dot burning"></span> Burning – 15%</li>
+      </ul>
     </div>
   </div>
-
-  <ul class="legend">
-    <li><span class="dot mining"></span> Mining – 60%</li>
-    <li><span class="dot listing"></span> Listing – 25%</li>
-    <li><span class="dot burning"></span> Burning – 15%</li>
-  </ul>
 </section>
+
 
 <script src="js/tokenomics.js"></script>
 </body>

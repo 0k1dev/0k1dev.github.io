@@ -5,6 +5,31 @@ body {
   margin: 0;
 }
 
+#tokenomics {
+  padding: 40px;
+}
+
+#tokenomics h2 {
+  font-size: 26px;
+  margin-bottom: 30px;
+}
+
+/* Layout */
+.tokenomics-wrap {
+  display: flex;
+  justify-content: space-between;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.circle-box {
+  width: 360px;
+  text-align: center;
+}
+
+/* Circle */
 .circle-container {
   position: relative;
   width: 260px;
@@ -22,37 +47,37 @@ circle {
   stroke-linecap: round;
 }
 
-/* Chu vi = 2πr ≈ 691 */
+/* Chu vi ≈ 691 */
 .bg {
   stroke: #222;
   stroke-dasharray: 691;
 }
 
-/* Mining – 60% */
+/* Mining 60% */
 .mining {
   stroke: #00ffcc;
   stroke-dasharray: 415 276;
   stroke-dashoffset: 0;
-  animation: draw 1.5s ease forwards;
+  animation: draw 1.6s ease forwards;
 }
 
-/* Listing – 25% */
+/* Listing 25% */
 .listing {
   stroke: #ffaa00;
   stroke-dasharray: 173 518;
   stroke-dashoffset: -415;
-  animation: draw 1.5s ease forwards;
+  animation: draw 1.6s ease forwards;
 }
 
-/* Burning – 15% */
+/* Burning 15% */
 .burning {
   stroke: #ff3366;
   stroke-dasharray: 103 588;
   stroke-dashoffset: -588;
-  animation: draw 1.5s ease forwards;
+  animation: draw 1.6s ease forwards;
 }
 
-/* Text giữa */
+/* Center text */
 .center-text {
   position: absolute;
   inset: 0;
@@ -63,7 +88,7 @@ circle {
 }
 
 .center-text span {
-  font-size: 36px;
+  font-size: 42px;
   font-weight: bold;
 }
 
@@ -72,7 +97,12 @@ circle {
   list-style: none;
   padding: 0;
   margin-top: 20px;
-  text-align: center;
+  text-align: left;
+}
+
+.legend li {
+  margin: 6px 0;
+  font-size: 16px;
 }
 
 .dot {
@@ -80,7 +110,7 @@ circle {
   height: 12px;
   border-radius: 50%;
   display: inline-block;
-  margin-right: 6px;
+  margin-right: 8px;
 }
 
 .dot.mining { background: #00ffcc; }

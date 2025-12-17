@@ -1,4 +1,3 @@
-
 body {
   background: #0b0b0b;
   color: #fff;
@@ -31,17 +30,24 @@ circle.bg {
   stroke: #222;
 }
 
-.progress {
+/* === VÒNG TOKENOMICS NHIỀU MÀU === */
+circle.multi {
   stroke-linecap: round;
-  stroke-dasharray: 691;
+
+  /* Chu vi ~ 691 */
+  stroke-dasharray:
+    415  /* Mining 60% */
+    173  /* Listing 25% */
+    103; /* Burning 15% */
+
   stroke-dashoffset: 691;
-  transition: stroke-dashoffset 1.8s ease;
+  animation: drawCircle 2s ease forwards;
+
+  /* Gradient chia màu */
+  stroke: url(#tokenGradient);
 }
 
-.mining { stroke: #00ffcc; }
-.listing { stroke: #ffaa00; }
-.burning { stroke: #ff3366; }
-
+/* Text giữa vòng */
 .center-text {
   position: absolute;
   inset: 0;
@@ -55,9 +61,15 @@ circle.bg {
   font-weight: bold;
 }
 
+.center-text small {
+  opacity: 0.7;
+}
+
+/* Legend */
 .legend {
   list-style: none;
   padding: 0;
+  margin-top: 20px;
 }
 
 .legend li {
@@ -71,3 +83,18 @@ circle.bg {
   display: inline-block;
   margin-right: 8px;
 }
+
+.dot.mining { background: #00ffcc; }
+.dot.listing { background: #ffaa00; }
+.dot.burning { background: #ff3366; }
+
+/* Animation */
+@keyframes drawCircle {
+  from {
+    stroke-dashoffset: 691;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+

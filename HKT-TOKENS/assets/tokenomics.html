@@ -23,6 +23,25 @@ h2{
   margin-bottom:40px;
 }
 
+/* ===== RAISING ===== */
+.raising{
+  text-align:center;
+  margin-bottom:20px;
+}
+
+.raising small{
+  color:#aaa;
+  letter-spacing:2px;
+}
+
+.raising span{
+  display:block;
+  font-size:34px;
+  font-weight:bold;
+  color:#00ffcc;
+  margin-top:6px;
+}
+
 /* ===== TOKENOMICS CIRCLE ===== */
 .circle-container{
   position:relative;
@@ -143,24 +162,25 @@ circle{
 <section>
 <h2>📊 HKT Tokenomics</h2>
 
+<!-- RAISING -->
+<div class="raising">
+  <small>RAISED</small>
+  <span id="raised">$0</span>
+</div>
+
 <div class="circle-container">
 <svg width="280" height="280">
-  <!-- background -->
   <circle class="bg" cx="140" cy="140" r="110" />
 
-  <!-- Mining 60% -->
   <circle class="mining"
     cx="140" cy="140" r="110"
-    stroke-dasharray="415 276"
-    stroke-dashoffset="0" />
+    stroke-dasharray="415 276" />
 
-  <!-- Listing 25% -->
   <circle class="listing"
     cx="140" cy="140" r="110"
     stroke-dasharray="173 518"
     stroke-dashoffset="-415" />
 
-  <!-- Burning 15% -->
   <circle class="burning"
     cx="140" cy="140" r="110"
     stroke-dasharray="103 588"
@@ -189,7 +209,7 @@ circle{
     <span class="dot mining"></span>
     <div class="content">
       <h3>⛏️ Mining</h3>
-      <p>300 HKT/day • Halving mỗi năm • Gói đào tăng tốc</p>
+      <p>3 HKT/day • Halving mỗi năm • Gói đào tăng tốc</p>
     </div>
   </div>
 
@@ -230,11 +250,42 @@ circle{
 
   <div class="pack">
     <h3>Pro</h3>
-    <div class="price">$300</div>
+    <div class="price">$299</div>
     <p>3,000 HKT / day<br>100x speed</p>
   </div>
 </div>
 </section>
+
+<script>
+const HOUR = 3600000;
+const INCREASE = 100000;
+
+let data = JSON.parse(localStorage.getItem("hkt_raised"));
+
+if(!data){
+  data = {
+    amount: Math.floor(Math.random() * 900000) + 100000,
+    last: Date.now()
+  };
+}
+
+function updateRaised(){
+  const now = Date.now();
+  const hoursPassed = Math.floor((now - data.last) / HOUR);
+
+  if(hoursPassed > 0){
+    data.amount += hoursPassed * INCREASE;
+    data.last += hoursPassed * HOUR;
+    localStorage.setItem("hkt_raised", JSON.stringify(data));
+  }
+
+  document.getElementById("raised").innerText =
+    "$" + data.amount.toLocaleString();
+}
+
+updateRaised();
+setInterval(updateRaised, 60000);
+</script>
 
 </body>
 </html>

@@ -2,86 +2,145 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8" />
-<title>ATC 2D – Prototype</title>
+<title>ATC 2D – Full Prototype</title>
 <style>
-body{margin:0;background:#0b0b0b;color:#fff;font-family:Arial}
-#ui{display:flex;gap:10px;padding:10px}
-.panel{background:#151515;border:1px solid #333;border-radius:6px;padding:8px;width:200px}
+body{margin:0;background:#020617;color:#e5e7eb;font-family:Arial}
+#layout{display:flex;height:100vh}
+#game{flex:1;background:#020617}
+#ui{width:280px;background:#020617;border-left:2px solid #1f2937;display:flex;flex-direction:column;gap:8px;padding:8px}
+.panel{background:#111827;border:1px solid #374151;border-radius:6px;padding:6px;flex:1;display:flex;flex-direction:column}
 .panel h3{margin:0 0 6px;font-size:14px;text-align:center}
-.list{min-height:120px;border:1px dashed #444;padding:4px}
-#game{display:block;margin:10px auto;border:1px solid #333;background:#0f172a}
-.item{background:#1f2937;margin:4px;padding:4px;font-size:12px;cursor:grab}
+.list{flex:1;border:1px dashed #4b5563;padding:4px;overflow:auto}
+.item{background:#1f2937;margin:4px;padding:4px;font-size:12px;cursor:grab;border-radius:4px}
+.legend{font-size:11px;color:#9ca3af;text-align:center}
 </style>
 </head>
 <body>
+<div id="layout">
+<canvas id="game" width="1200" height="700"></canvas>
 <div id="ui">
-  <div class="panel"><h3>Chờ trên không</h3><div id="air" class="list"></div></div>
-  <div class="panel"><h3>Đang đỗ</h3><div id="parked" class="list"></div></div>
-  <div class="panel"><h3>Cất cánh</h3><div id="takeoff" class="list"></div></div>
-  <div class="panel"><h3>Hạ cánh</h3><div id="landing" class="list"></div></div>
+  <div class="panel"><h3>✈ AIR</h3><div id="air" class="list"></div><div class="legend">Holding</div></div>
+  <div class="panel"><h3>🛬 LAND</h3><div id="landing" class="list"></div><div class="legend">RWY 10 / 10R</div></div>
+  <div class="panel"><h3>🅿 PARK</h3><div id="parked" class="list"></div><div class="legend">Apron / Stands</div></div>
+  <div class="panel"><h3>🛫 DEP</h3><div id="takeoff" class="list"></div><div class="legend">Taxi → RWY</div></div>
 </div>
-<canvas id="game" width="1000" height="600"></canvas>
+</div>
+
 <script>
+// ================= CANVAS =================
 const canvas=document.getElementById('game');
 const ctx=canvas.getContext('2d');
 
-// ====== MAP ======
+// ================= MAP =================
+// Runways (song song)
 const runways=[
- {id:'10',x:650,y:120,w:300,h:40},
- {id:'10R',x:650,y:200,w:300,h:40}
+ {id:'10',x:450,y:160,w:650,h:50},
+ {id:'10R',x:450,y:240,w:650,h:50}
 ];
-const taxiLane={x:300,y:300,w:350,h:30};
+
+// Taxiway chính
+const taxiLane={x:250,y:360,w:500,h:30};
+
+// Apron
+const apron={x:80,y:420,w:300,h:200};
+
+// Stands 30
 const stands=[];
-for(let i=0;i<30;i++)stands.push({id:i,x:50+(i%10)*60,y:350+Math.floor(i/10)*60,w:40,h:40});
+for(let i=0;i<30;i++){
+ stands.push({
+  id:i,
+  x:90+(i%6)*45,
+  y:430+Math.floor(i/6)*45,
+  w:35,h:35
+ });
+}
 
-// ====== PLANES ======
+// Holding pattern
+const holding={x:200,y:120,r:60};
+
+// ================= AIRCRAFT =================
+class Aircraft{
+ constructor(id,x,y){
+  this.id=id;
+  this.x=x;this.y=y;
+  this.state='air';
+  this.speed=1.2;
+  this.path=[];
+ }
+ setTarget(target){
+  this.path=[{x:target.x+target.w/2,y:target.y+target.h/2}];
+ }
+ update(){
+  if(this.path.length>0){
+   const t=this.path[0];
+   const dx=t.x-this.x,dy=t.y-this.y;
+   const d=Math.hypot(dx,dy);
+   if(d>1){this.x+=dx/d*this.speed;this.y+=dy/d*this.speed}
+   else this.path.shift();
+  }
+ }
+ draw(){
+  ctx.fillStyle=this.state==='air'?'#38bdf8':this.state==='landing'?'#fb7185':'#facc15';
+  ctx.beginPath();ctx.arc(this.x,this.y,7,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#e5e7eb';ctx.font='11px Arial';ctx.fillText(this.id,this.x-12,this.y-10);
+ }
+}
+
 let planes=[];
-for(let i=0;i<5;i++)planes.push({id:'VN'+(100+i),x:100,y:80+i*30,state:'air',target:null});
+for(let i=0;i<8;i++)planes.push(new Aircraft('VN'+(100+i),120,80+i*25));
 
+// ================= DRAW MAP =================
 function drawMap(){
- ctx.fillStyle='#1e293b';
- ctx.fillRect(0,0,canvas.width,canvas.height);
- ctx.fillStyle='#374151';
- runways.forEach(r=>ctx.fillRect(r.x,r.y,r.w,r.h));
- ctx.fillRect(taxiLane.x,taxiLane.y,taxiLane.w,taxiLane.h);
- ctx.fillStyle='#065f46';
+ ctx.fillStyle='#020617';ctx.fillRect(0,0,canvas.width,canvas.height);
+
+ // Holding
+ ctx.strokeStyle='#38bdf8';ctx.setLineDash([6,6]);
+ ctx.beginPath();ctx.arc(holding.x,holding.y,holding.r,0,Math.PI*2);ctx.stroke();
+ ctx.setLineDash([]);ctx.fillText('HOLD',holding.x-18,holding.y-holding.r-5);
+
+ // Runways
+ ctx.fillStyle='#334155';
+ runways.forEach(r=>{
+  ctx.fillRect(r.x,r.y,r.w,r.h);
+  ctx.fillStyle='#e5e7eb';ctx.fillText(r.id,r.x+10,r.y+32);
+  ctx.fillStyle='#334155';
+ });
+
+ // Taxiway
+ ctx.fillStyle='#475569';ctx.fillRect(taxiLane.x,taxiLane.y,taxiLane.w,taxiLane.h);
+ ctx.fillText('TAXI',taxiLane.x+10,taxiLane.y+22);
+
+ // Apron
+ ctx.fillStyle='#064e3b';ctx.fillRect(apron.x,apron.y,apron.w,apron.h);
+ ctx.fillStyle='#a7f3d0';ctx.fillText('APRON',apron.x+10,apron.y+20);
+
+ // Stands
+ ctx.fillStyle='#16a34a';
  stands.forEach(s=>ctx.fillRect(s.x,s.y,s.w,s.h));
 }
 
-function drawPlanes(){
- planes.forEach(p=>{
-  ctx.fillStyle=p.state==='air'?'#38bdf8':'#facc15';
-  ctx.beginPath();ctx.arc(p.x,p.y,8,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#fff';ctx.fillText(p.id,p.x-10,p.y-12);
- });
+// ================= UPDATE LOOP =================
+function update(){planes.forEach(p=>p.update());}
+function draw(){
+ drawMap();
+ planes.forEach(p=>p.draw());
 }
+function loop(){update();draw();requestAnimationFrame(loop);}loop();
 
-function update(){
- planes.forEach(p=>{
-  if(p.target){
-   const dx=p.target.x-p.x;const dy=p.target.y-p.y;
-   const d=Math.hypot(dx,dy);
-   if(d>1){p.x+=dx/d;p.y+=dy/d}else p.target=null;
-  }
- });
-}
-
-function loop(){
- drawMap();update();drawPlanes();requestAnimationFrame(loop);
-}
-loop();
-
-// ====== UI ======
+// ================= UI DRAG DROP =================
 const panels={air,parked,takeoff,landing};
-function refresh(){Object.values(panels).forEach(p=>p.innerHTML='');
- planes.forEach(pl=>{
-  const div=document.createElement('div');
-  div.className='item';div.textContent=pl.id;
-  div.draggable=true;
-  div.ondragstart=e=>e.dataTransfer.setData('id',pl.id);
-  panels[pl.state].appendChild(div);
- });}
-refresh();
+
+function refreshUI(){
+ Object.values(panels).forEach(p=>p.innerHTML='');
+ planes.forEach(p=>{
+  const d=document.createElement('div');
+  d.className='item';d.textContent=p.id;
+  d.draggable=true;
+  d.ondragstart=e=>e.dataTransfer.setData('id',p.id);
+  panels[p.state].appendChild(d);
+ });
+}
+refreshUI();
 
 Object.entries(panels).forEach(([state,el])=>{
  el.ondragover=e=>e.preventDefault();
@@ -89,12 +148,30 @@ Object.entries(panels).forEach(([state,el])=>{
   const id=e.dataTransfer.getData('id');
   const p=planes.find(x=>x.id===id);
   p.state=state;
-  if(state==='landing')p.target=runways[0];
-  if(state==='parked')p.target=stands[Math.floor(Math.random()*stands.length)];
-  if(state==='takeoff')p.target=taxiLane;
-  refresh();
+  if(state==='landing'){
+   const r=runways[Math.floor(Math.random()*2)];
+   p.setTarget(r);
+  }
+  if(state==='parked'){
+   p.setTarget(stands[Math.floor(Math.random()*stands.length)]);
+  }
+  if(state==='takeoff'){
+   p.setTarget(taxiLane);
+  }
+  if(state==='air'){
+   p.setTarget({x:120,y:80,w:1,h:1});
+  }
+  refreshUI();
  };
 });
+
+// ================= AUTO TRAFFIC =================
+setInterval(()=>{
+ if(planes.length<15){
+  planes.push(new Aircraft('VN'+(100+planes.length),120,60));
+  refreshUI();
+ }
+},15000);
 </script>
 </body>
 </html>

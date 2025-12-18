@@ -2,239 +2,101 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8" />
-<title>ATC 2D – Full Prototype</title>
+<title>ATC 2D – Full Tower Simulation</title>
 <style>
-body{margin:0;background:#020617;color:#e5e7eb;font-family:Arial}
+body{margin:0;font-family:Arial;background:#020617;color:#e5e7eb}
 #layout{display:flex;height:100vh}
 #game{flex:1;background:#020617}
-#ui{width:280px;background:#020617;border-left:2px solid #1f2937;display:flex;flex-direction:column;gap:8px;padding:8px}
-.panel{background:#111827;border:1px solid #374151;border-radius:6px;padding:6px;flex:1;display:flex;flex-direction:column}
-.panel h3{margin:0 0 6px;font-size:14px;text-align:center}
-.list{flex:1;border:1px dashed #4b5563;padding:4px;overflow:auto}
-.item{background:#1f2937;margin:4px;padding:4px;font-size:12px;cursor:grab;border-radius:4px}
-.legend{font-size:11px;color:#9ca3af;text-align:center}
+#ui{width:320px;background:#020617;border-left:2px solid #1f2937;display:flex;flex-direction:column}
+.panel{flex:1;border-bottom:1px solid #1f2937;padding:6px}
+.panel h3{margin:4px 0;font-size:14px;text-align:center}
+.list{border:1px dashed #374151;min-height:80px;padding:4px}
+.item{background:#1f2937;margin:4px;padding:4px;font-size:12px;border-radius:4px;cursor:grab}
+#msg{height:48px;border-top:2px solid #1f2937;display:flex;align-items:center;justify-content:center;font-size:14px}
 </style>
 </head>
 <body>
 <div id="layout">
 <canvas id="game" width="1200" height="700"></canvas>
 <div id="ui">
-  <div class="panel"><h3>✈ AIR</h3><div id="air" class="list"></div><div class="legend">Holding</div></div>
-  <div class="panel"><h3>🛬 LAND</h3><div id="landing" class="list"></div><div class="legend">RWY 10 / 10R</div></div>
-  <div class="panel"><h3>🅿 PARK</h3><div id="parked" class="list"></div><div class="legend">Apron / Stands</div></div>
-  <div class="panel"><h3>🛫 DEP</h3><div id="takeoff" class="list"></div><div class="legend">Taxi → RWY</div></div>
+ <div class="panel"><h3>AIR</h3><div id="air" class="list"></div></div>
+ <div class="panel"><h3>LAND</h3><div id="landing" class="list"></div></div>
+ <div class="panel"><h3>PARK</h3><div id="parked" class="list"></div></div>
+ <div class="panel"><h3>DEP</h3><div id="takeoff" class="list"></div></div>
+ <div id="msg">ATC READY</div>
 </div>
 </div>
-
 <script>
 // ================= CANVAS =================
 const canvas=document.getElementById('game');
 const ctx=canvas.getContext('2d');
+const msgBox=document.getElementById('msg');
 
-// ================= MAP =================
-// Runways (song song)
-const runways=[
- {id:'10',x:450,y:160,w:650,h:50},
- {id:'10R',x:450,y:240,w:650,h:50}
-];
-
-// Taxiway chính
-const taxiLane={x:250,y:360,w:500,h:30};
-
-// Apron
-const apron={x:80,y:420,w:300,h:200};
-
-// Stands 30
-const stands=[];
+// ================= MAP DATA =================
+const runway={id:'10',x:300,y:260,w:700,h:50};
+const runwayR={id:'10R',x:300,y:340,w:700,h:50};
+const taxi={x:200,y:420,w:600,h:30};
+const apron={x:50,y:460,w:250,h:200};
+const gates=[];
 for(let i=0;i<30;i++){
- stands.push({
-  id:i,
-  x:90+(i%6)*45,
-  y:430+Math.floor(i/6)*45,
-  w:35,h:35
- });
+ gates.push({id:i+1,x:60+(i%6)*40,y:470+Math.floor(i/6)*40,w:30,h:30});
 }
-
-// Holding pattern
-const holding={x:200,y:120,r:60};
-
-// ================= ATC MESSAGE SYSTEM =================
-let currentClearance=null;
-let atcMessage='';
-let messageTimer=0;
-
-function showMessage(text,ok=true){
- atcMessage=text;
- messageTimer=180; // 3s
- messageColor=ok?'#22c55e':'#ef4444';
-}
-
-let messageColor='#22c55e';
-
-function issueClearance(type,aircraft,runway,gate){
- currentClearance={type,aircraft,runway,gate};
- showMessage(`ATC: ${aircraft} CLEARED ${type.toUpperCase()} RWY ${runway} GATE ${gate}`,true);
-}
-
-function checkReadback(aircraft,type,runway,gate){
- if(!currentClearance)return false;
- const ok=
-  aircraft===currentClearance.aircraft &&
-  type===currentClearance.type &&
-  runway===currentClearance.runway &&
-  gate===currentClearance.gate;
- if(ok){
-  showMessage(`READBACK CORRECT – ${aircraft} PROCEED`,true);
-  currentClearance=null;
-  return true;
- }
- showMessage(`READBACK INCORRECT – CLEARANCE DENIED`,false);
- return false;
-}
-
-// ================= AIRCRAFT =================
-let currentClearance=null;
-let radioLog=[];
-
-function issueClearance(type,aircraft,gate){
- currentClearance={type,aircraft,gate};
- radioLog.push(`ATC → ${aircraft}: ${type.toUpperCase()} CLEARED ${gate??''}`);
-}
-
-function pilotReadback(text){
- radioLog.push(text);
- if(!currentClearance)return false;
- const expect=currentClearance.aircraft;
- const ok=text.includes(expect) && text.toLowerCase().includes(currentClearance.type);
- if(ok){radioLog.push('ATC: READBACK CORRECT');currentClearance=null;return true;}
- radioLog.push('ATC: READBACK INCORRECT – CLEARANCE DENIED');
- return false;
-}
+const holding={x:180,y:150,r:70};
 
 // ================= AIRCRAFT =================
 class Aircraft{
- constructor(id,x,y){
-  this.id=id;
-  this.x=x;this.y=y;
-  this.state='air';
-  this.speed=1.2;
-  this.path=[];
+ constructor(id){
+  this.id=id;this.x=holding.x;this.y=holding.y;this.state='air';this.target=null;this.speed=1.4;this.clear=false;
  }
- setTarget(target){
-  this.path=[{x:target.x+target.w/2,y:target.y+target.h/2}];
- }
+ setTarget(t){this.target={x:t.x+t.w/2,y:t.y+t.h/2}}
  update(){
-  if(this.path.length>0){
-   const t=this.path[0];
-   const dx=t.x-this.x,dy=t.y-this.y;
+  if(this.target){
+   const dx=this.target.x-this.x,dy=this.target.y-this.y;
    const d=Math.hypot(dx,dy);
-   if(d>1){this.x+=dx/d*this.speed;this.y+=dy/d*this.speed}
-   else this.path.shift();
+   if(d>1){this.x+=dx/d*this.speed;this.y+=dy/d*this.speed}else this.target=null;
   }
  }
  draw(){
-  ctx.fillStyle=this.state==='air'?'#38bdf8':this.state==='landing'?'#fb7185':'#facc15';
+  ctx.fillStyle=this.clear?'#22c55e':'#facc15';
   ctx.beginPath();ctx.arc(this.x,this.y,7,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#e5e7eb';ctx.font='11px Arial';ctx.fillText(this.id,this.x-12,this.y-10);
+  ctx.fillStyle='#fff';ctx.fillText(this.id,this.x-10,this.y-10);
  }
 }
 
-let planes=[];
-for(let i=0;i<8;i++)planes.push(new Aircraft('VN'+(100+i),120,80+i*25));
+let planes=[new Aircraft('VN101'),new Aircraft('VN202')];
+
+// ================= ATC LOGIC =================
+let clearance=null;
+function issue(type,plane,gate){
+ clearance={type,plane,gate};
+ msgBox.textContent=`ATC: ${plane.id} CLEARED ${type.toUpperCase()} RWY 10 GATE ${gate}`;
+ msgBox.style.color='#22c55e';
+ plane.clear=true;
+ if(type==='landing')plane.setTarget(runway);
+ if(type==='park')plane.setTarget(gates[gate-1]);
+ if(type==='takeoff')plane.setTarget(taxi);
+}
 
 // ================= DRAW MAP =================
 function drawMap(){
  ctx.fillStyle='#020617';ctx.fillRect(0,0,canvas.width,canvas.height);
-
- // Holding
- ctx.strokeStyle='#38bdf8';ctx.setLineDash([6,6]);
- ctx.beginPath();ctx.arc(holding.x,holding.y,holding.r,0,Math.PI*2);ctx.stroke();
- ctx.setLineDash([]);ctx.fillText('HOLD',holding.x-18,holding.y-holding.r-5);
-
- // Runways
- ctx.fillStyle='#334155';
- runways.forEach(r=>{
-  ctx.fillRect(r.x,r.y,r.w,r.h);
-  ctx.fillStyle='#e5e7eb';ctx.fillText(r.id,r.x+10,r.y+32);
-  ctx.fillStyle='#334155';
- });
-
- // Taxiway
- ctx.fillStyle='#475569';ctx.fillRect(taxiLane.x,taxiLane.y,taxiLane.w,taxiLane.h);
- ctx.fillText('TAXI',taxiLane.x+10,taxiLane.y+22);
-
- // Apron
- ctx.fillStyle='#064e3b';ctx.fillRect(apron.x,apron.y,apron.w,apron.h);
- ctx.fillStyle='#a7f3d0';ctx.fillText('APRON',apron.x+10,apron.y+20);
-
- // Stands
- ctx.fillStyle='#16a34a';
- stands.forEach(s=>ctx.fillRect(s.x,s.y,s.w,s.h));
+ ctx.strokeStyle='#38bdf8';ctx.setLineDash([6,6]);ctx.beginPath();ctx.arc(holding.x,holding.y,holding.r,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+ ctx.fillText('HOLD',holding.x-20,holding.y-holding.r-5);
+ ctx.fillStyle='#334155';ctx.fillRect(runway.x,runway.y,runway.w,runway.h);ctx.fillRect(runwayR.x,runwayR.y,runwayR.w,runwayR.h);
+ ctx.fillStyle='#fff';ctx.fillText('RWY 10',runway.x+10,runway.y+32);ctx.fillText('RWY 10R',runwayR.x+10,runwayR.y+32);
+ ctx.fillStyle='#475569';ctx.fillRect(taxi.x,taxi.y,taxi.w,taxi.h);ctx.fillText('TAXI',taxi.x+10,taxi.y+22);
+ ctx.fillStyle='#064e3b';ctx.fillRect(apron.x,apron.y,apron.w,apron.h);ctx.fillStyle='#a7f3d0';ctx.fillText('APRON',apron.x+10,apron.y+20);
+ ctx.fillStyle='#16a34a';gates.forEach(g=>ctx.fillRect(g.x,g.y,g.w,g.h));
 }
 
-// ================= UPDATE LOOP =================
-function update(){planes.forEach(p=>p.update());}
-function draw(){
- drawMap();
- planes.forEach(p=>p.draw());
+// ================= LOOP =================
+function loop(){drawMap();planes.forEach(p=>{p.update();p.draw()});requestAnimationFrame(loop)}loop();
 
- // ATC MESSAGE OVERLAY
- if(messageTimer>0){
-  ctx.fillStyle='rgba(0,0,0,0.6)';
-  ctx.fillRect(200,20,800,40);
-  ctx.fillStyle=messageColor;
-  ctx.font='16px Arial';
-  ctx.fillText(atcMessage,220,47);
-  messageTimer--;
- }
-}
-function loop(){update();draw();requestAnimationFrame(loop);}loop();
-
-// ================= UI DRAG DROP =================
-const panels={air,parked,takeoff,landing};
-
-function refreshUI(){
- Object.values(panels).forEach(p=>p.innerHTML='');
- planes.forEach(p=>{
-  const d=document.createElement('div');
-  d.className='item';d.textContent=p.id;
-  d.draggable=true;
-  d.ondragstart=e=>e.dataTransfer.setData('id',p.id);
-  panels[p.state].appendChild(d);
- });
-}
-refreshUI();
-
-Object.entries(panels).forEach(([state,el])=>{
- el.ondragover=e=>e.preventDefault();
- el.ondrop=e=>{
-  const id=e.dataTransfer.getData('id');
-  const p=planes.find(x=>x.id===id);
-  p.state=state;
-  if(state==='landing'){
-   const r=runways[Math.floor(Math.random()*2)];
-   p.setTarget(r);
-  }
-  if(state==='parked'){
-   p.setTarget(stands[Math.floor(Math.random()*stands.length)]);
-  }
-  if(state==='takeoff'){
-   p.setTarget(taxiLane);
-  }
-  if(state==='air'){
-   p.setTarget({x:120,y:80,w:1,h:1});
-  }
-  refreshUI();
- };
-});
-
-// ================= AUTO TRAFFIC =================
-setInterval(()=>{
- if(planes.length<15){
-  planes.push(new Aircraft('VN'+(100+planes.length),120,60));
-  refreshUI();
- }
-},15000);
+// ================= UI =================
+const panels={air,landing,parked,takeoff};
+function refresh(){Object.values(panels).forEach(p=>p.innerHTML='');planes.forEach(pl=>{const d=document.createElement('div');d.className='item';d.textContent=pl.id;d.draggable=true;d.ondragstart=e=>e.dataTransfer.setData('id',pl.id);panels[pl.state].appendChild(d)})}
+refresh();
+Object.entries(panels).forEach(([state,el])=>{el.ondragover=e=>e.preventDefault();el.ondrop=e=>{const id=e.dataTransfer.getData('id');const p=planes.find(x=>x.id===id);p.state=state;if(state==='landing')issue('landing',p,1);if(state==='parked')issue('park',p,Math.floor(Math.random()*30)+1);if(state==='takeoff')issue('takeoff',p,0);refresh()}});
 </script>
 </body>
 </html>

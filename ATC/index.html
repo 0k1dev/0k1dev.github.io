@@ -58,7 +58,41 @@ for(let i=0;i<30;i++){
 // Holding pattern
 const holding={x:200,y:120,r:60};
 
-// ================= ATC RADIO =================
+// ================= ATC MESSAGE SYSTEM =================
+let currentClearance=null;
+let atcMessage='';
+let messageTimer=0;
+
+function showMessage(text,ok=true){
+ atcMessage=text;
+ messageTimer=180; // 3s
+ messageColor=ok?'#22c55e':'#ef4444';
+}
+
+let messageColor='#22c55e';
+
+function issueClearance(type,aircraft,runway,gate){
+ currentClearance={type,aircraft,runway,gate};
+ showMessage(`ATC: ${aircraft} CLEARED ${type.toUpperCase()} RWY ${runway} GATE ${gate}`,true);
+}
+
+function checkReadback(aircraft,type,runway,gate){
+ if(!currentClearance)return false;
+ const ok=
+  aircraft===currentClearance.aircraft &&
+  type===currentClearance.type &&
+  runway===currentClearance.runway &&
+  gate===currentClearance.gate;
+ if(ok){
+  showMessage(`READBACK CORRECT – ${aircraft} PROCEED`,true);
+  currentClearance=null;
+  return true;
+ }
+ showMessage(`READBACK INCORRECT – CLEARANCE DENIED`,false);
+ return false;
+}
+
+// ================= AIRCRAFT =================
 let currentClearance=null;
 let radioLog=[];
 
@@ -143,6 +177,16 @@ function update(){planes.forEach(p=>p.update());}
 function draw(){
  drawMap();
  planes.forEach(p=>p.draw());
+
+ // ATC MESSAGE OVERLAY
+ if(messageTimer>0){
+  ctx.fillStyle='rgba(0,0,0,0.6)';
+  ctx.fillRect(200,20,800,40);
+  ctx.fillStyle=messageColor;
+  ctx.font='16px Arial';
+  ctx.fillText(atcMessage,220,47);
+  messageTimer--;
+ }
 }
 function loop(){update();draw();requestAnimationFrame(loop);}loop();
 

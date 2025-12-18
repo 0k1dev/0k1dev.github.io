@@ -58,6 +58,25 @@ for(let i=0;i<30;i++){
 // Holding pattern
 const holding={x:200,y:120,r:60};
 
+// ================= ATC RADIO =================
+let currentClearance=null;
+let radioLog=[];
+
+function issueClearance(type,aircraft,gate){
+ currentClearance={type,aircraft,gate};
+ radioLog.push(`ATC → ${aircraft}: ${type.toUpperCase()} CLEARED ${gate??''}`);
+}
+
+function pilotReadback(text){
+ radioLog.push(text);
+ if(!currentClearance)return false;
+ const expect=currentClearance.aircraft;
+ const ok=text.includes(expect) && text.toLowerCase().includes(currentClearance.type);
+ if(ok){radioLog.push('ATC: READBACK CORRECT');currentClearance=null;return true;}
+ radioLog.push('ATC: READBACK INCORRECT – CLEARANCE DENIED');
+ return false;
+}
+
 // ================= AIRCRAFT =================
 class Aircraft{
  constructor(id,x,y){

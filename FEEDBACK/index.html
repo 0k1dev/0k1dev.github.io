@@ -1,1 +1,149 @@
 
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Xem sản phẩm & Feedback</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+    margin:0;
+    font-family:Arial, Helvetica, sans-serif;
+    background:#0b0b0b;
+    color:#fff;
+}
+
+h2{
+    text-align:center;
+    margin:20px 0;
+    color:#38bdf8;
+}
+
+/* Gallery */
+.gallery{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:15px;
+    padding:20px;
+}
+
+.gallery img{
+    width:100%;
+    border-radius:10px;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.gallery img:hover{
+    transform:scale(1.05);
+}
+
+/* Viewer */
+.viewer{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.85);
+    justify-content:center;
+    align-items:center;
+}
+
+.viewer-content{
+    background:#020617;
+    padding:20px;
+    border-radius:12px;
+    max-width:600px;
+    width:90%;
+}
+
+.viewer-content img{
+    width:100%;
+    border-radius:10px;
+}
+
+/* Feedback */
+textarea{
+    width:100%;
+    margin-top:10px;
+    padding:10px;
+    border-radius:6px;
+    border:none;
+    background:#020617;
+    color:#fff;
+    border:1px solid #334155;
+}
+
+button{
+    margin-top:10px;
+    padding:10px;
+    width:100%;
+    background:#22c55e;
+    border:none;
+    border-radius:8px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.close{
+    background:#ef4444;
+}
+</style>
+</head>
+<body>
+
+<h2>📸 Sản phẩm / Hình ảnh sau kỳ thi</h2>
+
+<div class="gallery">
+    <img src="static/images/sp1.jpg" onclick="openViewer(this.src)">
+    <img src="static/images/sp2.jpg" onclick="openViewer(this.src)">
+    <img src="static/images/sp3.jpg" onclick="openViewer(this.src)">
+</div>
+
+<!-- Viewer -->
+<div class="viewer" id="viewer">
+    <div class="viewer-content">
+        <img id="viewImg">
+        <textarea id="comment" placeholder="Nhận xét của bạn về hình ảnh này..."></textarea>
+        <button onclick="sendFeedback()">Gửi feedback</button>
+        <button class="close" onclick="closeViewer()">Đóng</button>
+    </div>
+</div>
+
+<script>
+let currentImage = "";
+
+function openViewer(src){
+    currentImage = src;
+    document.getElementById("viewImg").src = src;
+    document.getElementById("viewer").style.display="flex";
+}
+
+function closeViewer(){
+    document.getElementById("viewer").style.display="none";
+    document.getElementById("comment").value="";
+}
+
+function sendFeedback(){
+    const feedback = {
+        image: currentImage,
+        comment: document.getElementById("comment").value,
+        time: new Date().toLocaleString()
+    };
+
+    if(!feedback.comment){
+        alert("Vui lòng nhập feedback!");
+        return;
+    }
+
+    let list = JSON.parse(localStorage.getItem("image_feedback") || "[]");
+    list.push(feedback);
+    localStorage.setItem("image_feedback", JSON.stringify(list));
+
+    alert("✔️ Đã gửi feedback");
+    closeViewer();
+}
+</script>
+
+</body>
+</html>

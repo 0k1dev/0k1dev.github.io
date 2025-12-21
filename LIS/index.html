@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS Listening Player</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .player-container {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Progress Bar Styles */
+        .progress-area {
+            height: 6px;
+            width: 100%;
+            background: #e2e8f0;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+
+        .progress-bar {
+            height: inherit;
+            width: 0%;
+            background: var(--primary-color);
+            border-radius: inherit;
+            position: relative;
+        }
+
+        .timer {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-bottom: 2rem;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .btn-control {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-main);
+            font-size: 1.2rem;
+            transition: transform 0.2s, color 0.2s;
+        }
+
+        .btn-control:hover {
+            color: var(--primary-color);
+            transform: scale(1.1);
+        }
+
+        .play-pause {
+            width: 60px;
+            height: 60px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .play-pause:hover {
+            background: #1d4ed8;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="player-container">
+    <div class="header">
+        <h1>IELTS Listening Practice</h1>
+        <p>File: 1.mp3</p>
+    </div>
+
+    <audio id="main-audio" src="1.mp3"></audio>
+
+    <div class="progress-area">
+        <div class="progress-bar"></div>
+    </div>
+    <div class="timer">
+        <span class="current">0:00</span>
+        <span class="duration">0:00</span>
+    </div>
+
+    <div class="controls">
+        <button class="btn-control" id="rewind" title="Lùi 10s"><i class="fas fa-backward-step"></i> -10s</button>
+        <button class="btn-control play-pause" id="play-btn">
+            <i class="fas fa-play"></i>
+        </button>
+        <button class="btn-control" id="forward" title="Tiến 10s">+10s <i class="fas fa-forward-step"></i></button>
+    </div>
+</div>
+
+<script>
+    const wrapper = document.querySelector(".player-container"),
+    mainAudio = wrapper.querySelector("#main-audio"),
+    playPauseBtn = wrapper.querySelector("#play-btn"),
+    progressBar = wrapper.querySelector(".progress-bar"),
+    progressArea = wrapper.querySelector(".progress-area");
+
+    // Play/Pause function
+    playPauseBtn.addEventListener("click", () => {
+        const isMusicPaused = wrapper.classList.contains("paused");
+        isMusicPaused ? pauseMusic() : playMusic();
+    });
+
+    function playMusic() {
+        wrapper.classList.add("paused");
+        playPauseBtn.querySelector("i").classList.replace("fa-play", "fa-pause");
+        mainAudio.play();
+    }
+
+    function pauseMusic() {
+        wrapper.classList.remove("paused");
+        playPauseBtn.querySelector("i").classList.replace("fa-pause", "fa-play");
+        mainAudio.pause();
+    }
+
+    // Update progress bar
+    mainAudio.addEventListener("timeupdate", (e) => {
+        const currentTime = e.target.currentTime;
+        const duration = e.target.duration;
+        let progressWidth = (currentTime / duration) * 100;
+        progressBar.style.width = `${progressWidth}%`;
+
+        let musicCurrentTime = wrapper.querySelector(".current"),
+            musicDuration = wrapper.querySelector(".duration");
+
+        mainAudio.addEventListener("loadeddata", () => {
+            let audioDuration = mainAudio.duration;
+            let totalMin = Math.floor(audioDuration / 60);
+            let totalSec = Math.floor(audioDuration % 60);
+            if(totalSec < 10) totalSec = `0${totalSec}`;
+            musicDuration.innerText = `${totalMin}:${totalSec}`;
+        });
+
+        let currentMin = Math.floor(currentTime / 60);
+        let currentSec = Math.floor(currentTime % 60);
+        if(currentSec < 10) currentSec = `0${currentSec}`;
+        musicCurrentTime.innerText = `${currentMin}:${currentSec}`;
+    });
+
+    // Seek music
+    progressArea.addEventListener("click", (e) => {
+        let progressWidthval = progressArea.clientWidth;
+        let clickedOffSetX = e.offsetX;
+        let songDuration = mainAudio.duration;
+        mainAudio.currentTime = (clickedOffSetX / progressWidthval) * songDuration;
+        playMusic();
+    });
+
+    // Forward/Rewind 10s
+    document.getElementById("forward").addEventListener("click", () => {
+        mainAudio.currentTime += 10;
+    });
+
+    document.getElementById("rewind").addEventListener("click", () => {
+        mainAudio.currentTime -= 10;
+    });
+</script>
+
+</body>
+</html>

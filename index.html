@@ -34,29 +34,6 @@ header p{
     font-size:18px;
 }
 
-.wallet-box{
-    margin-top:25px;
-}
-.wallet-btn{
-    padding:14px 30px;
-    border:none;
-    border-radius:50px;
-    background:#00e5ff;
-    color:#000;
-    font-weight:bold;
-    cursor:pointer;
-    box-shadow:0 0 20px #00e5ff;
-}
-.wallet-btn:hover{
-    box-shadow:0 0 35px #00e5ff;
-}
-#walletAddress{
-    margin-top:15px;
-    font-size:14px;
-    opacity:0.8;
-    word-break:break-all;
-}
-
 section{
     max-width:1100px;
     margin:auto;
@@ -223,24 +200,6 @@ lưu lịch sử giao dịch – phù hợp shop & dịch vụ.
 💬 Facebook
 </a>
 
-<script>
-let web3;
-async function connectWallet(){
-    if(window.ethereum){
-        try{
-            await window.ethereum.request({ method: "eth_requestAccounts" });
-            web3 = new Web3(window.ethereum);
-            const accounts = await web3.eth.getAccounts();
-            document.getElementById("walletAddress").innerText =
-              "Ví đã kết nối: " + accounts[0];
-        }catch(err){
-            alert("Bạn đã từ chối kết nối ví");
-        }
-    }else{
-        alert("Vui lòng cài MetaMask");
-    }
-}
-</script>
 
 </body>
 </html>

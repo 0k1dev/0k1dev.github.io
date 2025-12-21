@@ -3,7 +3,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Xem sản phẩm & Feedback</title>
+<title>Feedback</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -92,58 +92,20 @@ button{
 </head>
 <body>
 
-<h2>📸 Sản phẩm / Hình ảnh sau kỳ thi</h2>
+<h2>📸 Hình ảnh FEEDBACK sau kỳ thi</h2>
 
 <div class="gallery">
-    <img src="static/images/sp1.jpg" onclick="openViewer(this.src)">
-    <img src="static/images/sp2.jpg" onclick="openViewer(this.src)">
-    <img src="static/images/sp3.jpg" onclick="openViewer(this.src)">
+    <img src="sp1.jpg" onclick="openViewer(this.src)">
+    <img src="sp2.jpg" onclick="openViewer(this.src)">
+    <img src="sp3.jpg" onclick="openViewer(this.src)">
+    <img src="sp4.jpg" onclick="openViewer(this.src)">
+    <img src="sp5.jpg" onclick="openViewer(this.src)">
+    <img src="sp6.jpg" onclick="openViewer(this.src)">
+    <img src="sp7.jpg" onclick="openViewer(this.src)">
+    <img src="sp8.jpg" onclick="openViewer(this.src)">
 </div>
 
 <!-- Viewer -->
-<div class="viewer" id="viewer">
-    <div class="viewer-content">
-        <img id="viewImg">
-        <textarea id="comment" placeholder="Nhận xét của bạn về hình ảnh này..."></textarea>
-        <button onclick="sendFeedback()">Gửi feedback</button>
-        <button class="close" onclick="closeViewer()">Đóng</button>
-    </div>
-</div>
-
-<script>
-let currentImage = "";
-
-function openViewer(src){
-    currentImage = src;
-    document.getElementById("viewImg").src = src;
-    document.getElementById("viewer").style.display="flex";
-}
-
-function closeViewer(){
-    document.getElementById("viewer").style.display="none";
-    document.getElementById("comment").value="";
-}
-
-function sendFeedback(){
-    const feedback = {
-        image: currentImage,
-        comment: document.getElementById("comment").value,
-        time: new Date().toLocaleString()
-    };
-
-    if(!feedback.comment){
-        alert("Vui lòng nhập feedback!");
-        return;
-    }
-
-    let list = JSON.parse(localStorage.getItem("image_feedback") || "[]");
-    list.push(feedback);
-    localStorage.setItem("image_feedback", JSON.stringify(list));
-
-    alert("✔️ Đã gửi feedback");
-    closeViewer();
-}
-</script>
 
 </body>
 </html>

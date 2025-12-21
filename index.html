@@ -2,8 +2,11 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>HKT PROJECTS</title>
+<title>HKT PROJECTS | WEB3</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- WEB3 -->
+<script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
 
 <style>
 body{
@@ -15,15 +18,43 @@ body{
 header{
     padding:60px 20px;
     text-align:center;
-    background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+    background:
+      radial-gradient(circle at top,#00e5ff33,transparent 60%),
+      linear-gradient(135deg,#0f2027,#203a43,#2c5364);
 }
 header h1{
-    font-size:40px;
+    font-size:42px;
     margin-bottom:10px;
+    background:linear-gradient(90deg,#00e5ff,#7cff00);
+    -webkit-background-clip:text;
+    color:transparent;
 }
 header p{
-    opacity:0.8;
+    opacity:0.85;
     font-size:18px;
+}
+
+.wallet-box{
+    margin-top:25px;
+}
+.wallet-btn{
+    padding:14px 30px;
+    border:none;
+    border-radius:50px;
+    background:#00e5ff;
+    color:#000;
+    font-weight:bold;
+    cursor:pointer;
+    box-shadow:0 0 20px #00e5ff;
+}
+.wallet-btn:hover{
+    box-shadow:0 0 35px #00e5ff;
+}
+#walletAddress{
+    margin-top:15px;
+    font-size:14px;
+    opacity:0.8;
+    word-break:break-all;
 }
 
 section{
@@ -91,6 +122,14 @@ footer{
 <header>
     <h1>HKT ECOSYSTEM</h1>
     <p>Blockchain • Esports • App • Công nghệ</p>
+
+    <!-- WALLET -->
+    <div class="wallet-box">
+        <button class="wallet-btn" onclick="connectWallet()">
+            🔗 KẾT NỐI VÍ
+        </button>
+        <div id="walletAddress"></div>
+    </div>
 </header>
 
 <section>
@@ -136,28 +175,44 @@ Tham gia scrim, giải phong trào và bán chuyên.
 <h3>🧾 APP BILL & HÓA ĐƠN</h3>
 <p>
 Ứng dụng tạo bill và hóa đơn bán hàng:
-- Xuất hóa đơn nhanh
-- QR thanh toán
-- Lưu lịch sử giao dịch
+- Xuất hóa đơn nhanh<br>
+- QR thanh toán<br>
+- Lưu lịch sử giao dịch<br>
 - Phù hợp shop, cửa hàng, dịch vụ online
 </p>
-</div>
-
 </div>
 
 </div>
 </section>
 
 <footer>
-© 2025 HKT PROJECTS | Build with ❤️ by HKT Team
+© 2025 HKT PROJECTS | Web3 Ready
 </footer>
 
-<!-- ZALO LINK -->
-<a class="zalo-btn" 
-   href="https://zalo.me/0868085409" 
-   target="_blank">
+<!-- ZALO -->
+<a class="zalo-btn" href="https://zalo.me/0868085409" target="_blank">
 💬 Zalo
 </a>
+
+<script>
+let web3;
+
+async function connectWallet(){
+    if(window.ethereum){
+        try{
+            await window.ethereum.request({ method: "eth_requestAccounts" });
+            web3 = new Web3(window.ethereum);
+            const accounts = await web3.eth.getAccounts();
+            document.getElementById("walletAddress").innerText =
+              "Ví đã kết nối: " + accounts[0];
+        }catch(err){
+            alert("Bạn đã từ chối kết nối ví");
+        }
+    }else{
+        alert("Vui lòng cài MetaMask để sử dụng Web3");
+    }
+}
+</script>
 
 </body>
 </html>

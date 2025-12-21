@@ -94,6 +94,30 @@ h2{
     opacity:0.85;
 }
 
+.card img{
+    width:100%;
+    height:160px;
+    object-fit:cover;
+    border-radius:12px;
+    margin-bottom:15px;
+    transition:0.4s;
+}
+.card:hover img{
+    transform:scale(1.05);
+}
+
+/* FEEDBACK STYLE */
+.feedback{
+    background:linear-gradient(135deg,#0d2a33,#112f3a);
+    border:1px solid rgba(0,229,255,0.25);
+}
+.feedback span{
+    display:block;
+    font-size:14px;
+    opacity:0.7;
+    margin-top:10px;
+}
+
 footer{
     text-align:center;
     padding:30px;
@@ -102,7 +126,7 @@ footer{
 }
 
 /* ZALO FLOAT BUTTON */
-.zalo-btn{
+.facebook-btn{
     position:fixed;
     right:20px;
     bottom:20px;
@@ -114,19 +138,6 @@ footer{
     font-weight:bold;
     box-shadow:0 0 15px rgba(0,104,255,0.5);
 }
-
-.card img{
-    width:100%;
-    height:160px;
-    object-fit:cover;
-    border-radius:12px;
-    margin-bottom:15px;
-    transition:0.4s;
-}
-
-.card:hover img{
-    transform:scale(1.05);
-}
 </style>
 </head>
 
@@ -134,21 +145,11 @@ footer{
 
 <header>
     <h1>HKT ECOSYSTEM</h1>
-    <p>Blockchain • Esports • App • Công nghệ</p>
-
-    <!-- WALLET -->
-    <div class="wallet-box">
-        <button class="wallet-btn" onclick="connectWallet()">
-            🔗 KẾT NỐI VÍ
-        </button>
-        <div id="walletAddress"></div>
-    </div>
+    <p>Blockchain • Esports • App • Công nghệ • FEEDBACK • NEWS</p>
 </header>
 
 <section>
 <h2>DỰ ÁN CỦA CHÚNG TÔI</h2>
-
-<div class="projects">
 
 <div class="projects">
 
@@ -157,8 +158,7 @@ footer{
 <h3>💠 HKT-TOKEN</h3>
 <p>
 HKT-TOKEN là dự án token blockchain định hướng ứng dụng thực tế,
-xây dựng cộng đồng mạnh, minh bạch và phát triển lâu dài.
-Token được sử dụng trong hệ sinh thái game, app và dịch vụ của HKT.
+xây dựng cộng đồng minh bạch và phát triển lâu dài.
 </p>
 </div>
 
@@ -166,8 +166,8 @@ Token được sử dụng trong hệ sinh thái game, app và dịch vụ của
 <img src="assets/lienquan-htk.jpg" alt="Liên Quân HTK">
 <h3>🎮 LIÊN QUÂN HTK</h3>
 <p>
-Đội tuyển Liên Quân Mobile HTK được xây dựng với mục tiêu thi đấu chuyên nghiệp,
-đào tạo thành viên từ cơ bản đến nâng cao, hướng tới giải đấu lớn và cộng đồng Esports.
+Đội tuyển Liên Quân Mobile HTK thi đấu chuyên nghiệp,
+đào tạo bài bản và hướng tới các giải đấu lớn.
 </p>
 </div>
 
@@ -175,9 +175,8 @@ Token được sử dụng trong hệ sinh thái game, app và dịch vụ của
 <img src="assets/pubg-mobile-htk.jpg" alt="PUBG Mobile HTK">
 <h3>🔥 PUBG MOBILE HTK</h3>
 <p>
-PUBG Mobile HTK là team thi đấu chiến thuật,
-kỷ luật và phối hợp đội hình chặt chẽ.
-Tham gia scrim, giải phong trào và bán chuyên.
+Team PUBG Mobile với chiến thuật chặt chẽ,
+tham gia scrim và giải phong trào – bán chuyên.
 </p>
 </div>
 
@@ -185,24 +184,32 @@ Tham gia scrim, giải phong trào và bán chuyên.
 <img src="assets/pubg-pc-htk.jpg" alt="PUBG PC HTK">
 <h3>🖥️ PUBG PC HTK</h3>
 <p>
-Đội hình PUBG PC HTK tập trung lối chơi chiến thuật cao,
-định hướng thi đấu nghiêm túc và phát triển lâu dài trong cộng đồng PUBG PC.
+Đội hình PUBG PC định hướng thi đấu nghiêm túc,
+phát triển lâu dài trong cộng đồng PUBG PC.
 </p>
 </div>
 
 <div class="card">
-<img src="assets/app-bill.jpg" alt="App Bill & Hóa đơn">
+<img src="assets/app-bill.jpg" alt="App Bill">
 <h3>🧾 APP BILL & HÓA ĐƠN</h3>
 <p>
-Ứng dụng tạo bill và hóa đơn bán hàng:<br>
-- Xuất hóa đơn nhanh<br>
-- QR thanh toán<br>
-- Lưu lịch sử giao dịch<br>
-- Phù hợp shop, cửa hàng, dịch vụ online
+Ứng dụng tạo hóa đơn nhanh, QR thanh toán,
+lưu lịch sử giao dịch – phù hợp shop & dịch vụ.
 </p>
 </div>
 
-</div>
+<!-- FEEDBACK CARD -->
+<a href="https://0k1.github.io/FEEDBACK" target="_blank" style="text-decoration:none;color:inherit;">
+  <div class="card feedback">
+    <h3>⭐ FEEDBACK</h3>
+    <p>
+    Feedback điểm số từ học viên cho thấy kết quả đánh giá chính xác,
+    thể hiện đúng trình độ sau quá trình học tập và kiểm tra.
+    Hệ thống chấm điểm minh bạch, ổn định và hỗ trợ phản hồi nhanh chóng.
+</p>
+    <span>👉 Xem chi tiết phản hồi</span>
+  </div>
+</a>
 
 
 </div>
@@ -212,14 +219,12 @@ Tham gia scrim, giải phong trào và bán chuyên.
 © 2025 HKT PROJECTS
 </footer>
 
-<!-- ZALO -->
-<a class="zalo-btn" href="https://zalo.me/0868085409" target="_blank">
+<a class="facebook-btn" href="https://www.facebook.com/Hiy.Jon" target="_blank">
 💬 Zalo
 </a>
 
 <script>
 let web3;
-
 async function connectWallet(){
     if(window.ethereum){
         try{
@@ -232,7 +237,7 @@ async function connectWallet(){
             alert("Bạn đã từ chối kết nối ví");
         }
     }else{
-        alert("Vui lòng cài MetaMask để sử dụng Web3");
+        alert("Vui lòng cài MetaMask");
     }
 }
 </script>

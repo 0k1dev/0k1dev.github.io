@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Carom 3 Băng – Pro</title>
+<title>Carom 3 Băng – Pro (Slow Motion)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -75,10 +75,8 @@ canvas{
 
 <script>
 /* ===== QR ===== */
-const BANK_ID="ACB";
-const ACCOUNT_NO="43146717";
 document.getElementById("vietqr").src =
-  `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?addInfo=Donate+Carom+3+Bang`;
+  "https://img.vietqr.io/image/ACB-43146717-compact2.png?addInfo=Donate+Carom+3+Bang";
 
 /* ===== CANVAS ===== */
 const c=document.getElementById("c");
@@ -87,7 +85,16 @@ const ctx=c.getContext("2d");
 /* ===== CONST ===== */
 const R=10;
 const FRICTION=0.992;
-const MAX_POWER=140;
+const MAX_POWER=160;
+
+/* ===== SLOW MOTION ===== */
+let TIME_SCALE = 1;
+let slowTimer = 0;
+
+function triggerSlow(){
+  TIME_SCALE = 0.25;      // tốc độ slow
+  slowTimer = 35;        // thời gian slow (~0.6s)
+}
 
 /* ===== BALL ===== */
 class Ball{
@@ -137,6 +144,7 @@ function drawBall(b){
 /* ===== PREDICT ===== */
 function drawPredict(){
   if(!showCue) return;
+
   let x=white.x,y=white.y;
   let dx=aimX-white.x, dy=aimY-white.y;
   let len=Math.hypot(dx,dy)||1;
@@ -159,7 +167,7 @@ function drawPredict(){
   ctx.setLineDash([]);
 }
 
-/* ===== CUE (FIX XOAY & KHOẢNG CÁCH) ===== */
+/* ===== CUE ===== */
 function drawCue(){
   if(!showCue) return;
 
@@ -185,6 +193,8 @@ function collide(a,b){
   const dist=Math.hypot(dx,dy);
   if(dist>=2*R||dist===0) return;
 
+  triggerSlow();
+
   const nx=dx/dist, ny=dy/dist;
   const tx=-ny, ty=nx;
 
@@ -193,7 +203,7 @@ function collide(a,b){
   const dpNormA=a.vx*nx+a.vy*ny;
   const dpNormB=b.vx*nx+b.vy*ny;
 
-  const REST=0.97;
+  const REST=0.98;
 
   a.vx=tx*dpTanA+nx*dpNormB*REST;
   a.vy=ty*dpTanA+ny*dpNormB*REST;
@@ -216,15 +226,18 @@ function update(){
   drawDots();
 
   balls.forEach(b=>{
-    b.x+=b.vx; b.y+=b.vy;
-    b.vx*=FRICTION; b.vy*=FRICTION;
+    b.x += b.vx * TIME_SCALE;
+    b.y += b.vy * TIME_SCALE;
+
+    b.vx *= Math.pow(FRICTION, TIME_SCALE);
+    b.vy *= Math.pow(FRICTION, TIME_SCALE);
 
     if(Math.hypot(b.vx,b.vy)<0.02) b.vx=b.vy=0;
 
-    if(b.x<R){b.x=R;b.vx=Math.abs(b.vx); if(b===white) cushionCount++}
-    if(b.x>c.width-R){b.x=c.width-R;b.vx=-Math.abs(b.vx); if(b===white) cushionCount++}
-    if(b.y<R){b.y=R;b.vy=Math.abs(b.vy); if(b===white) cushionCount++}
-    if(b.y>c.height-R){b.y=c.height-R;b.vy=-Math.abs(b.vy); if(b===white) cushionCount++}
+    if(b.x<R){b.x=R;b.vx=Math.abs(b.vx); if(b===white){cushionCount++;triggerSlow();}}
+    if(b.x>c.width-R){b.x=c.width-R;b.vx=-Math.abs(b.vx); if(b===white){cushionCount++;triggerSlow();}}
+    if(b.y<R){b.y=R;b.vy=Math.abs(b.vy); if(b===white){cushionCount++;triggerSlow();}}
+    if(b.y>c.height-R){b.y=c.height-R;b.vy=-Math.abs(b.vy); if(b===white){cushionCount++;triggerSlow();}}
   });
 
   collide(white,red);
@@ -239,16 +252,15 @@ function update(){
   ctx.font="18px Arial";
   ctx.fillText("SCORE: "+score,20,30);
 
-  if(
-    cushionCount>=3 &&
-    hitRed &&
-    hitYellow &&
-    white.vx===0 &&
-    white.vy===0
-  ){
+  if(cushionCount>=3 && hitRed && hitYellow && white.vx===0 && white.vy===0){
     score++;
     cushionCount=0;
     hitRed=hitYellow=false;
+  }
+
+  if(slowTimer>0){
+    slowTimer--;
+    if(slowTimer===0) TIME_SCALE=1;
   }
 
   requestAnimationFrame(update);
@@ -283,7 +295,7 @@ window.addEventListener("keyup",e=>{
   if(e.code==="Space"&&showCue){
     let dx=aimX-white.x, dy=aimY-white.y;
     let len=Math.hypot(dx,dy)||1;
-    let force=power*0.35;
+    let force=power*0.38;
     white.vx=(dx/len)*force;
     white.vy=(dy/len)*force;
     power=0; charging=false; showCue=false; aiming=false;

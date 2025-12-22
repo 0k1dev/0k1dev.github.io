@@ -15,24 +15,17 @@ body{
   flex-direction:column;
   align-items:center;
 }
-
-h1{ color:#00e5ff; margin:10px 0 }
-
-#wrap{
-  position:relative;
-}
-
+h1{color:#00e5ff;margin:10px}
 canvas{
   background:#145214;
   border:18px solid #5b2c06;
   border-radius:12px;
 }
-
 #powerBox{
-  margin-top:10px;
   width:300px;
   height:12px;
   background:#333;
+  margin-top:10px;
   border-radius:6px;
   overflow:hidden;
 }
@@ -41,33 +34,27 @@ canvas{
   width:0%;
   background:linear-gradient(90deg,#00ffcc,#ff0044);
 }
-
-.info{
-  margin-top:8px;
-  font-size:15px;
-}
+.info{margin-top:8px;font-size:15px}
 </style>
 </head>
 
 <body>
 
 <h1>🎱 Carom 3 Băng – Training</h1>
-
-<div id="wrap">
 <canvas id="table" width="900" height="450"></canvas>
+<div id="powerBox"><div id="power"></div></div>
+<div class="info" id="info">
+  Click bi trắng để đặt gậy – giữ SPACE để lấy lực
 </div>
 
-<div id="powerBox"><div id="power"></div></div>
-<div class="info" id="info">Click bi trắng → kéo chuột để đặt gậy & lực</div>
-
 <script>
-const canvas = document.getElementById("table");
-const ctx = canvas.getContext("2d");
-const powerBar = document.getElementById("power");
-const info = document.getElementById("info");
+const canvas=document.getElementById("table");
+const ctx=canvas.getContext("2d");
+const powerBar=document.getElementById("power");
+const info=document.getElementById("info");
 
-const R = 10;
-const MAX_POWER = 120;
+const R=10;
+const MAX_POWER=120;
 
 /* ===== BALL ===== */
 function Ball(x,y,color){
@@ -81,29 +68,23 @@ let yellow=new Ball(600,270,"yellow");
 const balls=[white,red,yellow];
 
 /* ===== STATE ===== */
-let dragging=false;
+let showCue=false;
+let aiming=false;
 let aimX=0, aimY=0;
 let power=0;
-let bands=0;
-let hits=new Set();
-let lock={x:false,y:false};
+let charging=false;
 
-/* ===== DRAW TABLE ===== */
+/* ===== TABLE ===== */
 function drawTable(){
-  // diamonds
   ctx.fillStyle="#cfa";
   const d=canvas.width/8;
   for(let i=1;i<8;i++){
-    ctx.beginPath();
-    ctx.arc(i*d,8,3,0,Math.PI*2); ctx.fill();
-    ctx.beginPath();
-    ctx.arc(i*d,canvas.height-8,3,0,Math.PI*2); ctx.fill();
+    ctx.beginPath();ctx.arc(i*d,8,3,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(i*d,canvas.height-8,3,0,Math.PI*2);ctx.fill();
   }
   for(let i=1;i<4;i++){
-    ctx.beginPath();
-    ctx.arc(8,i*(canvas.height/4),3,0,Math.PI*2); ctx.fill();
-    ctx.beginPath();
-    ctx.arc(canvas.width-8,i*(canvas.height/4),3,0,Math.PI*2); ctx.fill();
+    ctx.beginPath();ctx.arc(8,i*(canvas.height/4),3,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(canvas.width-8,i*(canvas.height/4),3,0,Math.PI*2);ctx.fill();
   }
 }
 
@@ -113,6 +94,22 @@ function drawBall(b){
   ctx.arc(b.x,b.y,R,0,Math.PI*2);
   ctx.fillStyle=b.color;
   ctx.fill();
+}
+
+/* ===== CUE ===== */
+function drawCue(){
+  if(!showCue) return;
+  let dx=white.x-aimX;
+  let dy=white.y-aimY;
+  let ang=Math.atan2(dy,dx);
+  let len=40+power;
+
+  ctx.save();
+  ctx.translate(white.x,white.y);
+  ctx.rotate(ang);
+  ctx.fillStyle="#deb887";
+  ctx.fillRect(20,-2,len,4);
+  ctx.restore();
 }
 
 /* ===== UPDATE ===== */
@@ -125,100 +122,73 @@ function update(){
     b.y+=b.vy;
     b.vx*=0.985;
     b.vy*=0.985;
-
     if(Math.abs(b.vx)<0.03) b.vx=0;
     if(Math.abs(b.vy)<0.03) b.vy=0;
-
-    if(b===white){
-      if(b.x<R && !lock.x){b.vx*=-1;bands++;lock.x=true;}
-      if(b.x>canvas.width-R && !lock.x){b.vx*=-1;bands++;lock.x=true;}
-      if(b.y<R && !lock.y){b.vy*=-1;bands++;lock.y=true;}
-      if(b.y>canvas.height-R && !lock.y){b.vy*=-1;bands++;lock.y=true;}
-      if(b.x>R && b.x<canvas.width-R) lock.x=false;
-      if(b.y>R && b.y<canvas.height-R) lock.y=false;
-    }else{
-      if(b.x<R || b.x>canvas.width-R) b.vx*=-1;
-      if(b.y<R || b.y>canvas.height-R) b.vy*=-1;
-    }
-
+    if(b.x<R||b.x>canvas.width-R) b.vx*=-1;
+    if(b.y<R||b.y>canvas.height-R) b.vy*=-1;
     drawBall(b);
   });
 
-  collide(white,red);
-  collide(white,yellow);
-  collide(red,yellow);
-
   drawCue();
-
   requestAnimationFrame(update);
 }
 
-/* ===== COLLISION ===== */
-function collide(a,b){
-  let dx=b.x-a.x, dy=b.y-a.y;
-  let dist=Math.hypot(dx,dy);
-  if(dist<2*R){
-    let ang=Math.atan2(dy,dx);
-    let sa=Math.hypot(a.vx,a.vy);
-    let sb=Math.hypot(b.vx,b.vy);
-    a.vx=-Math.cos(ang)*sa;
-    a.vy=-Math.sin(ang)*sa;
-    b.vx=Math.cos(ang)*sb;
-    b.vy=Math.sin(ang)*sb;
-
-    if(a===white && bands>=3){
-      hits.add(b.color);
-      if(hits.size===2){
-        info.innerText="🎯 GHI ĐIỂM CHUẨN 3 BĂNG!";
-        bands=0; hits.clear();
-      }
-    }
-  }
-}
-
-/* ===== CUE ===== */
-function drawCue(){
-  if(!dragging) return;
-  let dx=white.x-aimX;
-  let dy=white.y-aimY;
-  let len=Math.min(Math.hypot(dx,dy),MAX_POWER);
-  let ang=Math.atan2(dy,dx);
-
-  ctx.save();
-  ctx.translate(white.x,white.y);
-  ctx.rotate(ang);
-  ctx.fillStyle="#deb887";
-  ctx.fillRect(20, -2, len, 4);
-  ctx.restore();
-}
-
-/* ===== INPUT ===== */
+/* ===== MOUSE ===== */
 canvas.addEventListener("mousedown",e=>{
   if(white.vx||white.vy) return;
-  let r=canvas.getBoundingClientRect();
-  let x=e.clientX-r.left, y=e.clientY-r.top;
+  const r=canvas.getBoundingClientRect();
+  const x=e.clientX-r.left;
+  const y=e.clientY-r.top;
+
+  // click bi trắng -> hiện apphe
   if(Math.hypot(x-white.x,y-white.y)<R+5){
-    dragging=true;
+    showCue=true;
+    aiming=true;
+    aimX=x; aimY=y;
+    info.innerText="Di chuyển chuột để chỉnh hướng – giữ SPACE để lấy lực";
+  }else{
+    // click ngoài -> ẩn apphe
+    showCue=false;
+    aiming=false;
+    power=0;
+    powerBar.style.width="0%";
+    info.innerText="Click bi trắng để đặt gậy";
   }
 });
 
 canvas.addEventListener("mousemove",e=>{
-  if(!dragging) return;
-  let r=canvas.getBoundingClientRect();
+  if(!aiming) return;
+  const r=canvas.getBoundingClientRect();
   aimX=e.clientX-r.left;
   aimY=e.clientY-r.top;
-  power=Math.min(Math.hypot(white.x-aimX,white.y-aimY),MAX_POWER);
-  powerBar.style.width=(power/MAX_POWER*100)+"%";
 });
 
-canvas.addEventListener("mouseup",()=>{
-  if(!dragging) return;
-  white.vx=(white.x-aimX)/5;
-  white.vy=(white.y-aimY)/5;
-  dragging=false;
-  power=0;
-  powerBar.style.width="0%";
+/* ===== SPACE POWER ===== */
+window.addEventListener("keydown",e=>{
+  if(e.code==="Space" && showCue){
+    charging=true;
+  }
 });
+
+window.addEventListener("keyup",e=>{
+  if(e.code==="Space" && showCue){
+    white.vx=(white.x-aimX)/(6-(power/60));
+    white.vy=(white.y-aimY)/(6-(power/60));
+    showCue=false;
+    aiming=false;
+    charging=false;
+    power=0;
+    powerBar.style.width="0%";
+  }
+});
+
+/* ===== POWER CHARGE ===== */
+setInterval(()=>{
+  if(charging){
+    power=Math.min(power+2,MAX_POWER);
+    powerBar.style.width=(power/MAX_POWER*100)+"%";
+  }
+},30);
 
 /* ===== START ===== */
 update();

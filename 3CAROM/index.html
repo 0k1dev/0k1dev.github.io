@@ -2,79 +2,92 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Carom 3 Băng – Pro Training</title>
+<title>Carom 3 Băng – Pro</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 body{
-  margin:0;background:#0b0b0b;color:#fff;
-  font-family:Arial;display:flex;
-  flex-direction:column;align-items:center
+  margin:0;
+  background:#0b0b0b;
+  color:#fff;
+  font-family:Arial;
+  display:flex;
+  flex-direction:column;
+  align-items:center
 }
+
 h1{color:#00e5ff;margin:8px}
+
+.table-wrap{
+  position:relative;
+  display:inline-block;
+}
+
 canvas{
   background:#145214;
   border:18px solid #5b2c06;
   border-radius:12px;
 }
-.info{margin-top:6px;font-size:14px;color:#ccc}
-.table-wrap{
-  position: relative;
-  display: inline-block;
+
+.info{
+  margin-top:6px;
+  font-size:14px;
+  color:#ccc
 }
 
+/* ===== QR ===== */
 .qr-box{
-  position: absolute;
-  top: 10px;          /* cách mép trên bàn 10px */
-  right: -160px;      /* cách mép phải bàn 10px */
-  width: 150px;
-  text-align: center;
+  position:absolute;
+  top:10px;
+  right:-160px;
+  width:150px;
+  text-align:center;
 }
-
 .qr-box img{
-  width: 140px;
-  border-radius: 10px;
+  width:140px;
   background:#fff;
   padding:5px;
+  border-radius:10px;
 }
-
 .qr-text{
   margin-top:6px;
-  font-size:20px;
+  font-size:14px;
   color:#ccc;
 }
-
 </style>
 </head>
 
 <body>
 <h1>🎱 Carom 3 Băng – Pro Training</h1>
+
 <div class="table-wrap">
   <canvas id="c" width="900" height="450"></canvas>
 
   <div class="qr-box">
-    <img id="vietqr" alt="QR Donate">
+    <img id="vietqr">
     <div class="qr-text">Ủng hộ tác giả</div>
   </div>
 </div>
+
+<div class="info">
+  Click bi trắng → giữ SPACE lấy lực | A/D xoáy | S = không xoáy
+</div>
+
 <script>
-/* ======== BANK =======*/
-const BANK_ID = "ACB";          // hoặc 970416
-const ACCOUNT_NO = "43146717";
-
+/* ===== QR ===== */
+const BANK_ID="ACB";
+const ACCOUNT_NO="43146717";
 document.getElementById("vietqr").src =
-  `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png` +
-  `?addInfo=Donate+Carom+3+Bang`;
+  `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?addInfo=Donate+Carom+3+Bang`;
 
-/*===================*/
-
-  
-const canvas=c=document.getElementById("c");
+/* ===== CANVAS ===== */
+const c=document.getElementById("c");
 const ctx=c.getContext("2d");
-c.addEventListener("contextmenu",e=>e.preventDefault());
 
+/* ===== CONST ===== */
 const R=10;
-const FRICTION = 0.996;
-const MAX_POWER=120;
+const FRICTION=0.992;
+const MAX_POWER=140;
 
 /* ===== BALL ===== */
 class Ball{
@@ -84,18 +97,27 @@ class Ball{
     this.color=color;
   }
 }
+
 let white=new Ball(150,225,"#fff");
 let red=new Ball(450,160,"red");
 let yellow=new Ball(600,290,"yellow");
 const balls=[white,red,yellow];
 
 /* ===== STATE ===== */
-let aiming=false, showCue=false;
+let showCue=false;
+let aiming=false;
 let aimX=0, aimY=0;
-let power=0, charging=false;
-let spin=0; // -1 left | 0 none | 1 right
+let charging=false;
+let power=0;
+let spin=0;
 
-/* ===== DRAW TABLE DOTS ===== */
+/* ===== SCORE ===== */
+let score=0;
+let cushionCount=0;
+let hitRed=false;
+let hitYellow=false;
+
+/* ===== DRAW ===== */
 function drawDots(){
   ctx.fillStyle="#cfa";
   const d=c.width/8;
@@ -105,7 +127,6 @@ function drawDots(){
   }
 }
 
-/* ===== DRAW ===== */
 function drawBall(b){
   ctx.beginPath();
   ctx.arc(b.x,b.y,R,0,6.28);
@@ -113,7 +134,7 @@ function drawBall(b){
   ctx.fill();
 }
 
-/* ===== PREDICTION LINE ===== */
+/* ===== PREDICT ===== */
 function drawPredict(){
   if(!showCue) return;
   let x=white.x,y=white.y;
@@ -127,35 +148,43 @@ function drawPredict(){
   ctx.moveTo(x,y);
 
   for(let i=0;i<3;i++){
-    let tX = dx>0 ? (c.width-R-x)/dx : (R-x)/dx;
-    let tY = dy>0 ? (c.height-R-y)/dy : (R-y)/dy;
-    let t = Math.min(tX,tY);
+    let tx=dx>0?(c.width-R-x)/dx:(R-x)/dx;
+    let ty=dy>0?(c.height-R-y)/dy:(R-y)/dy;
+    let t=Math.min(tx,ty);
     x+=dx*t; y+=dy*t;
     ctx.lineTo(x,y);
-    if(tX<tY) dx*=-1; else dy*=-1;
+    if(tx<ty) dx*=-1; else dy*=-1;
   }
   ctx.stroke();
   ctx.setLineDash([]);
 }
 
-/* ===== CUE ===== */
+/* ===== CUE (FIX XOAY & KHOẢNG CÁCH) ===== */
 function drawCue(){
   if(!showCue) return;
-  let dx=aimX-white.x, dy=aimY-white.y;
+
+  let dx=aimX-white.x;
+  let dy=aimY-white.y;
   let ang=Math.atan2(dy,dx);
+
+  const GAP=20;
+  const PULL=power*0.8;
+  const LEN=220;
+
   ctx.save();
   ctx.translate(white.x,white.y);
   ctx.rotate(ang);
   ctx.fillStyle="#deb887";
-  ctx.fillRect(-40-power*0.6,-2,200,4);
+  ctx.fillRect(-(GAP+PULL+LEN),-2,LEN,4);
   ctx.restore();
 }
 
-/* ===== BALL COLLISION (ELASTIC) ===== */
+/* ===== COLLISION ===== */
 function collide(a,b){
   const dx=b.x-a.x, dy=b.y-a.y;
   const dist=Math.hypot(dx,dy);
   if(dist>=2*R||dist===0) return;
+
   const nx=dx/dist, ny=dy/dist;
   const tx=-ny, ty=nx;
 
@@ -164,17 +193,21 @@ function collide(a,b){
   const dpNormA=a.vx*nx+a.vy*ny;
   const dpNormB=b.vx*nx+b.vy*ny;
 
-  const REST = 0.97;
+  const REST=0.97;
 
-  a.vx = tx*dpTanA + nx*dpNormB * REST;
-  a.vy = ty*dpTanA + ny*dpNormB * REST;
-  b.vx = tx*dpTanB + nx*dpNormA * REST;
-  b.vy = ty*dpTanB + ny*dpNormA * REST;
-
+  a.vx=tx*dpTanA+nx*dpNormB*REST;
+  a.vy=ty*dpTanA+ny*dpNormB*REST;
+  b.vx=tx*dpTanB+nx*dpNormA*REST;
+  b.vy=ty*dpTanB+ny*dpNormA*REST;
 
   const overlap=2*R-dist;
   a.x-=nx*overlap/2; a.y-=ny*overlap/2;
   b.x+=nx*overlap/2; b.y+=ny*overlap/2;
+
+  if(a===white||b===white){
+    if(a===red||b===red) hitRed=true;
+    if(a===yellow||b===yellow) hitYellow=true;
+  }
 }
 
 /* ===== UPDATE ===== */
@@ -185,16 +218,13 @@ function update(){
   balls.forEach(b=>{
     b.x+=b.vx; b.y+=b.vy;
     b.vx*=FRICTION; b.vy*=FRICTION;
-    if(Math.hypot(b.vx,b.vy)<0.01){b.vx=b.vy=0;}
 
-    if(b.x<R||b.x>c.width-R){
-      b.vx*=-1;
-      if(b===white) b.vy += spin*0.25;
-    }
-    if(b.y<R||b.y>c.height-R){
-      b.vy*=-1;
-      if(b===white) b.vx -= spin*0.25;
-    }
+    if(Math.hypot(b.vx,b.vy)<0.02) b.vx=b.vy=0;
+
+    if(b.x<R){b.x=R;b.vx=Math.abs(b.vx); if(b===white) cushionCount++}
+    if(b.x>c.width-R){b.x=c.width-R;b.vx=-Math.abs(b.vx); if(b===white) cushionCount++}
+    if(b.y<R){b.y=R;b.vy=Math.abs(b.vy); if(b===white) cushionCount++}
+    if(b.y>c.height-R){b.y=c.height-R;b.vy=-Math.abs(b.vy); if(b===white) cushionCount++}
   });
 
   collide(white,red);
@@ -204,12 +234,29 @@ function update(){
   balls.forEach(drawBall);
   drawPredict();
   drawCue();
+
+  ctx.fillStyle="#fff";
+  ctx.font="18px Arial";
+  ctx.fillText("SCORE: "+score,20,30);
+
+  if(
+    cushionCount>=3 &&
+    hitRed &&
+    hitYellow &&
+    white.vx===0 &&
+    white.vy===0
+  ){
+    score++;
+    cushionCount=0;
+    hitRed=hitYellow=false;
+  }
+
   requestAnimationFrame(update);
 }
 
 /* ===== INPUT ===== */
-canvas.addEventListener("mousedown",e=>{
-  if(e.button!==0||white.vx||white.vy) return;
+c.addEventListener("mousedown",e=>{
+  if(white.vx||white.vy) return;
   const r=c.getBoundingClientRect();
   const x=e.clientX-r.left, y=e.clientY-r.top;
   if(Math.hypot(x-white.x,y-white.y)<R+5){
@@ -217,31 +264,34 @@ canvas.addEventListener("mousedown",e=>{
     aimX=x; aimY=y;
   }
 });
-canvas.addEventListener("mousemove",e=>{
+
+c.addEventListener("mousemove",e=>{
   if(!aiming) return;
   const r=c.getBoundingClientRect();
   aimX=e.clientX-r.left;
   aimY=e.clientY-r.top;
 });
+
 window.addEventListener("keydown",e=>{
   if(e.code==="Space"&&showCue) charging=true;
   if(e.key==="a") spin=-1;
   if(e.key==="d") spin=1;
   if(e.key==="s") spin=0;
 });
+
 window.addEventListener("keyup",e=>{
   if(e.code==="Space"&&showCue){
     let dx=aimX-white.x, dy=aimY-white.y;
     let len=Math.hypot(dx,dy)||1;
-    let force = power * 0.32;
+    let force=power*0.35;
     white.vx=(dx/len)*force;
     white.vy=(dy/len)*force;
-    charging=showCue=aiming=false;
-    power=0;
+    power=0; charging=false; showCue=false; aiming=false;
   }
 });
+
 setInterval(()=>{
-  if(charging) power=Math.min(power+3,MAX_POWER);
+  if(charging) power=Math.min(power+4,MAX_POWER);
 },30);
 
 update();

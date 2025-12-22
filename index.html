@@ -1,227 +1,1217 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<title>HKT PROJECTS</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>HKT ECOSYSTEM | Blockchain • Esports • Technology</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="HKT Ecosystem - Hệ sinh thái công nghệ, blockchain và esports chuyên nghiệp">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+    <style>
+        :root {
+            --primary: #00e5ff;
+            --primary-dark: #00b8d4;
+            --secondary: #7cff00;
+            --secondary-dark: #5ac500;
+            --accent: #ff4d8d;
+            --dark-bg: #0a0a0f;
+            --card-bg: #15151f;
+            --card-hover: #1e1e2d;
+            --text-light: #f0f8ff;
+            --text-gray: #a0a8c0;
+            --gradient-bg: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            --gradient-primary: linear-gradient(90deg, var(--primary), var(--secondary));
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            --glow: 0 0 25px rgba(0, 229, 255, 0.4);
+            --border-radius: 16px;
+        }
 
-<!-- WEB3 -->
-<script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
 
-<style>
-body{
-    margin:0;
-    font-family: Arial, Helvetica, sans-serif;
-    background:#0b0b0b;
-    color:#fff;
-}
-header{
-    padding:60px 20px;
-    text-align:center;
-    background:
-      radial-gradient(circle at top,#00e5ff33,transparent 60%),
-      linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-}
-header h1{
-    font-size:42px;
-    margin-bottom:10px;
-    background:linear-gradient(90deg,#00e5ff,#7cff00);
-    -webkit-background-clip:text;
-    color:transparent;
-}
-header p{
-    opacity:0.85;
-    font-size:18px;
-}
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
 
-section{
-    max-width:1100px;
-    margin:auto;
-    padding:60px 20px;
-}
-h2{
-    text-align:center;
-    margin-bottom:40px;
-    font-size:32px;
-    color:#00e5ff;
-}
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background: 
+                radial-gradient(circle at 10% 20%, rgba(0, 229, 255, 0.05) 0%, transparent 30%),
+                radial-gradient(circle at 90% 80%, rgba(124, 255, 0, 0.05) 0%, transparent 30%),
+                radial-gradient(circle at 50% 50%, rgba(255, 77, 141, 0.03) 0%, transparent 40%);
+        }
 
-.projects{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-    gap:25px;
-}
-.card{
-    background:#151515;
-    border-radius:14px;
-    padding:25px;
-    box-shadow:0 0 20px rgba(0,229,255,0.05);
-    transition:0.3s;
-}
-.card:hover{
-    transform:translateY(-6px);
-    box-shadow:0 0 30px rgba(0,229,255,0.15);
-}
-.card h3{
-    margin-top:0;
-    color:#00e5ff;
-}
-.card p{
-    line-height:1.6;
-    opacity:0.85;
-}
+        /* Header */
+        header {
+            padding: 80px 20px 60px;
+            text-align: center;
+            background: var(--gradient-bg);
+            position: relative;
+            overflow: hidden;
+        }
 
-.card img{
-    width:100%;
-    height:160px;
-    object-fit:cover;
-    border-radius:12px;
-    margin-bottom:15px;
-    transition:0.4s;
-}
-.card:hover img{
-    transform:scale(1.05);
-}
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+            box-shadow: var(--glow);
+        }
 
-/* FEEDBACK STYLE */
-.feedback{
-    background:linear-gradient(135deg,#0d2a33,#112f3a);
-    border:1px solid rgba(0,229,255,0.25);
-}
-.feedback span{
-    display:block;
-    font-size:14px;
-    opacity:0.7;
-    margin-top:10px;
-}
+        .header-content {
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
 
-footer{
-    text-align:center;
-    padding:30px;
-    background:#111;
-    opacity:0.7;
-}
+        .logo {
+            font-size: 2.8rem;
+            margin-bottom: 15px;
+            display: inline-block;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 800;
+            text-shadow: 0 0 30px rgba(0, 229, 255, 0.3);
+        }
 
-/* ZALO FLOAT BUTTON */
-.facebook-btn{
-    position:fixed;
-    right:20px;
-    bottom:20px;
-    background:#0068ff;
-    color:#fff;
-    padding:14px 18px;
-    border-radius:50px;
-    text-decoration:none;
-    font-weight:bold;
-    box-shadow:0 0 15px rgba(0,104,255,0.5);
-}
-</style>
+        .logo span {
+            color: var(--accent);
+        }
+
+        .tagline {
+            font-size: 1.4rem;
+            color: var(--text-gray);
+            margin-bottom: 25px;
+            font-weight: 400;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-top: 40px;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px 24px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+
+        .stat-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary);
+        }
+
+        .stat-item i {
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+
+        /* Navigation */
+        .category-nav {
+            max-width: 1200px;
+            margin: -30px auto 40px;
+            padding: 0 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .category-list {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding: 15px 0;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .category-list::-webkit-scrollbar {
+            display: none;
+        }
+
+        .category-btn {
+            background: var(--card-bg);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-gray);
+            padding: 12px 24px;
+            border-radius: 50px;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .category-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .category-btn.active {
+            background: var(--gradient-primary);
+            color: var(--dark-bg);
+            border-color: transparent;
+            font-weight: 600;
+            box-shadow: var(--glow);
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px 60px;
+        }
+
+        .section-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 40px;
+            text-align: center;
+            position: relative;
+            display: inline-block;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--gradient-primary);
+            border-radius: 3px;
+        }
+
+        /* Projects Grid */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+
+        .project-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .project-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: var(--shadow), var(--glow);
+            background: var(--card-hover);
+        }
+
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .project-card:hover::before {
+            opacity: 1;
+        }
+
+        .project-image {
+            height: 180px;
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .project-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+
+        .project-card:hover .project-image img {
+            transform: scale(1.1);
+        }
+
+        .project-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: var(--primary);
+            color: var(--dark-bg);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            z-index: 2;
+        }
+
+        .project-content {
+            padding: 25px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .project-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .project-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 229, 255, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .project-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: var(--text-light);
+        }
+
+        .project-category {
+            font-size: 0.9rem;
+            color: var(--text-gray);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 3px 10px;
+            border-radius: 12px;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        .project-description {
+            color: var(--text-gray);
+            line-height: 1.6;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+
+        .project-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+        }
+
+        .project-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--secondary);
+        }
+
+        .status-dot.active {
+            background: var(--secondary);
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.in-progress {
+            background: var(--primary);
+        }
+
+        .status-dot.coming-soon {
+            background: var(--accent);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .project-link {
+            background: rgba(0, 229, 255, 0.1);
+            color: var(--primary);
+            padding: 8px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid transparent;
+        }
+
+        .project-link:hover {
+            background: var(--primary);
+            color: var(--dark-bg);
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        /* Featured Projects */
+        .featured-projects {
+            margin-bottom: 60px;
+        }
+
+        .featured-slider {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+        }
+
+        .featured-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.4s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .featured-card:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow), 0 0 40px rgba(0, 229, 255, 0.2);
+        }
+
+        .featured-image {
+            height: 200px;
+            overflow: hidden;
+        }
+
+        .featured-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+
+        .featured-card:hover .featured-image img {
+            transform: scale(1.1);
+        }
+
+        .featured-content {
+            padding: 25px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .featured-badge {
+            background: var(--gradient-primary);
+            color: var(--dark-bg);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            display: inline-block;
+            margin-bottom: 15px;
+            align-self: flex-start;
+        }
+
+        /* Footer */
+        footer {
+            background: rgba(10, 10, 15, 0.95);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 50px 20px 30px;
+            margin-top: 60px;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+        }
+
+        .footer-section h3 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+
+        .footer-links a {
+            color: var(--text-gray);
+            text-decoration: none;
+            transition: color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-links a {
+            width: 40px;
+            height: 40px;
+            background: var(--card-bg);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-light);
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .social-links a:hover {
+            background: var(--primary);
+            color: var(--dark-bg);
+            transform: translateY(-5px);
+        }
+
+        .copyright {
+            text-align: center;
+            padding-top: 30px;
+            margin-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-gray);
+            font-size: 0.9rem;
+        }
+
+        /* Floating Buttons */
+        .floating-buttons {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 100;
+        }
+
+        .floating-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            text-decoration: none;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .floating-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .floating-btn.fb {
+            background: linear-gradient(135deg, #0068ff, #0099ff);
+        }
+
+        .floating-btn.web3 {
+            background: linear-gradient(135deg, #f6851b, #f0b90b);
+        }
+
+        .floating-btn.feedback {
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+        }
+
+        .floating-btn .tooltip {
+            position: absolute;
+            right: 70px;
+            background: var(--card-bg);
+            color: var(--text-light);
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .floating-btn:hover .tooltip {
+            opacity: 1;
+            visibility: visible;
+            right: 75px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .featured-slider {
+                grid-template-columns: 1fr;
+            }
+            
+            .category-list {
+                padding-bottom: 10px;
+            }
+            
+            .category-btn {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+            
+            .floating-buttons {
+                bottom: 20px;
+                right: 20px;
+            }
+            
+            .floating-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+            
+            .section-title {
+                font-size: 1.8rem;
+            }
+        }
+
+        /* Loading Animation */
+        .loading-skeleton {
+            background: linear-gradient(90deg, var(--card-bg) 25%, var(--card-hover) 50%, var(--card-bg) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: var(--border-radius);
+            min-height: 300px;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Web3 Connect Button */
+        .web3-connect {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .connect-btn {
+            background: linear-gradient(135deg, #f6851b, #f0b90b);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+
+        .connect-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(246, 133, 27, 0.3);
+        }
+
+        .connected {
+            background: linear-gradient(135deg, var(--secondary), var(--secondary-dark));
+        }
+    </style>
 </head>
-
 <body>
+    <!-- Background Animation -->
+    <div class="background-animation"></div>
 
-<header>
-    <h1>HKT ECOSYSTEM</h1>
-    <p>Blockchain • Esports • App • Công nghệ • FEEDBACK • NEWS</p>
-</header>
+    <!-- Web3 Connect Button -->
+    <div class="web3-connect">
+        <button id="connectWallet" class="connect-btn">
+            <i class="fas fa-wallet"></i>
+            <span>Kết nối Ví</span>
+        </button>
+    </div>
 
-<section>
-<h2>DỰ ÁN CỦA CHÚNG TÔI</h2>
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <h1 class="logo">HKT <span>ECOSYSTEM</span></h1>
+            <p class="tagline">Blockchain • Esports • Applications • Technology • Innovation</p>
+            
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <i class="fas fa-project-diagram"></i>
+                    <span>12+ Dự án</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-users"></i>
+                    <span>50K+ Thành viên</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-rocket"></i>
+                    <span>24/7 Hoạt động</span>
+                </div>
+            </div>
+        </div>
+    </header>
 
-<div class="projects">
+    <!-- Category Navigation -->
+    <nav class="category-nav">
+        <div class="category-list">
+            <button class="category-btn active" data-category="all">
+                <i class="fas fa-th-large"></i> Tất cả
+            </button>
+            <button class="category-btn" data-category="blockchain">
+                <i class="fas fa-link"></i> Blockchain
+            </button>
+            <button class="category-btn" data-category="esports">
+                <i class="fas fa-gamepad"></i> Esports
+            </button>
+            <button class="category-btn" data-category="applications">
+                <i class="fas fa-mobile-alt"></i> Ứng dụng
+            </button>
+            <button class="category-btn" data-category="education">
+                <i class="fas fa-graduation-cap"></i> Giáo dục
+            </button>
+            <button class="category-btn" data-category="games">
+                <i class="fas fa-dice"></i> Games
+            </button>
+        </div>
+    </nav>
 
-<div class="card">
-<img src="hkt-token.jpg" alt="HKT Token">
-<h3>💠 HKT-TOKEN</h3>
-<p>
-HKT-TOKEN là dự án token blockchain định hướng ứng dụng thực tế,
-xây dựng cộng đồng minh bạch và phát triển lâu dài.
-</p>
-</div>
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Featured Projects -->
+        <section class="featured-projects">
+            <h2 class="section-title">DỰ ÁN NỔI BẬT</h2>
+            
+            <div class="featured-slider">
+                <!-- 3CAROM -->
+                <div class="featured-card">
+                    <div class="featured-image">
+                        <img src="https://images.unsplash.com/photo-1600861194947-8e8a6296e7ff?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" alt="Carom 3 Băng">
+                    </div>
+                    <div class="featured-content">
+                        <span class="featured-badge">TRÒ CHƠI CAO CẤP</span>
+                        <h3 class="project-title">🎱 3CAROM - Bi-a Chuyên Nghiệp</h3>
+                        <p class="project-description">Game carom 3 băng đồ họa đẹp như ZingPlay, vật lý chân thực, chế độ 2 người chơi với hệ thống áp phê và điều khiển lực tinh vi.</p>
+                        <div class="project-footer">
+                            <div class="project-status">
+                                <span class="status-dot active"></span>
+                                <span>Online</span>
+                            </div>
+                            <a href="https://0k1dev.github.io/3CAROM" target="_blank" class="project-link">
+                                Chơi ngay <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
 
-<div class="card">
-<img src="lienquan-htk.jpg" alt="Liên Quân HTK">
-<h3>🎮 LIÊN QUÂN HTK</h3>
-<p>
-Đội tuyển Liên Quân Mobile HTK thi đấu chuyên nghiệp,
-đào tạo bài bản và hướng tới các giải đấu lớn.
-</p>
-</div>
+                <!-- HKT Token -->
+                <div class="featured-card">
+                    <div class="featured-image">
+                        <img src="https://images.unsplash.com/photo-1620336655055-bd87c5d1d73f?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" alt="Blockchain Token">
+                    </div>
+                    <div class="featured-content">
+                        <span class="featured-badge">BLOCKCHAIN</span>
+                        <h3 class="project-title">💎 HKT TOKEN</h3>
+                        <p class="project-description">Token tiện ích cho hệ sinh thái HKT, tích hợp DeFi, NFT và ứng dụng thực tế. Hướng tới xây dựng cộng đồng blockchain minh bạch.</p>
+                        <div class="project-footer">
+                            <div class="project-status">
+                                <span class="status-dot in-progress"></span>
+                                <span>Đang phát triển</span>
+                            </div>
+                            <a href="https://0k1dev.github.io/HKT-TOKENS" target="_blank" class="project-link">
+                                Xem chi tiết <i class="fas fa-external-link-alt"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-<div class="card">
-<img src="lienquan-htk.jpg" alt="PUBG Mobile HTK">
-<h3>🔥 PUBG MOBILE HTK</h3>
-<p>
-Team PUBG Mobile với chiến thuật chặt chẽ,
-tham gia scrim và giải phong trào – bán chuyên.
-</p>
-</div>
+        <!-- All Projects -->
+        <section class="all-projects">
+            <h2 class="section-title">TẤT CẢ DỰ ÁN</h2>
+            
+            <div class="projects-grid">
+                <!-- Block Blaster -->
+                <div class="project-card" data-category="games">
+                    <div class="project-image">
+                        <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" alt="Block Blaster">
+                        <span class="project-badge">GAME</span>
+                    </div>
+                    <div class="project-content">
+                        <div class="project-header">
+                            <div class="project-icon">
+                                <i class="fas fa-cube"></i>
+                            </div>
+                            <div>
+                                <h3 class="project-title">🧱 Block Blaster</h3>
+                                <span class="project-category">Puzzle Game</span>
+                            </div>
+                        </div>
+                        <p class="project-description">Game puzzle thách thức trí tuệ với cơ chế phá khối độc đáo, đồ họa sáng tạo và nhiều cấp độ từ dễ đến khó.</p>
+                        <div class="project-footer">
+                            <div class="project-status">
+                                <span class="status-dot active"></span>
+                                <span>Online</span>
+                            </div>
+                            <a href="https://0k1dev.github.io/Block-Blaster" target="_blank" class="project-link">
+                                Khám phá <i class="fas fa-play"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
 
-<div class="card">
-<img src="lienquan-htk.jpg" alt="PUBG PC HTK">
-<h3>🖥️ PUBG PC HTK</h3>
-<p>
-Đội hình PUBG PC định hướng thi đấu nghiêm túc,
-phát triển lâu dài trong cộng đồng PUBG PC.
-</p>
-</div>
+                <!-- Feedback System -->
+                <div class="project-card" data-category="education">
+                    <div class="project-image">
+                        <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" alt="Feedback System">
+                        <span class="project-badge">GIÁO DỤC</span>
+                    </div>
+                    <div class="project-content">
+                        <div class="project-header">
+                            <div class="project-icon">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div>
+                                <h3 class="project-title">⭐ HỆ THỐNG FEEDBACK</h3>
+                                <span class="project-category">Đánh giá & Phản hồi</span>
+                            </div>
+                        </div>
+                        <p class="project-description">Hệ thống đánh giá và phản hồi minh bạch cho học viên, cung cấp insights chi tiết về quá trình học tập và kết quả.</p>
+                        <div class="project-footer">
+                            <div class="project-status">
+                                <span class="status-dot active"></span>
+                                <span>Online</span>
+                            </div>
+                            <a href="https://0k1dev.github.io/FEEDBACK" target="_blank" class="project-link">
+                                Xem phản hồi <i class="fas fa-chart-line"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
 
-<div class="card">
-<img src="app-bill.jpg" alt="App Bill">
-<h3>🧾 APP BILL & HÓA ĐƠN</h3>
-<p>
-Ứng dụng tạo hóa đơn nhanh, QR thanh toán,
-lưu lịch sử giao dịch – phù hợp shop & dịch vụ.
-</p>
-</div>
+                <!-- LIS - IELTS Practice -->
+                <div class="project-card" data-category="education">
+                    <div class="project-image">
+                        <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" alt="IELTS Listening">
+                        <span class="project-badge">GIÁO DỤC</span>
+                    </div>
+                    <div class="project-content">
+                        <div class="project-header">
+                            <div class="project-icon">
+                                <i class="fas fa-headphones"></i>
+                            </div>
+                            <div>
+                                <h3 class="project-title">🎧 LIS - IELTS Listening</h3>
+                                <span class="project-category">Luyện thi IELTS</span>
+                            </div>
+                        </div>
+                        <p class="project-description">Hệ thống luyện nghe IELTS với hàng trăm bài tập, phân tích kết quả chi tiết và lộ trình học tập cá nhân hóa.</p>
+                        <div class="project-footer">
+                            <div class="project-status">
+                                <span class="status-dot active"></span>
+                                <span>Online</span>
+                            </div>
+                            <a href="https://0k1dev.github.io/LIS" target="_blank" class="project-link">
+                                Luyện tập <i class="fas fa-book-open"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
 
-<!-- FEEDBACK CARD -->
-<a href="https://0k1dev.github.io/FEEDBACK" target="_blank" style="text-decoration:none;color:inherit;">
-  <div class="card feedback">
-    <h3>⭐ FEEDBACK</h3>
-    <p>
-    Feedback điểm số từ học viên cho thấy kết quả đánh giá chính xác,
-    thể hiện đúng trình độ sau quá trình học tập và kiểm tra.
-    Hệ thống chấm điểm minh bạch, ổn định và hỗ trợ phản hồi nhanh chóng.
-</p>
-    <span>👉 Xem chi tiết phản hồi</span>
-  </div>
-</a>
+                <!-- News Portal -->
+                <div class="project-card" data-category="applications">
+                    <div class="project-image">
+                        <img src="https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" alt="News Portal">
+                        <span class="project-badge">TIN TỨC</span>
+                    </div>
+                    <div class="project-content">
+                        <div class="project-header">
+                            <div class="project-icon">
+                                <i class="fas fa-newspaper"></i>
+                            </div>
+                            <div>
+                                <h3 class="project-title">📰 NEWS PORTAL</h3>
+                                <span class="project-category">Tin tức & Cập nhật</span>
+                            </div>
+                        </div>
+                        <p class="project-description">Cổng thông tin tổng hợp tin tức mới nhất về công nghệ, esports và các dự án trong hệ sinh thái HKT.</p>
+                        <div class="project-footer">
+                            <div class="project-status">
+                                <span class="status-dot active"></span>
+                                <span>Online</span>
+                            </div>
+                            <a href="https://0k1dev.github.io/NEWS" target="_blank" class="project-link">
+                                Đọc tin <i class="fas fa-external-link-alt"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
 
-<a href="https://0k1dev.github.io/NEWS" target="_blank" style="text-decoration:none;color:inherit;">
-  <div class="card feedback">
-    <h3>⭐ NEWS</h3>
-    <p>
-        Tin Tức Hot <br>
-        Bạn sẽ chú ý đến nó
-    </p>
-    <span>👉 Xem chi tiết</span>
-  </div>
-</a>
+                <!-- Funny Games -->
+                <div class="project-card" data-category="games">
+                    <div class="project-image">
+                        <img src="https://images.unsplash.com/photo-1552820728-8b83bb6b773f?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" alt="Funny Games">
+                        <span class="project-badge">GAME</span>
+                    </div>
+                    <div class="project-content">
+                        <div class="project-header">
+                            <div class="project-icon">
+                                <i class="fas fa-laugh"></i>
+                            </div>
+                            <div>
+                                <h3 class="project-title">😂 FUNNY GAMES</h3>
+                                <span class="project-category">Giải trí nhẹ</span>
+                            </div>
+                        </div>
+                        <p class="project-description">Bộ sưu tập các game vui nhộn, giải trí nhanh với cơ chế đơn giản nhưng hấp dẫn, phù hợp mọi lứa tuổi.</p>
+                        <div class="project-footer">
+                            <div class="project-status">
+                                <span class="status-dot active"></span>
+                                <span>Online</span>
+                            </div>
+                            <a href="https://0k1dev.github.io/FUNNY" target="_blank" class="project-link">
+                                Vui chơi <i class="fas fa-gamepad"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
 
-<a href="https://0k1dev.github.io/LIS" target="_blank" style="text-decoration:none;color:inherit;">
-  <div class="card feedback">
-    <h3>⭐ LIS</h3>
-    <p>
-        IELTS LISTENING<br>
-        MINI PRACTICE
-    </p>
-    <span>👉 Xem chi tiết</span>
-  </div>
-</a>
+                <!-- Esports Teams -->
+                <div class="project-card" data-category="esports">
+                    <div class="project-image">
+                        <img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" alt="Esports Teams">
+                        <span class="project-badge">ESPORTS</span>
+                    </div>
+                    <div class="project-content">
+                        <div class="project-header">
+                            <div class="project-icon">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <div>
+                                <h3 class="project-title">🏆 HTK ESPORTS</h3>
+                                <span class="project-category">Liên Quân & PUBG</span>
+                            </div>
+                        </div>
+                        <p class="project-description">Các đội tuyển esports chuyên nghiệp với thành tích ấn tượng trong Liên Quân Mobile và PUBG Mobile.</p>
+                        <div class="project-footer">
+                            <div class="project-status">
+                                <span class="status-dot in-progress"></span>
+                                <span>Thi đấu</span>
+                            </div>
+                            <a href="https://0k1dev.github.io/HTK" target="_blank" class="project-link">
+                                Xem đội hình <i class="fas fa-users"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
 
+                <!-- App Bill -->
+                <div class="project-card" data-category="applications">
+                    <div class="project-image">
+                        <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" alt="Billing App">
+                        <span class="project-badge">ỨNG DỤNG</span>
+                    </div>
+                    <div class="project-content">
+                        <div class="project-header">
+                            <div class="project-icon">
+                                <i class="fas fa-receipt"></i>
+                            </div>
+                            <div>
+                                <h3 class="project-title">🧾 APP BILL</h3>
+                                <span class="project-category">Quản lý hóa đơn</span>
+                            </div>
+                        </div>
+                        <p class="project-description">Ứng dụng tạo và quản lý hóa đơn thông minh với QR thanh toán, báo cáo doanh thu và lưu trữ đám mây.</p>
+                        <div class="project-footer">
+                            <div class="project-status">
+                                <span class="status-dot in-progress"></span>
+                                <span>Beta</span>
+                            </div>
+                            <a href="https://0k1dev.github.io/RES" target="_blank" class="project-link">
+                                Dùng thử <i class="fas fa-qrcode"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
 
-</div>
-</section>
+                <!-- Upload System -->
+                <div class="project-card" data-category="applications">
+                    <div class="project-image">
+                        <img src="https://images.unsplash.com/photo-1620321023374-d1a68fbc720d?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" alt="Upload System">
+                        <span class="project-badge">CÔNG NGHỆ</span>
+                    </div>
+                    <div class="project-content">
+                        <div class="project-header">
+                            <div class="project-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <div>
+                                <h3 class="project-title">☁️ UPLOAD SYSTEM</h3>
+                                <span class="project-category">Lưu trữ đám mây</span>
+                            </div>
+                        </div>
+                        <p class="project-description">Hệ thống upload và lưu trữ file an toàn với mã hóa end-to-end, quản lý tập trung và chia sẻ dễ dàng.</p>
+                        <div class="project-footer">
+                            <div class="project-status">
+                                <span class="status-dot active"></span>
+                                <span>Online</span>
+                            </div>
+                            <a href="https://0k1dev.github.io/upload" target="_blank" class="project-link">
+                                Tải lên <i class="fas fa-upload"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
 
-<footer>
-© 2025 HKT PROJECTS
-</footer>
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>HKT ECOSYSTEM</h3>
+                <p>Hệ sinh thái công nghệ đa dạng với các dự án blockchain, esports, ứng dụng và giải trí chất lượng cao.</p>
+                <div class="social-links">
+                    <a href="https://www.facebook.com/Hiy.Jon" target="_blank" title="Facebook">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="https://github.com/0k1dev" target="_blank" title="GitHub">
+                        <i class="fab fa-github"></i>
+                    </a>
+                    <a href="#" title="Telegram">
+                        <i class="fab fa-telegram"></i>
+                    </a>
+                    <a href="#" title="Discord">
+                        <i class="fab fa-discord"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Danh mục</h3>
+                <ul class="footer-links">
+                    <li><a href="#"><i class="fas fa-chevron-right"></i> Blockchain & Token</a></li>
+                    <li><a href="#"><i class="fas fa-chevron-right"></i> Esports Teams</a></li>
+                    <li><a href="#"><i class="fas fa-chevron-right"></i> Games & Entertainment</a></li>
+                    <li><a href="#"><i class="fas fa-chevron-right"></i> Educational Tools</a></li>
+                    <li><a href="#"><i class="fas fa-chevron-right"></i> Applications</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Liên kết nhanh</h3>
+                <ul class="footer-links">
+                    <li><a href="https://0k1dev.github.io/3CAROM"><i class="fas fa-external-link-alt"></i> 3CAROM Game</a></li>
+                    <li><a href="https://0k1dev.github.io/FEEDBACK"><i class="fas fa-external-link-alt"></i> Feedback System</a></li>
+                    <li><a href="https://0k1dev.github.io/LIS"><i class="fas fa-external-link-alt"></i> IELTS Practice</a></li>
+                    <li><a href="https://0k1dev.github.io/NEWS"><i class="fas fa-external-link-alt"></i> News Portal</a></li>
+                    <li><a href="https://0k1dev.github.io/HTK"><i class="fas fa-external-link-alt"></i> Esports Teams</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="copyright">
+            <p>© 2025 HKT ECOSYSTEM. All rights reserved.</p>
+            <p>Powered by Innovation & Technology</p>
+        </div>
+    </footer>
 
-<a class="facebook-btn" href="https://www.facebook.com/Hiy.Jon" target="_blank">
-💬 Facebook
-</a>
+    <!-- Floating Buttons -->
+    <div class="floating-buttons">
+        <a href="https://www.facebook.com/Hiy.Jon" target="_blank" class="floating-btn fb">
+            <i class="fab fa-facebook-f"></i>
+            <span class="tooltip">Facebook</span>
+        </a>
+        <a href="#" id="web3Btn" class="floating-btn web3">
+            <i class="fab fa-ethereum"></i>
+            <span class="tooltip">Web3 Connect</span>
+        </a>
+        <a href="https://0k1dev.github.io/FEEDBACK" target="_blank" class="floating-btn feedback">
+            <i class="fas fa-comment-dots"></i>
+            <span class="tooltip">Feedback</span>
+        </a>
+    </div>
 
+    <script>
+        // Category Filter
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Update active button
+                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                const category = btn.dataset.category;
+                const cards = document.querySelectorAll('.project-card');
+                
+                cards.forEach(card => {
+                    if (category === 'all' || card.dataset.category === category) {
+                        card.style.display = 'flex';
+                        setTimeout(() => card.style.opacity = '1', 10);
+                    } else {
+                        card.style.opacity = '0';
+                        setTimeout(() => card.style.display = 'none', 300);
+                    }
+                });
+            });
+        });
 
+        // Web3 Wallet Connection
+        let web3;
+        const connectBtn = document.getElementById('connectWallet');
+        const web3Btn = document.getElementById('web3Btn');
+
+        async function connectWallet() {
+            try {
+                if (window.ethereum) {
+                    web3 = new Web3(window.ethereum);
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    
+                    const accounts = await web3.eth.getAccounts();
+                    const account = accounts[0];
+                    
+                    // Update UI
+                    connectBtn.innerHTML = `<i class="fas fa-check"></i> ${account.slice(0, 6)}...${account.slice(-4)}`;
+                    connectBtn.classList.add('connected');
+                    web3Btn.classList.add('connected');
+                    
+                    // Show notification
+                    showNotification(`Đã kết nối ví: ${account.slice(0, 6)}...${account.slice(-4)}`);
+                    
+                } else {
+                    showNotification('Vui lòng cài đặt MetaMask!', 'error');
+                }
+            } catch (error) {
+                console.error('Connection error:', error);
+                showNotification('Kết nối thất bại!', 'error');
+            }
+        }
+
+        // Notification system
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'error' ? '#ff4444' : '#00C851'};
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+            `;
+            
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : 'check-circle'}"></i>
+                <span style="margin-left: 10px">${message}</span>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Add CSS for animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Event listeners
+        connectBtn.addEventListener('click', connectWallet);
+        web3Btn.addEventListener('click', connectWallet);
+
+        // Hover effects for cards
+        document.querySelectorAll('.project-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.querySelector('.project-link').style.transform = 'translateX(5px)';
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.querySelector('.project-link').style.transform = 'translateX(0)';
+            });
+        });
+
+        // Initialize with all projects showing
+        document.querySelector('.category-btn.active').click();
+    </script>
 </body>
 </html>

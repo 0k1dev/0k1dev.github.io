@@ -1,204 +1,656 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<title>Carom 3 Băng – Pro 2P (Fixed)</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-body{
-  margin:0;background:#0b0b0b;color:#fff;
-  font-family:Arial;display:flex;
-  flex-direction:column;align-items:center
-}
-h1{color:#00e5ff;margin:8px}
-.table-wrap{position:relative;display:inline-block}
-
-/* POWER */
-.power-wrap{
-  position:absolute;left:-40px;top:20px;
-  width:16px;height:380px;background:#222;border-radius:8px
-}
-.power-bar{
-  position:absolute;bottom:0;width:100%;height:0%;
-  background:linear-gradient(#0f0,#ff0,#f00);border-radius:8px
-}
-
-canvas{
-  background:#145214;
-  border:18px solid #5b2c06;
-  border-radius:12px;
-}
-.info{margin-top:8px;color:#ccc}
-</style>
+    <meta charset="UTF-8">
+    <title>Carom 3 Băng Pro 2P | Bi-a Chuyên Nghiệp</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="https://img.icons8.com/color/48/000000/pool.png" type="image/x-icon">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to bottom, #0a1f0a, #1a3a1a);
+            color: #f0f0f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1100px;
+            width: 100%;
+            text-align: center;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+        header { margin-bottom: 25px; }
+        h1 {
+            color: #00e5ff;
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.7);
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00e5ff, #ffcc00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+            color: #ccc;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        .table-outer {
+            position: relative;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8);
+            overflow: hidden;
+            border: 8px solid #3b2a1f;
+        }
+        canvas {
+            display: block;
+            background: #0e520e;
+        }
+        .power-ui {
+            position: absolute;
+            left: -50px;
+            top: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 45px;
+        }
+        .power-label {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            color: #ffcc00;
+            font-weight: bold;
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+        }
+        .power-bar-container {
+            width: 100%;
+            height: 380px;
+            background: #222;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: inset 0 0 10px #000;
+            position: relative;
+            border: 3px solid #444;
+        }
+        #powerBar {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 0%;
+            background: linear-gradient(to top, #0f0 0%, #ff0 50%, #f00 100%);
+            border-radius: 9px;
+            transition: height 0.05s linear;
+        }
+        .power-value {
+            margin-top: 10px;
+            font-size: 1rem;
+            color: #00e5ff;
+            font-weight: bold;
+            min-width: 45px;
+            padding: 3px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 5px;
+        }
+        .player-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 900px;
+            margin: 25px auto 15px;
+            background: rgba(30, 60, 30, 0.7);
+            padding: 15px 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+        }
+        .player {
+            text-align: center;
+            flex: 1;
+        }
+        .player.active {
+            background: rgba(0, 100, 100, 0.4);
+            border-radius: 10px;
+            padding: 10px;
+            border: 2px solid #00e5ff;
+        }
+        .player-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .player1 .player-name { color: #00e5ff; }
+        .player2 .player-name { color: #ffcc00; }
+        .player-score {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 8px currentColor;
+        }
+        .player-status {
+            font-size: 1.2rem;
+            margin-top: 8px;
+            min-height: 1.8em;
+            color: #a0e0a0;
+        }
+        .controls-instruction {
+            background: rgba(40, 40, 40, 0.8);
+            padding: 15px 25px;
+            border-radius: 15px;
+            margin: 15px auto 30px;
+            max-width: 900px;
+            line-height: 1.8;
+            text-align: left;
+            font-size: 1.05rem;
+        }
+        .controls-instruction h3 {
+            color: #ffcc00;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        kbd {
+            background: #333;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            border: 1px solid #666;
+            box-shadow: 0 2px 0 #222;
+            color: #ffcc00;
+        }
+        footer {
+            margin-top: 20px;
+            color: #aaa;
+            font-size: 0.9rem;
+            text-align: center;
+            padding: 15px;
+            border-top: 1px solid #333;
+            width: 100%;
+        }
+        .rule-highlight {
+            color: #ff9966;
+            font-weight: bold;
+        }
+        @media (max-width: 1000px) {
+            .game-area { flex-direction: column; }
+            .power-ui {
+                position: static;
+                flex-direction: row;
+                width: auto;
+                height: auto;
+                margin-top: 20px;
+                justify-content: center;
+            }
+            .power-label { writing-mode: horizontal-tb; transform: none; margin: 0 15px 0 0; }
+            .power-bar-container { width: 40px; height: 200px; }
+            .player-info { flex-direction: column; align-items: center; }
+            .player { margin-bottom: 15px; }
+        }
+    </style>
 </head>
-
 <body>
-<h1>🎱 Carom 3 Băng – Pro 2P</h1>
+    <div class="container">
+        <header>
+            <h1>🎱 CAROM 3 BĂNG CHUYÊN NGHIỆP</h1>
+            <p class="subtitle">Đấu trí 2 người chơi - Lực đánh vừa phải - Vật lý chân thực</p>
+        </header>
 
-<div class="table-wrap">
-  <div class="power-wrap"><div id="powerBar" class="power-bar"></div></div>
-  <canvas id="c" width="900" height="450"></canvas>
-</div>
+        <div class="game-area">
+            <div class="table-outer">
+                <div class="power-ui">
+                    <div class="power-label">LỰC ĐẨY</div>
+                    <div class="power-bar-container">
+                        <div id="powerBar"></div>
+                    </div>
+                    <div class="power-value" id="powerValue">0%</div>
+                </div>
+                <canvas id="gameCanvas" width="900" height="450"></canvas>
+            </div>
 
-<div class="info" id="info">Player 1 | SPACE lấy lực</div>
+            <div class="player-info">
+                <div class="player player1" id="player1Info">
+                    <div class="player-name">NGƯỜI CHƠI 1</div>
+                    <div class="player-score" id="score1">0</div>
+                    <div class="player-status" id="status1">🔵 Đang chờ...</div>
+                </div>
+                <div class="player player2" id="player2Info">
+                    <div class="player-name">NGƯỜI CHƠI 2</div>
+                    <div class="player-score" id="score2">0</div>
+                    <div class="player-status" id="status2">🟡 Sẵn sàng</div>
+                </div>
+            </div>
+        </div>
 
-<script>
-const c=document.getElementById("c");
-const ctx=c.getContext("2d");
+        <div class="controls-instruction">
+            <h3>🎮 HƯỚNG DẪN ĐIỀU KHIỂN & LUẬT CHƠI</h3>
+            <p><strong>Cách chơi:</strong> Mục tiêu là dùng bi cái (trắng) chạm <span class="rule-highlight">cả hai bi mục tiêu (đỏ và vàng)</span> sau khi bi cái đã nẩy <span class="rule-highlight">ít nhất 3 băng</span>. Mỗi cú đánh hợp lệ được <span class="rule-highlight">1 điểm</span>.</p>
+            <p><strong>Điều khiển:</strong></p>
+            <ul>
+                <li><kbd>CLICK CHUỘT</kbd> vào bàn để nhắm hướng đánh (cây cơ sẽ hiện ra).</li>
+                <li>Giữ phím <kbd>SPACE</kbd> để tăng lực đẩy (thanh lực bên trái).</li>
+                <li>Thả <kbd>SPACE</kbd> để thực hiện cú đánh.</li>
+                <li>Chờ tất cả bi dừng hẳn để kết thúc lượt và tính điểm.</li>
+            </ul>
+            <p><strong>Lưu ý:</strong> Đảm bảo chân chạm sàn khi đánh và không chạm tay/quần áo vào bi. Bi nhảy lên băng rồi rơi lại bàn vẫn hợp lệ[citation:1].</p>
+        </div>
 
-const R=10, FRICTION=0.992, MAX_POWER=160;
-let TIME_SCALE=1;
+        <footer>
+            <p>© 2025 Carom 3 Băng Pro - Phiên bản được tối ưu cho GitHub Pages | Môn thể thao trí tuệ và kỹ thuật</p>
+        </footer>
+    </div>
 
-/* ===== BALL ===== */
-class Ball{
-  constructor(x,y,color){
-    this.x=x;this.y=y;this.vx=0;this.vy=0;this.color=color;
-    this.hitWallX=false;this.hitWallY=false;
-  }
-  moving(){ return Math.hypot(this.vx,this.vy)>0.05 }
-}
-const white=new Ball(150,225,"#fff");
-const red=new Ball(450,160,"red");
-const yellow=new Ball(600,290,"yellow");
-const balls=[white,red,yellow];
+    <script>
+        // ==================== CẤU HÌNH GAME ====================
+        const CONFIG = {
+            BALL_RADIUS: 10,
+            FRICTION: 0.990,          // Giảm ma sát một chút để bi lăn xa hơn
+            MAX_POWER: 120,           // Giảm lực tối đa để lực vừa phải hơn
+            POWER_INCREMENT: 2.5,     // Tốc độ tăng lực khi giữ Space
+            MIN_MOVING_SPEED: 0.04,
+            TIME_SCALE_SLOWMO: 0.3,
+            SLOWMO_DURATION: 150
+        };
 
-/* ===== STATE ===== */
-let aiming=false, showCue=false;
-let aimX=0, aimY=0;
-let charging=false, power=0;
+        // ==================== THAM CHIẾU DOM ====================
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const powerBar = document.getElementById('powerBar');
+        const powerValue = document.getElementById('powerValue');
+        const score1El = document.getElementById('score1');
+        const score2El = document.getElementById('score2');
+        const status1El = document.getElementById('status1');
+        const status2El = document.getElementById('status2');
+        const player1Info = document.getElementById('player1Info');
+        const player2Info = document.getElementById('player2Info');
 
-/* ===== GAME ===== */
-let player=1, score=[0,0];
-let cushion=0, hitRed=false, hitYellow=false;
-let replay=[], replaying=false, rIndex=0;
-let shotInProgress=false;
+        // ==================== LỚP BI ====================
+        class Ball {
+            constructor(x, y, color, type) {
+                this.x = x;
+                this.y = y;
+                this.vx = 0;
+                this.vy = 0;
+                this.color = color;
+                this.type = type; // 'cue', 'red', 'yellow'
+                this.hitWallX = false;
+                this.hitWallY = false;
+            }
+            moving() {
+                return Math.hypot(this.vx, this.vy) > CONFIG.MIN_MOVING_SPEED;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, CONFIG.BALL_RADIUS, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                // Viền cho bi cái
+                if (this.type === 'cue') {
+                    ctx.strokeStyle = '#aaa';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                }
+                // Chấm đen cho bi mục tiêu
+                if (this.type === 'red' || this.type === 'yellow') {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, CONFIG.BALL_RADIUS * 0.5, 0, Math.PI * 2);
+                    ctx.fillStyle = '#000';
+                    ctx.fill();
+                }
+            }
+        }
 
-/* ===== DRAW ===== */
-function drawBall(b){
-  ctx.beginPath();ctx.arc(b.x,b.y,R,0,6.28);
-  ctx.fillStyle=b.color;ctx.fill();
-}
-function drawCue(){
-  if(!showCue) return;
-  let dx=aimX-white.x, dy=aimY-white.y;
-  let a=Math.atan2(dy,dx);
-  ctx.save();
-  ctx.translate(white.x,white.y);
-  ctx.rotate(a);
-  ctx.fillStyle="#deb887";
-  ctx.fillRect(-(40+power),-2,220,4);
-  ctx.restore();
-}
+        // Tạo bi với vị trí hợp lệ[citation:1][citation:4]
+        const white = new Ball(150, 225, '#f8f8f8', 'cue');
+        const red = new Ball(450, 160, '#ff4d4d', 'red');     // Bi đỏ ở vị trí đặc biệt[citation:1]
+        const yellow = new Ball(600, 290, '#ffff66', 'yellow'); // Bi vàng đối phương[citation:4]
+        const balls = [white, red, yellow];
 
-/* ===== COLLISION ===== */
-function collide(a,b){
-  let dx=b.x-a.x, dy=b.y-a.y;
-  let d=Math.hypot(dx,dy);
-  if(d>=2*R||d===0) return;
-  TIME_SCALE=0.25; setTimeout(()=>TIME_SCALE=1,120);
+        // ==================== TRẠNG THÁI GAME ====================
+        let gameState = {
+            currentPlayer: 1,          // Người chơi hiện tại (1 hoặc 2)
+            scores: [0, 0],            // Điểm số [P1, P2]
+            cushionHits: 0,            // Số băng bi cái đã chạm
+            hitRed: false,             // Đã chạm bi đỏ chưa?
+            hitYellow: false,          // Đã chạm bi vàng chưa?
+            shotInProgress: false,     // Đang trong lượt đánh?
+            aiming: false,             // Đang nhắm?
+            showCue: false,            // Hiển thị cây cơ?
+            charging: false,           // Đang giữ Space để lấy lực?
+            power: 0,                  // Giá trị lực hiện tại (0-MAX_POWER)
+            aimX: 0,                   // Tọa độ nhắm X
+            aimY: 0,                   // Tọa độ nhắm Y
+            replay: [],                // Lưu trữ replay
+            replaying: false,          // Đang phát replay?
+            replayIndex: 0,
+            timeScale: 1               // Tốc độ game (cho hiệu ứng slow-mo)
+        };
 
-  let nx=dx/d, ny=dy/d, tx=-ny, ty=nx;
-  let dpTanA=a.vx*tx+a.vy*ty;
-  let dpTanB=b.vx*tx+b.vy*ty;
-  let dpNormA=a.vx*nx+a.vy*ny;
-  let dpNormB=b.vx*nx+b.vy*ny;
+        // ==================== VẼ & HIỆU ỨNG ====================
+        function drawBackground() {
+            // Vẽ bàn
+            ctx.fillStyle = '#0e520e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  a.vx=tx*dpTanA+nx*dpNormB*0.98;
-  a.vy=ty*dpTanA+ny*dpNormB*0.98;
-  b.vx=tx*dpTanB+nx*dpNormA*0.98;
-  b.vy=ty*dpTanB+ny*dpNormA*0.98;
+            // Vẽ logo ở giữa bàn (dùng ảnh htk.jpg nếu có, hoặc vẽ placeholder)
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const logoRadius = 40;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, logoRadius, 0, Math.PI * 2);
+            const gradient = ctx.createRadialGradient(centerX, centerY, 5, centerX, centerY, logoRadius);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+            gradient.addColorStop(1, 'rgba(0, 100, 0, 0.4)');
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255, 215, 0, 0.6)';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            // Chữ viết tắt
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('HTK', centerX, centerY);
 
-  if(a===white||b===white){
-    if(a===red||b===red) hitRed=true;
-    if(a===yellow||b===yellow) hitYellow=true;
-  }
-}
+            // Vẽ viền bàn 3D
+            ctx.strokeStyle = '#5b2c06';
+            ctx.lineWidth = 18;
+            ctx.strokeRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#8b4513';
+            ctx.lineWidth = 6;
+            ctx.strokeRect(9, 9, canvas.width - 18, canvas.height - 18);
+        }
 
-/* ===== UPDATE ===== */
-function update(){
-  ctx.clearRect(0,0,c.width,c.height);
+        function drawCue() {
+            if (!gameState.showCue) return;
+            const dx = gameState.aimX - white.x;
+            const dy = gameState.aimY - white.y;
+            const angle = Math.atan2(dy, dx);
+            const powerLength = gameState.power * 0.6; // Chiều dài cơ tỉ lệ với lực
 
-  if(replaying){
-    let f=replay[rIndex++];
-    balls.forEach((b,i)=>{b.x=f[i].x;b.y=f[i].y});
-    if(rIndex>=replay.length){ replaying=false; }
-  }else{
-    if(shotInProgress){
-      replay.push(balls.map(b=>({x:b.x,y:b.y})));
-      if(replay.length>140) replay.shift();
-    }
+            ctx.save();
+            ctx.translate(white.x, white.y);
+            ctx.rotate(angle);
 
-    balls.forEach(b=>{
-      b.x+=b.vx*TIME_SCALE; b.y+=b.vy*TIME_SCALE;
-      b.vx*=FRICTION; b.vy*=FRICTION;
+            // Vẽ thân cơ (màu gỗ)
+            ctx.fillStyle = '#deb887';
+            ctx.fillRect(-(40 + powerLength), -3, 220, 6);
 
-      if(b.x<R&&!b.hitWallX){ b.vx=Math.abs(b.vx); b.hitWallX=true; if(b===white)cushion++ }
-      if(b.x>c.width-R&&!b.hitWallX){ b.vx=-Math.abs(b.vx); b.hitWallX=true; if(b===white)cushion++ }
-      if(b.y<R&&!b.hitWallY){ b.vy=Math.abs(b.vy); b.hitWallY=true; if(b===white)cushion++ }
-      if(b.y>c.height-R&&!b.hitWallY){ b.vy=-Math.abs(b.vy); b.hitWallY=true; if(b===white)cushion++ }
+            // Vẽ viền và trang trí cơ
+            ctx.strokeStyle = '#8b5a2b';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(-(40 + powerLength), -3, 220, 6);
+            ctx.fillStyle = '#d2691e';
+            ctx.fillRect(-(40 + powerLength), -2, 15, 4); // Đầu cơ
 
-      if(b.x>R&&b.x<c.width-R) b.hitWallX=false;
-      if(b.y>R&&b.y<c.height-R) b.hitWallY=false;
-    });
+            ctx.restore();
+        }
 
-    collide(white,red);
-    collide(white,yellow);
-    collide(red,yellow);
-  }
+        // ==================== VA CHẠM & VẬT LÝ ====================
+        function handleCollision(ballA, ballB) {
+            const dx = ballB.x - ballA.x;
+            const dy = ballB.y - ballA.y;
+            const distance = Math.hypot(dx, dy);
+            if (distance >= CONFIG.BALL_RADIUS * 2 || distance === 0) return;
 
-  balls.forEach(drawBall);
-  drawCue();
+            // Hiệu ứng slow-mo khi va chạm mạnh
+            if (Math.hypot(ballA.vx, ballA.vy) > 2 || Math.hypot(ballB.vx, ballB.vy) > 2) {
+                gameState.timeScale = CONFIG.TIME_SCALE_SLOWMO;
+                setTimeout(() => { gameState.timeScale = 1; }, CONFIG.SLOWMO_DURATION);
+            }
 
-  ctx.fillStyle="#fff";
-  ctx.font="16px Arial";
-  ctx.fillText(`P1: ${score[0]}   P2: ${score[1]}`,20,24);
+            // Xử lý va chạm đàn hồi
+            const nx = dx / distance;
+            const ny = dy / distance;
+            const tx = -ny;
+            const ty = nx;
+            const dpTanA = ballA.vx * tx + ballA.vy * ty;
+            const dpTanB = ballB.vx * tx + ballB.vy * ty;
+            const dpNormA = ballA.vx * nx + ballA.vy * ny;
+            const dpNormB = ballB.vx * nx + ballB.vy * ny;
 
-  /* CHECK END SHOT */
-  if(shotInProgress && balls.every(b=>!b.moving())){
-    shotInProgress=false;
-    if(cushion>=3 && hitRed && hitYellow){
-      score[player-1]++;
-      replaying=true; rIndex=0;
-    }
-    cushion=0; hitRed=hitYellow=false;
-    player=player===1?2:1;
-    info.textContent=`Player ${player} | SPACE lấy lực`;
-  }
+            const m1 = (dpNormA * 1 + dpNormB * 2) / 3; // Giả sử bi mục tiêu nặng hơn một chút
+            const m2 = (dpNormA * 2 + dpNormB * 1) / 3;
 
-  requestAnimationFrame(update);
-}
+            ballA.vx = tx * dpTanA + nx * m2 * 0.98;
+            ballA.vy = ty * dpTanA + ny * m2 * 0.98;
+            ballB.vx = tx * dpTanB + nx * m1 * 0.98;
+            ballB.vy = ty * dpTanB + ny * m1 * 0.98;
 
-/* ===== INPUT ===== */
-c.onmousedown=e=>{
-  if(shotInProgress) return;
-  let r=c.getBoundingClientRect();
-  aimX=e.clientX-r.left; aimY=e.clientY-r.top;
-  showCue=aiming=true;
-};
-c.onmousemove=e=>{
-  if(!aiming) return;
-  let r=c.getBoundingClientRect();
-  aimX=e.clientX-r.left; aimY=e.clientY-r.top;
-};
-window.onkeydown=e=>{ if(e.code==="Space") charging=true; };
-window.onkeyup=e=>{
-  if(e.code==="Space"&&showCue){
-    let dx=aimX-white.x, dy=aimY-white.y;
-    let l=Math.hypot(dx,dy)||1;
-    white.vx=(dx/l)*power*0.38;
-    white.vy=(dy/l)*power*0.38;
-    power=0; charging=false; aiming=false; showCue=false;
-    shotInProgress=true; replay=[];
-  }
-};
+            // Đánh dấu bi cái đã chạm bi mục tiêu nào
+            if (ballA === white || ballB === white) {
+                if (ballA === red || ballB === red) gameState.hitRed = true;
+                if (ballA === yellow || ballB === yellow) gameState.hitYellow = true;
+            }
+        }
 
-/* POWER BAR */
-setInterval(()=>{
-  if(charging) power=Math.min(power+4,MAX_POWER);
-  powerBar.style.height=(power/MAX_POWER*100)+"%";
-},30);
+        function updatePhysics() {
+            balls.forEach(ball => {
+                // Cập nhật vị trí với timeScale
+                ball.x += ball.vx * gameState.timeScale;
+                ball.y += ball.vy * gameState.timeScale;
+                // Ma sát
+                ball.vx *= CONFIG.FRICTION;
+                ball.vy *= CONFIG.FRICTION;
 
-update();
-</script>
+                // Va chạm với băng (bàn size 900x450)
+                if (ball.x < CONFIG.BALL_RADIUS && !ball.hitWallX) {
+                    ball.vx = Math.abs(ball.vx) * 0.95;
+                    ball.hitWallX = true;
+                    if (ball === white) gameState.cushionHits++;
+                }
+                if (ball.x > canvas.width - CONFIG.BALL_RADIUS && !ball.hitWallX) {
+                    ball.vx = -Math.abs(ball.vx) * 0.95;
+                    ball.hitWallX = true;
+                    if (ball === white) gameState.cushionHits++;
+                }
+                if (ball.y < CONFIG.BALL_RADIUS && !ball.hitWallY) {
+                    ball.vy = Math.abs(ball.vy) * 0.95;
+                    ball.hitWallY = true;
+                    if (ball === white) gameState.cushionHits++;
+                }
+                if (ball.y > canvas.height - CONFIG.BALL_RADIUS && !ball.hitWallY) {
+                    ball.vy = -Math.abs(ball.vy) * 0.95;
+                    ball.hitWallY = true;
+                    if (ball === white) gameState.cushionHits++;
+                }
+
+                // Reset cờ va chạm băng
+                if (ball.x > CONFIG.BALL_RADIUS && ball.x < canvas.width - CONFIG.BALL_RADIUS) ball.hitWallX = false;
+                if (ball.y > CONFIG.BALL_RADIUS && ball.y < canvas.height - CONFIG.BALL_RADIUS) ball.hitWallY = false;
+            });
+
+            // Kiểm tra va chạm giữa các bi
+            for (let i = 0; i < balls.length; i++) {
+                for (let j = i + 1; j < balls.length; j++) {
+                    handleCollision(balls[i], balls[j]);
+                }
+            }
+        }
+
+        // ==================== LOGIC GAME ====================
+        function startNewShot() {
+            const dx = gameState.aimX - white.x;
+            const dy = gameState.aimY - white.y;
+            const dist = Math.hypot(dx, dy) || 1;
+            const powerFactor = gameState.power * 0.30; // Hệ số lực giảm để lực vừa phải
+
+            white.vx = (dx / dist) * powerFactor;
+            white.vy = (dy / dist) * powerFactor;
+
+            // Reset trạng thái lượt đánh
+            gameState.power = 0;
+            gameState.charging = false;
+            gameState.aiming = false;
+            gameState.showCue = false;
+            gameState.shotInProgress = true;
+            gameState.replay = [];
+            gameState.cushionHits = 0;
+            gameState.hitRed = false;
+            gameState.hitYellow = false;
+
+            // Cập nhật UI
+            updateStatus(`Đang đánh... (Băng: 0)`);
+        }
+
+        function checkShotEnd() {
+            if (!gameState.shotInProgress || balls.some(b => b.moving())) return false;
+
+            // TẤT CẢ BI ĐÃ DỪNG -> Kết thúc lượt
+            gameState.shotInProgress = false;
+            let pointScored = false;
+
+            // Kiểm tra điều kiện ghi điểm Carom 3 Băng
+            if (gameState.cushionHits >= 3 && gameState.hitRed && gameState.hitYellow) {
+                gameState.scores[gameState.currentPlayer - 1]++;
+                pointScored = true;
+                // Phát replay nếu ghi điểm
+                gameState.replaying = true;
+                gameState.replayIndex = 0;
+                // Lưu vị trí cuối cùng vào replay để hiển thị
+                if (gameState.replay.length === 0) {
+                    gameState.replay = balls.map(b => ({ x: b.x, y: b.y }));
+                }
+            }
+
+            // Chuyển lượt
+            gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+
+            // Cập nhật giao diện
+            updateScores();
+            updatePlayerTurnDisplay();
+            updateStatus(pointScored ? `🎯 Điểm! Lượt tiếp theo...` : `Lượt kế tiếp...`);
+
+            return true;
+        }
+
+        // ==================== CẬP NHẬT GIAO DIỆN ====================
+        function updateScores() {
+            score1El.textContent = gameState.scores[0];
+            score2El.textContent = gameState.scores[1];
+        }
+
+        function updatePlayerTurnDisplay() {
+            const isPlayer1Turn = gameState.currentPlayer === 1;
+            player1Info.classList.toggle('active', isPlayer1Turn);
+            player2Info.classList.toggle('active', !isPlayer1Turn);
+            status1El.textContent = isPlayer1Turn ? '🟢 Đến lượt bạn!' : '🔵 Chờ lượt...';
+            status2El.textContent = !isPlayer1Turn ? '🟢 Đến lượt bạn!' : '🔵 Chờ lượt...';
+        }
+
+        function updateStatus(message) {
+            const statusEl = gameState.currentPlayer === 1 ? status1El : status2El;
+            if (gameState.shotInProgress) {
+                statusEl.textContent = `Đang đánh... (Băng: ${gameState.cushionHits})`;
+            } else {
+                statusEl.textContent = message;
+            }
+        }
+
+        // ==================== VÒNG LẶP GAME CHÍNH ====================
+        function gameLoop() {
+            drawBackground();
+
+            if (gameState.replaying) {
+                // Hiển thị replay khi ghi điểm
+                const frame = gameState.replay[gameState.replayIndex];
+                if (frame) {
+                    balls.forEach((ball, idx) => {
+                        ball.x = frame[idx].x;
+                        ball.y = frame[idx].y;
+                    });
+                }
+                gameState.replayIndex++;
+                if (gameState.replayIndex >= gameState.replay.length) {
+                    gameState.replaying = false;
+                }
+            } else {
+                if (gameState.shotInProgress) {
+                    // Lưu replay khi đang đánh
+                    gameState.replay.push(balls.map(b => ({ x: b.x, y: b.y })));
+                    if (gameState.replay.length > 200) gameState.replay.shift();
+                    updatePhysics();
+                }
+                checkShotEnd();
+            }
+
+            // Vẽ bi và cơ
+            balls.forEach(ball => ball.draw());
+            drawCue();
+
+            // Vẽ overlay điểm số
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(10, 10, 180, 40);
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(`P1: ${gameState.scores[0]}  |  P2: ${gameState.scores[1]}`, 20, 35);
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ==================== XỬ LÝ ĐẦU VÀO ====================
+        canvas.addEventListener('mousedown', (e) => {
+            if (gameState.shotInProgress || gameState.replaying) return;
+            const rect = canvas.getBoundingClientRect();
+            gameState.aimX = e.clientX - rect.left;
+            gameState.aimY = e.clientY - rect.top;
+            gameState.showCue = gameState.aiming = true;
+            updateStatus('Nhắm & giữ SPACE để lấy lực');
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!gameState.aiming) return;
+            const rect = canvas.getBoundingClientRect();
+            gameState.aimX = e.clientX - rect.left;
+            gameState.aimY = e.clientY - rect.top;
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && gameState.showCue && !gameState.shotInProgress) {
+                gameState.charging = true;
+                e.preventDefault(); // Ngăn cuộn trang
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.code === 'Space' && gameState.charging) {
+                if (gameState.power > 10) { // Chỉ đánh nếu có lực đủ
+                    startNewShot();
+                } else {
+                    gameState.charging = false;
+                    updateStatus('Lực quá yếu! Giữ SPACE lâu hơn.');
+                }
+                e.preventDefault();
+            }
+        });
+
+        // Cập nhật thanh lực
+        setInterval(() => {
+            if (gameState.charging) {
+                gameState.power = Math.min(gameState.power + CONFIG.POWER_INCREMENT, CONFIG.MAX_POWER);
+                const percent = Math.round((gameState.power / CONFIG.MAX_POWER) * 100);
+                powerBar.style.height = percent + '%';
+                powerValue.textContent = percent + '%';
+                // Đổi màu chữ theo lực
+                powerValue.style.color = percent < 50 ? '#0f0' : percent < 80 ? '#ff0' : '#f00';
+            }
+        }, 30);
+
+        // ==================== KHỞI ĐỘNG ====================
+        updateScores();
+        updatePlayerTurnDisplay();
+        updateStatus('Nhấp chuột để nhắm, giữ SPACE để lấy lực');
+        gameLoop();
+    </script>
 </body>
 </html>

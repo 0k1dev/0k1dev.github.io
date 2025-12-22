@@ -208,7 +208,7 @@ window.addEventListener("keyup",e=>{
     const dx = aimX - white.x
     const dy = aimY - white.y
     const len=Math.hypot(dx,dy);
-    const force=power*0.08;
+    const force = power * 0.16;
 
     white.vx=(dx/len)*force;
     white.vy=(dy/len)*force;

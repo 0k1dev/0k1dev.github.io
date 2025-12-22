@@ -39,7 +39,7 @@ canvas{
 
 .qr-text{
   margin-top:6px;
-  font-size:13px;
+  font-size:20px;
   color:#ccc;
 }
 
@@ -60,12 +60,11 @@ canvas{
 /* ======== BANK =======*/
 const BANK_ID = "ACB";          // hoặc 970416
 const ACCOUNT_NO = "43146717";
-const ACCOUNT_NAME = "DINH TAN HUY";
 
 document.getElementById("vietqr").src =
   `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png` +
-  `?addInfo=Donate+Carom+3+Bang` +
-  `&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
+  `?addInfo=Donate+Carom+3+Bang`;
+
 /*===================*/
 
   

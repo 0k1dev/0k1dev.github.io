@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Carom 3 Băng – Pro (Slow Motion)</title>
+<title>Carom 3 Băng – Pro 2P</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -15,7 +15,6 @@ body{
   flex-direction:column;
   align-items:center
 }
-
 h1{color:#00e5ff;margin:8px}
 
 .table-wrap{
@@ -23,16 +22,29 @@ h1{color:#00e5ff;margin:8px}
   display:inline-block;
 }
 
+/* ===== POWER BAR ===== */
+.power-wrap{
+  position:absolute;
+  left:-40px;
+  top:20px;
+  width:16px;
+  height:380px;
+  background:#222;
+  border-radius:8px;
+}
+.power-bar{
+  position:absolute;
+  bottom:0;
+  width:100%;
+  height:0%;
+  background:linear-gradient(#0f0,#ff0,#f00);
+  border-radius:8px;
+}
+
 canvas{
   background:#145214;
   border:18px solid #5b2c06;
   border-radius:12px;
-}
-
-.info{
-  margin-top:6px;
-  font-size:14px;
-  color:#ccc
 }
 
 /* ===== QR ===== */
@@ -49,35 +61,37 @@ canvas{
   padding:5px;
   border-radius:10px;
 }
-.qr-text{
-  margin-top:6px;
+.qr-text{margin-top:6px;color:#ccc;font-size:14px}
+
+.info{
+  margin-top:8px;
   font-size:14px;
-  color:#ccc;
+  color:#ccc
 }
 </style>
 </head>
 
 <body>
-<h1>🎱 Carom 3 Băng – Pro Training</h1>
+<h1>🎱 Carom 3 Băng – Pro Training (2 Players)</h1>
 
 <div class="table-wrap">
+  <div class="power-wrap">
+    <div class="power-bar" id="powerBar"></div>
+  </div>
+
   <canvas id="c" width="900" height="450"></canvas>
 
   <div class="qr-box">
-    <img id="vietqr">
+    <img src="https://img.vietqr.io/image/ACB-43146717-compact2.png?addInfo=Donate+Carom">
     <div class="qr-text">Ủng hộ tác giả</div>
   </div>
 </div>
 
-<div class="info">
-  Click bi trắng → giữ SPACE lấy lực | A/D xoáy | S = không xoáy
+<div class="info" id="info">
+  Player 1 | SPACE lấy lực | A/D xoáy | S = không xoáy
 </div>
 
 <script>
-/* ===== QR ===== */
-document.getElementById("vietqr").src =
-  "https://img.vietqr.io/image/ACB-43146717-compact2.png?addInfo=Donate+Carom+3+Bang";
-
 /* ===== CANVAS ===== */
 const c=document.getElementById("c");
 const ctx=c.getContext("2d");
@@ -88,13 +102,8 @@ const FRICTION=0.992;
 const MAX_POWER=160;
 
 /* ===== SLOW MOTION ===== */
-let TIME_SCALE = 1;
-let slowTimer = 0;
-
-function triggerSlow(){
-  TIME_SCALE = 0.25;      // tốc độ slow
-  slowTimer = 35;        // thời gian slow (~0.6s)
-}
+let TIME_SCALE=1, slowTimer=0;
+const triggerSlow=()=>{TIME_SCALE=0.25;slowTimer=35};
 
 /* ===== BALL ===== */
 class Ball{
@@ -104,36 +113,28 @@ class Ball{
     this.color=color;
   }
 }
-
 let white=new Ball(150,225,"#fff");
 let red=new Ball(450,160,"red");
 let yellow=new Ball(600,290,"yellow");
 const balls=[white,red,yellow];
 
-/* ===== STATE ===== */
-let showCue=false;
-let aiming=false;
+/* ===== GAME STATE ===== */
+let showCue=false, aiming=false;
 let aimX=0, aimY=0;
-let charging=false;
-let power=0;
-let spin=0;
+let charging=false, power=0, spin=0;
 
-/* ===== SCORE ===== */
-let score=0;
-let cushionCount=0;
-let hitRed=false;
-let hitYellow=false;
+/* ===== PLAYER ===== */
+let currentPlayer=1;
+let score=[0,0];
+
+/* ===== CAROM CHECK ===== */
+let cushionCount=0, hitRed=false, hitYellow=false;
+
+/* ===== REPLAY ===== */
+let replayFrames=[];
+let replaying=false, replayIndex=0;
 
 /* ===== DRAW ===== */
-function drawDots(){
-  ctx.fillStyle="#cfa";
-  const d=c.width/8;
-  for(let i=1;i<8;i++){
-    ctx.beginPath();ctx.arc(i*d,8,3,0,6.28);ctx.fill();
-    ctx.beginPath();ctx.arc(i*d,c.height-8,3,0,6.28);ctx.fill();
-  }
-}
-
 function drawBall(b){
   ctx.beginPath();
   ctx.arc(b.x,b.y,R,0,6.28);
@@ -141,49 +142,16 @@ function drawBall(b){
   ctx.fill();
 }
 
-/* ===== PREDICT ===== */
-function drawPredict(){
-  if(!showCue) return;
-
-  let x=white.x,y=white.y;
-  let dx=aimX-white.x, dy=aimY-white.y;
-  let len=Math.hypot(dx,dy)||1;
-  dx/=len; dy/=len;
-
-  ctx.setLineDash([6,6]);
-  ctx.strokeStyle="rgba(255,255,255,.6)";
-  ctx.beginPath();
-  ctx.moveTo(x,y);
-
-  for(let i=0;i<3;i++){
-    let tx=dx>0?(c.width-R-x)/dx:(R-x)/dx;
-    let ty=dy>0?(c.height-R-y)/dy:(R-y)/dy;
-    let t=Math.min(tx,ty);
-    x+=dx*t; y+=dy*t;
-    ctx.lineTo(x,y);
-    if(tx<ty) dx*=-1; else dy*=-1;
-  }
-  ctx.stroke();
-  ctx.setLineDash([]);
-}
-
 /* ===== CUE ===== */
 function drawCue(){
   if(!showCue) return;
-
-  let dx=aimX-white.x;
-  let dy=aimY-white.y;
+  let dx=aimX-white.x, dy=aimY-white.y;
   let ang=Math.atan2(dy,dx);
-
-  const GAP=20;
-  const PULL=power*0.8;
-  const LEN=220;
-
   ctx.save();
   ctx.translate(white.x,white.y);
   ctx.rotate(ang);
   ctx.fillStyle="#deb887";
-  ctx.fillRect(-(GAP+PULL+LEN),-2,LEN,4);
+  ctx.fillRect(-(40+power),-2,220,4);
   ctx.restore();
 }
 
@@ -197,22 +165,15 @@ function collide(a,b){
 
   const nx=dx/dist, ny=dy/dist;
   const tx=-ny, ty=nx;
-
   const dpTanA=a.vx*tx+a.vy*ty;
   const dpTanB=b.vx*tx+b.vy*ty;
   const dpNormA=a.vx*nx+a.vy*ny;
   const dpNormB=b.vx*nx+b.vy*ny;
 
-  const REST=0.98;
-
-  a.vx=tx*dpTanA+nx*dpNormB*REST;
-  a.vy=ty*dpTanA+ny*dpNormB*REST;
-  b.vx=tx*dpTanB+nx*dpNormA*REST;
-  b.vy=ty*dpTanB+ny*dpNormA*REST;
-
-  const overlap=2*R-dist;
-  a.x-=nx*overlap/2; a.y-=ny*overlap/2;
-  b.x+=nx*overlap/2; b.y+=ny*overlap/2;
+  a.vx=tx*dpTanA+nx*dpNormB*0.98;
+  a.vy=ty*dpTanA+ny*dpNormB*0.98;
+  b.vx=tx*dpTanB+nx*dpNormA*0.98;
+  b.vy=ty*dpTanB+ny*dpNormA*0.98;
 
   if(a===white||b===white){
     if(a===red||b===red) hitRed=true;
@@ -223,87 +184,90 @@ function collide(a,b){
 /* ===== UPDATE ===== */
 function update(){
   ctx.clearRect(0,0,c.width,c.height);
-  drawDots();
 
-  balls.forEach(b=>{
-    b.x += b.vx * TIME_SCALE;
-    b.y += b.vy * TIME_SCALE;
+  if(replaying){
+    let f=replayFrames[replayIndex++];
+    balls.forEach((b,i)=>{b.x=f[i].x;b.y=f[i].y});
+    if(replayIndex>=replayFrames.length){
+      replaying=false;
+    }
+  }else{
+    replayFrames.push(balls.map(b=>({x:b.x,y:b.y})));
+    if(replayFrames.length>120) replayFrames.shift();
 
-    b.vx *= Math.pow(FRICTION, TIME_SCALE);
-    b.vy *= Math.pow(FRICTION, TIME_SCALE);
+    balls.forEach(b=>{
+      b.x+=b.vx*TIME_SCALE;
+      b.y+=b.vy*TIME_SCALE;
+      b.vx*=Math.pow(FRICTION,TIME_SCALE);
+      b.vy*=Math.pow(FRICTION,TIME_SCALE);
 
-    if(Math.hypot(b.vx,b.vy)<0.02) b.vx=b.vy=0;
+      if(b.x<R||b.x>c.width-R||b.y<R||b.y>c.height-R){
+        if(b===white){cushionCount++;triggerSlow();}
+      }
+      b.x=Math.max(R,Math.min(c.width-R,b.x));
+      b.y=Math.max(R,Math.min(c.height-R,b.y));
+    });
 
-    if(b.x<R){b.x=R;b.vx=Math.abs(b.vx); if(b===white){cushionCount++;triggerSlow();}}
-    if(b.x>c.width-R){b.x=c.width-R;b.vx=-Math.abs(b.vx); if(b===white){cushionCount++;triggerSlow();}}
-    if(b.y<R){b.y=R;b.vy=Math.abs(b.vy); if(b===white){cushionCount++;triggerSlow();}}
-    if(b.y>c.height-R){b.y=c.height-R;b.vy=-Math.abs(b.vy); if(b===white){cushionCount++;triggerSlow();}}
-  });
-
-  collide(white,red);
-  collide(white,yellow);
-  collide(red,yellow);
+    collide(white,red);
+    collide(white,yellow);
+    collide(red,yellow);
+  }
 
   balls.forEach(drawBall);
-  drawPredict();
   drawCue();
 
   ctx.fillStyle="#fff";
-  ctx.font="18px Arial";
-  ctx.fillText("SCORE: "+score,20,30);
+  ctx.font="16px Arial";
+  ctx.fillText(`P1: ${score[0]}   P2: ${score[1]}`,20,24);
 
-  if(cushionCount>=3 && hitRed && hitYellow && white.vx===0 && white.vy===0){
-    score++;
-    cushionCount=0;
-    hitRed=hitYellow=false;
+  if(cushionCount>=3&&hitRed&&hitYellow&&white.vx===0&&white.vy===0){
+    score[currentPlayer-1]++;
+    replaying=true;
+    replayIndex=0;
+    cushionCount=0;hitRed=hitYellow=false;
   }
 
-  if(slowTimer>0){
-    slowTimer--;
-    if(slowTimer===0) TIME_SCALE=1;
-  }
-
+  if(slowTimer>0 && --slowTimer===0) TIME_SCALE=1;
   requestAnimationFrame(update);
 }
 
 /* ===== INPUT ===== */
-c.addEventListener("mousedown",e=>{
+c.onmousedown=e=>{
   if(white.vx||white.vy) return;
   const r=c.getBoundingClientRect();
-  const x=e.clientX-r.left, y=e.clientY-r.top;
-  if(Math.hypot(x-white.x,y-white.y)<R+5){
-    showCue=aiming=true;
-    aimX=x; aimY=y;
-  }
-});
-
-c.addEventListener("mousemove",e=>{
+  aimX=e.clientX-r.left;
+  aimY=e.clientY-r.top;
+  showCue=aiming=true;
+};
+c.onmousemove=e=>{
   if(!aiming) return;
   const r=c.getBoundingClientRect();
   aimX=e.clientX-r.left;
   aimY=e.clientY-r.top;
-});
+};
 
-window.addEventListener("keydown",e=>{
-  if(e.code==="Space"&&showCue) charging=true;
-  if(e.key==="a") spin=-1;
-  if(e.key==="d") spin=1;
-  if(e.key==="s") spin=0;
-});
-
-window.addEventListener("keyup",e=>{
-  if(e.code==="Space"&&showCue){
+window.onkeydown=e=>{
+  if(e.code==="Space") charging=true;
+};
+window.onkeyup=e=>{
+  if(e.code==="Space"){
     let dx=aimX-white.x, dy=aimY-white.y;
     let len=Math.hypot(dx,dy)||1;
     let force=power*0.38;
     white.vx=(dx/len)*force;
     white.vy=(dy/len)*force;
-    power=0; charging=false; showCue=false; aiming=false;
+    power=0;charging=false;showCue=false;aiming=false;
+    currentPlayer=currentPlayer===1?2:1;
+    document.getElementById("info").textContent=
+      `Player ${currentPlayer} | SPACE lấy lực`;
   }
-});
+};
 
+/* ===== POWER BAR ===== */
 setInterval(()=>{
   if(charging) power=Math.min(power+4,MAX_POWER);
+  document.getElementById("powerBar").style.height=
+    (power/MAX_POWER*100)+"%";
 },30);
 
 update();

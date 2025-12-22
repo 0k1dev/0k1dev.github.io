@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Carom 3 Băng – Training</title>
+<title>Carom 3 Băng – Training Pro</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -22,16 +22,12 @@ canvas{
   border-radius:12px;
 }
 #powerBox{
-  width:300px;
-  height:12px;
-  background:#333;
-  margin-top:10px;
-  border-radius:6px;
-  overflow:hidden;
+  width:300px;height:12px;
+  background:#333;margin-top:10px;
+  border-radius:6px;overflow:hidden;
 }
 #power{
-  height:100%;
-  width:0%;
+  height:100%;width:0%;
   background:linear-gradient(90deg,#00ffcc,#ff0044);
 }
 .info{margin-top:8px;font-size:15px}
@@ -40,7 +36,7 @@ canvas{
 
 <body>
 
-<h1>🎱 Carom 3 Băng – Training</h1>
+<h1>🎱 Carom 3 Băng – Training Pro</h1>
 <canvas id="table" width="900" height="450"></canvas>
 <div id="powerBox"><div id="power"></div></div>
 <div class="info" id="info">
@@ -54,13 +50,16 @@ const powerBar=document.getElementById("power");
 const info=document.getElementById("info");
 
 const R=10;
-const MAX_POWER=120;
+const MAX_POWER=100;
+const FRICTION=0.985;
 
 /* ===== BALL ===== */
-function Ball(x,y,color){
-  this.x=x; this.y=y;
-  this.vx=0; this.vy=0;
-  this.color=color;
+class Ball{
+  constructor(x,y,color){
+    this.x=x;this.y=y;
+    this.vx=0;this.vy=0;
+    this.color=color;
+  }
 }
 let white=new Ball(150,225,"#fff");
 let red=new Ball(450,180,"red");
@@ -74,7 +73,7 @@ let aimX=0, aimY=0;
 let power=0;
 let charging=false;
 
-/* ===== TABLE ===== */
+/* ===== TABLE DOTS ===== */
 function drawTable(){
   ctx.fillStyle="#cfa";
   const d=canvas.width/8;
@@ -102,14 +101,41 @@ function drawCue(){
   let dx=white.x-aimX;
   let dy=white.y-aimY;
   let ang=Math.atan2(dy,dx);
-  let len=40+power;
+  let back=30+power*0.6;
 
   ctx.save();
   ctx.translate(white.x,white.y);
   ctx.rotate(ang);
   ctx.fillStyle="#deb887";
-  ctx.fillRect(20,-2,len,4);
+  ctx.fillRect(back,-2,200,4);
   ctx.restore();
+}
+
+/* ===== COLLISION BALL-BALL ===== */
+function ballCollision(a,b){
+  let dx=b.x-a.x;
+  let dy=b.y-a.y;
+  let dist=Math.hypot(dx,dy);
+  if(dist<2*R){
+    let angle=Math.atan2(dy,dx);
+    let speedA=Math.hypot(a.vx,a.vy);
+    let speedB=Math.hypot(b.vx,b.vy);
+
+    let dirA=Math.atan2(a.vy,a.vx);
+    let dirB=Math.atan2(b.vy,b.vx);
+
+    a.vx=Math.cos(dirB)*speedB;
+    a.vy=Math.sin(dirB)*speedB;
+    b.vx=Math.cos(dirA)*speedA;
+    b.vy=Math.sin(dirA)*speedA;
+
+    // tách bi ra
+    let overlap=2*R-dist;
+    a.x-=Math.cos(angle)*overlap/2;
+    a.y-=Math.sin(angle)*overlap/2;
+    b.x+=Math.cos(angle)*overlap/2;
+    b.y+=Math.sin(angle)*overlap/2;
+  }
 }
 
 /* ===== UPDATE ===== */
@@ -120,16 +146,23 @@ function update(){
   balls.forEach(b=>{
     b.x+=b.vx;
     b.y+=b.vy;
-    b.vx*=0.985;
-    b.vy*=0.985;
+    b.vx*=FRICTION;
+    b.vy*=FRICTION;
+
     if(Math.abs(b.vx)<0.03) b.vx=0;
     if(Math.abs(b.vy)<0.03) b.vy=0;
+
     if(b.x<R||b.x>canvas.width-R) b.vx*=-1;
     if(b.y<R||b.y>canvas.height-R) b.vy*=-1;
-    drawBall(b);
   });
 
+  ballCollision(white,red);
+  ballCollision(white,yellow);
+  ballCollision(red,yellow);
+
+  balls.forEach(drawBall);
   drawCue();
+
   requestAnimationFrame(update);
 }
 
@@ -140,19 +173,16 @@ canvas.addEventListener("mousedown",e=>{
   const x=e.clientX-r.left;
   const y=e.clientY-r.top;
 
-  // click bi trắng -> hiện apphe
   if(Math.hypot(x-white.x,y-white.y)<R+5){
     showCue=true;
     aiming=true;
-    aimX=x; aimY=y;
-    info.innerText="Di chuyển chuột để chỉnh hướng – giữ SPACE để lấy lực";
+    aimX=x;aimY=y;
+    info.innerText="Giữ SPACE để chỉnh lực – thả SPACE để đánh";
   }else{
-    // click ngoài -> ẩn apphe
     showCue=false;
     aiming=false;
     power=0;
     powerBar.style.width="0%";
-    info.innerText="Click bi trắng để đặt gậy";
   }
 });
 
@@ -163,26 +193,30 @@ canvas.addEventListener("mousemove",e=>{
   aimY=e.clientY-r.top;
 });
 
-/* ===== SPACE POWER ===== */
+/* ===== POWER ===== */
 window.addEventListener("keydown",e=>{
   if(e.code==="Space" && showCue){
     charging=true;
   }
 });
-
 window.addEventListener("keyup",e=>{
   if(e.code==="Space" && showCue){
-    white.vx=(white.x-aimX)/(6-(power/60));
-    white.vy=(white.y-aimY)/(6-(power/60));
+    const dx=white.x-aimX;
+    const dy=white.y-aimY;
+    const len=Math.hypot(dx,dy);
+    const force=power*0.08;
+
+    white.vx=(dx/len)*force;
+    white.vy=(dy/len)*force;
+
+    charging=false;
     showCue=false;
     aiming=false;
-    charging=false;
     power=0;
     powerBar.style.width="0%";
   }
 });
 
-/* ===== POWER CHARGE ===== */
 setInterval(()=>{
   if(charging){
     power=Math.min(power+2,MAX_POWER);

@@ -220,8 +220,7 @@
       <img id="vietqr" alt="VietQR Donate">
 
       <div class="donate-info">
-        <input id="message" type="text" value="Donate video content ❤️">
-        <button onclick="generateQR()">Tạo mã QR</button>
+        <p style="color:#ccc;font-size:14px"> Nội dung chuyển khoản: <b>ADMIN</b></p>
       </div>
     </div>
   </div>
@@ -293,14 +292,14 @@
         mainAudio.currentTime -= 2;
     });
     /* ===== VIETQR DONATE (KHÔNG SỐ TIỀN) ===== */
-    const BANK_ID="ACB";
-    const ACCOUNT_NO="43146717";
-    const ACCOUNT_NAME="DINH TAN HUY";
+    const BANK_ID = "ACB";
+    const ACCOUNT_NO = "43146717";
 
     function generateQR(){
-        const msg=document.getElementById("message").value;
-        document.getElementById("vietqr").src=`https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?addInfo=${encodeURIComponent(msg)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
+      document.getElementById("vietqr").src =`https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?addInfo=ADMIN`;
     }
+
+// auto load
     generateQR();
     
 </script>

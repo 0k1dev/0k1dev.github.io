@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IELTS Listening Player</title>
+    <link rel="icon" href="https://fav.farm/🎧">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
@@ -126,15 +127,15 @@
     </div>
     <div class="timer">
         <span class="current">0:00</span>
-        <span class="duration">0:00</span>
+        <span class="duration">35:34</span>
     </div>
 
     <div class="controls">
-        <button class="btn-control" id="rewind" title="Lùi 10s"><i class="fas fa-backward-step"></i> -10s</button>
+        <button class="btn-control" id="rewind" title="Lùi 2s"><i class="fas fa-backward-step"></i> -2s</button>
         <button class="btn-control play-pause" id="play-btn">
             <i class="fas fa-play"></i>
         </button>
-        <button class="btn-control" id="forward" title="Tiến 10s">+10s <i class="fas fa-forward-step"></i></button>
+        <button class="btn-control" id="forward" title="Tiến 2s">+2s <i class="fas fa-forward-step"></i></button>
     </div>
 </div>
 
@@ -177,13 +178,13 @@
             let audioDuration = mainAudio.duration;
             let totalMin = Math.floor(audioDuration / 60);
             let totalSec = Math.floor(audioDuration % 60);
-            if(totalSec < 10) totalSec = `0${totalSec}`;
+            if(totalSec < 2) totalSec = `0${totalSec}`;
             musicDuration.innerText = `${totalMin}:${totalSec}`;
         });
 
         let currentMin = Math.floor(currentTime / 60);
         let currentSec = Math.floor(currentTime % 60);
-        if(currentSec < 10) currentSec = `0${currentSec}`;
+        if(currentSec < 2) currentSec = `0${currentSec}`;
         musicCurrentTime.innerText = `${currentMin}:${currentSec}`;
     });
 

@@ -46,6 +46,7 @@ canvas{
 <script>
 const canvas=document.getElementById("table");
 const ctx=canvas.getContext("2d");
+canvas.addEventListener("contextmenu", e => e.preventDefault());
 const powerBar=document.getElementById("power");
 const info=document.getElementById("info");
 
@@ -168,10 +169,13 @@ function update(){
 
 /* ===== MOUSE ===== */
 canvas.addEventListener("mousedown",e=>{
-  if(white.vx||white.vy) return;
-  const r=canvas.getBoundingClientRect();
-  const x=e.clientX-r.left;
-  const y=e.clientY-r.top;
+  if (e.button !== 0) return; // ❗ CHỈ CHUỘT TRÁI
+  if (white.vx || white.vy) return;
+
+  const r = canvas.getBoundingClientRect();
+  const x = e.clientX - r.left;
+  const y = e.clientY - r.top;
+
 
   if(Math.hypot(x-white.x,y-white.y)<R+5){
     showCue=true;

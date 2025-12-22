@@ -73,7 +73,7 @@ const ctx=c.getContext("2d");
 c.addEventListener("contextmenu",e=>e.preventDefault());
 
 const R=10;
-const FRICTION=0.992;
+const FRICTION = 0.996;
 const MAX_POWER=120;
 
 /* ===== BALL ===== */
@@ -164,10 +164,13 @@ function collide(a,b){
   const dpNormA=a.vx*nx+a.vy*ny;
   const dpNormB=b.vx*nx+b.vy*ny;
 
-  a.vx=tx*dpTanA+nx*dpNormB;
-  a.vy=ty*dpTanA+ny*dpNormB;
-  b.vx=tx*dpTanB+nx*dpNormA;
-  b.vy=ty*dpTanB+ny*dpNormA;
+  const REST = 0.97;
+
+  a.vx = tx*dpTanA + nx*dpNormB * REST;
+  a.vy = ty*dpTanA + ny*dpNormB * REST;
+  b.vx = tx*dpTanB + nx*dpNormA * REST;
+  b.vy = ty*dpTanB + ny*dpNormA * REST;
+
 
   const overlap=2*R-dist;
   a.x-=nx*overlap/2; a.y-=ny*overlap/2;
@@ -182,15 +185,15 @@ function update(){
   balls.forEach(b=>{
     b.x+=b.vx; b.y+=b.vy;
     b.vx*=FRICTION; b.vy*=FRICTION;
-    if(Math.hypot(b.vx,b.vy)<0.02){b.vx=b.vy=0;}
+    if(Math.hypot(b.vx,b.vy)<0.01){b.vx=b.vy=0;}
 
     if(b.x<R||b.x>c.width-R){
       b.vx*=-1;
-      if(b===white) b.vy+=spin*0.15;
+      if(b===white) b.vy += spin*0.25;
     }
     if(b.y<R||b.y>c.height-R){
       b.vy*=-1;
-      if(b===white) b.vx-=spin*0.15;
+      if(b===white) b.vx -= spin*0.25;
     }
   });
 
@@ -230,7 +233,7 @@ window.addEventListener("keyup",e=>{
   if(e.code==="Space"&&showCue){
     let dx=aimX-white.x, dy=aimY-white.y;
     let len=Math.hypot(dx,dy)||1;
-    let force=Math.min(power*0.15,8);
+    let force = power * 0.32;
     white.vx=(dx/len)*force;
     white.vy=(dy/len)*force;
     charging=showCue=aiming=false;

@@ -17,6 +17,27 @@ canvas{
   border-radius:12px;
 }
 .info{margin-top:6px;font-size:14px;color:#ccc}
+/* QR BOX */
+#qr-box{
+  position: absolute;
+  top: 10px;
+  right: -160px; /* đẩy ra ngoài bàn */
+  width: 150px;
+  text-align: center;
+}
+
+#qr-box img{
+  width: 140px;
+  border-radius: 10px;
+  background:#fff;
+  padding:5px;
+}
+
+.qr-text{
+  margin-top:6px;
+  font-size:13px;
+  color:#ccc;
+}
 </style>
 </head>
 
@@ -26,16 +47,23 @@ canvas{
 <div class="info" id="info">
   Click bi trắng → SPACE lấy lực | A/D xoáy | S = không xoáy
 </div>
-<div style="text-align:center;margin-top:16px;">
-  <h3>Ủng hộ qua QR ACB</h3>
-  <img 
-    src="https://img.vietqr.io/image/acb-123456789-compact2.png?addInfo=Support+Project&accountName=NGUYEN+VAN+A"
-    alt="QR Donate ACB"
-    style="width:250px;border:1px solid #ccc;border-radius:12px;"
-  >
-  <p>Quét để chuyển khoản</p>
+<div id="qr-box">
+    <img id="vietqr" alt="QR Donate">
+    <div class="qr-text">Ủng hộ tác giả</div>
 </div>
 <script>
+/* ======== BANK =======*/
+const BANK_ID = "ACB";          // hoặc 970416
+const ACCOUNT_NO = "43146717";
+const ACCOUNT_NAME = "DINH TAN HUY";
+
+document.getElementById("vietqr").src =
+  `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png` +
+  `?addInfo=Donate+Carom+3+Bang` +
+  `&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
+/*===================*/
+
+  
 const canvas=c=document.getElementById("c");
 const ctx=c.getContext("2d");
 c.addEventListener("contextmenu",e=>e.preventDefault());

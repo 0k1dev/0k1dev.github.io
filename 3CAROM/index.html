@@ -2,43 +2,25 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Carom 3 Băng – Pro 2P</title>
+<title>Carom 3 Băng – Pro 2P (Fixed)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
 body{
-  margin:0;
-  background:#0b0b0b;
-  color:#fff;
-  font-family:Arial;
-  display:flex;
-  flex-direction:column;
-  align-items:center
+  margin:0;background:#0b0b0b;color:#fff;
+  font-family:Arial;display:flex;
+  flex-direction:column;align-items:center
 }
 h1{color:#00e5ff;margin:8px}
+.table-wrap{position:relative;display:inline-block}
 
-.table-wrap{
-  position:relative;
-  display:inline-block;
-}
-
-/* ===== POWER BAR ===== */
+/* POWER */
 .power-wrap{
-  position:absolute;
-  left:-40px;
-  top:20px;
-  width:16px;
-  height:380px;
-  background:#222;
-  border-radius:8px;
+  position:absolute;left:-40px;top:20px;
+  width:16px;height:380px;background:#222;border-radius:8px
 }
 .power-bar{
-  position:absolute;
-  bottom:0;
-  width:100%;
-  height:0%;
-  background:linear-gradient(#0f0,#ff0,#f00);
-  border-radius:8px;
+  position:absolute;bottom:0;width:100%;height:0%;
+  background:linear-gradient(#0f0,#ff0,#f00);border-radius:8px
 }
 
 canvas{
@@ -46,110 +28,63 @@ canvas{
   border:18px solid #5b2c06;
   border-radius:12px;
 }
-
-/* ===== QR ===== */
-.qr-box{
-  position:absolute;
-  top:10px;
-  right:-160px;
-  width:150px;
-  text-align:center;
-}
-.qr-box img{
-  width:140px;
-  background:#fff;
-  padding:5px;
-  border-radius:10px;
-}
-.qr-text{margin-top:6px;color:#ccc;font-size:14px}
-
-.info{
-  margin-top:8px;
-  font-size:14px;
-  color:#ccc
-}
+.info{margin-top:8px;color:#ccc}
 </style>
 </head>
 
 <body>
-<h1>🎱 Carom 3 Băng – Pro Training (2 Players)</h1>
+<h1>🎱 Carom 3 Băng – Pro 2P</h1>
 
 <div class="table-wrap">
-  <div class="power-wrap">
-    <div class="power-bar" id="powerBar"></div>
-  </div>
-
+  <div class="power-wrap"><div id="powerBar" class="power-bar"></div></div>
   <canvas id="c" width="900" height="450"></canvas>
-
-  <div class="qr-box">
-    <img src="https://img.vietqr.io/image/ACB-43146717-compact2.png?addInfo=Donate+Carom">
-    <div class="qr-text">Ủng hộ tác giả</div>
-  </div>
 </div>
 
-<div class="info" id="info">
-  Player 1 | SPACE lấy lực | A/D xoáy | S = không xoáy
-</div>
+<div class="info" id="info">Player 1 | SPACE lấy lực</div>
 
 <script>
-/* ===== CANVAS ===== */
 const c=document.getElementById("c");
 const ctx=c.getContext("2d");
 
-/* ===== CONST ===== */
-const R=10;
-const FRICTION=0.992;
-const MAX_POWER=160;
-
-/* ===== SLOW MOTION ===== */
-let TIME_SCALE=1, slowTimer=0;
-const triggerSlow=()=>{TIME_SCALE=0.25;slowTimer=35};
+const R=10, FRICTION=0.992, MAX_POWER=160;
+let TIME_SCALE=1;
 
 /* ===== BALL ===== */
 class Ball{
   constructor(x,y,color){
-    this.x=x;this.y=y;
-    this.vx=0;this.vy=0;
-    this.color=color;
+    this.x=x;this.y=y;this.vx=0;this.vy=0;this.color=color;
+    this.hitWallX=false;this.hitWallY=false;
   }
+  moving(){ return Math.hypot(this.vx,this.vy)>0.05 }
 }
-let white=new Ball(150,225,"#fff");
-let red=new Ball(450,160,"red");
-let yellow=new Ball(600,290,"yellow");
+const white=new Ball(150,225,"#fff");
+const red=new Ball(450,160,"red");
+const yellow=new Ball(600,290,"yellow");
 const balls=[white,red,yellow];
 
-/* ===== GAME STATE ===== */
-let showCue=false, aiming=false;
+/* ===== STATE ===== */
+let aiming=false, showCue=false;
 let aimX=0, aimY=0;
-let charging=false, power=0, spin=0;
+let charging=false, power=0;
 
-/* ===== PLAYER ===== */
-let currentPlayer=1;
-let score=[0,0];
-
-/* ===== CAROM CHECK ===== */
-let cushionCount=0, hitRed=false, hitYellow=false;
-
-/* ===== REPLAY ===== */
-let replayFrames=[];
-let replaying=false, replayIndex=0;
+/* ===== GAME ===== */
+let player=1, score=[0,0];
+let cushion=0, hitRed=false, hitYellow=false;
+let replay=[], replaying=false, rIndex=0;
+let shotInProgress=false;
 
 /* ===== DRAW ===== */
 function drawBall(b){
-  ctx.beginPath();
-  ctx.arc(b.x,b.y,R,0,6.28);
-  ctx.fillStyle=b.color;
-  ctx.fill();
+  ctx.beginPath();ctx.arc(b.x,b.y,R,0,6.28);
+  ctx.fillStyle=b.color;ctx.fill();
 }
-
-/* ===== CUE ===== */
 function drawCue(){
   if(!showCue) return;
   let dx=aimX-white.x, dy=aimY-white.y;
-  let ang=Math.atan2(dy,dx);
+  let a=Math.atan2(dy,dx);
   ctx.save();
   ctx.translate(white.x,white.y);
-  ctx.rotate(ang);
+  ctx.rotate(a);
   ctx.fillStyle="#deb887";
   ctx.fillRect(-(40+power),-2,220,4);
   ctx.restore();
@@ -157,18 +92,16 @@ function drawCue(){
 
 /* ===== COLLISION ===== */
 function collide(a,b){
-  const dx=b.x-a.x, dy=b.y-a.y;
-  const dist=Math.hypot(dx,dy);
-  if(dist>=2*R||dist===0) return;
+  let dx=b.x-a.x, dy=b.y-a.y;
+  let d=Math.hypot(dx,dy);
+  if(d>=2*R||d===0) return;
+  TIME_SCALE=0.25; setTimeout(()=>TIME_SCALE=1,120);
 
-  triggerSlow();
-
-  const nx=dx/dist, ny=dy/dist;
-  const tx=-ny, ty=nx;
-  const dpTanA=a.vx*tx+a.vy*ty;
-  const dpTanB=b.vx*tx+b.vy*ty;
-  const dpNormA=a.vx*nx+a.vy*ny;
-  const dpNormB=b.vx*nx+b.vy*ny;
+  let nx=dx/d, ny=dy/d, tx=-ny, ty=nx;
+  let dpTanA=a.vx*tx+a.vy*ty;
+  let dpTanB=b.vx*tx+b.vy*ty;
+  let dpNormA=a.vx*nx+a.vy*ny;
+  let dpNormB=b.vx*nx+b.vy*ny;
 
   a.vx=tx*dpTanA+nx*dpNormB*0.98;
   a.vy=ty*dpTanA+ny*dpNormB*0.98;
@@ -186,26 +119,26 @@ function update(){
   ctx.clearRect(0,0,c.width,c.height);
 
   if(replaying){
-    let f=replayFrames[replayIndex++];
+    let f=replay[rIndex++];
     balls.forEach((b,i)=>{b.x=f[i].x;b.y=f[i].y});
-    if(replayIndex>=replayFrames.length){
-      replaying=false;
-    }
+    if(rIndex>=replay.length){ replaying=false; }
   }else{
-    replayFrames.push(balls.map(b=>({x:b.x,y:b.y})));
-    if(replayFrames.length>120) replayFrames.shift();
+    if(shotInProgress){
+      replay.push(balls.map(b=>({x:b.x,y:b.y})));
+      if(replay.length>140) replay.shift();
+    }
 
     balls.forEach(b=>{
-      b.x+=b.vx*TIME_SCALE;
-      b.y+=b.vy*TIME_SCALE;
-      b.vx*=Math.pow(FRICTION,TIME_SCALE);
-      b.vy*=Math.pow(FRICTION,TIME_SCALE);
+      b.x+=b.vx*TIME_SCALE; b.y+=b.vy*TIME_SCALE;
+      b.vx*=FRICTION; b.vy*=FRICTION;
 
-      if(b.x<R||b.x>c.width-R||b.y<R||b.y>c.height-R){
-        if(b===white){cushionCount++;triggerSlow();}
-      }
-      b.x=Math.max(R,Math.min(c.width-R,b.x));
-      b.y=Math.max(R,Math.min(c.height-R,b.y));
+      if(b.x<R&&!b.hitWallX){ b.vx=Math.abs(b.vx); b.hitWallX=true; if(b===white)cushion++ }
+      if(b.x>c.width-R&&!b.hitWallX){ b.vx=-Math.abs(b.vx); b.hitWallX=true; if(b===white)cushion++ }
+      if(b.y<R&&!b.hitWallY){ b.vy=Math.abs(b.vy); b.hitWallY=true; if(b===white)cushion++ }
+      if(b.y>c.height-R&&!b.hitWallY){ b.vy=-Math.abs(b.vy); b.hitWallY=true; if(b===white)cushion++ }
+
+      if(b.x>R&&b.x<c.width-R) b.hitWallX=false;
+      if(b.y>R&&b.y<c.height-R) b.hitWallY=false;
     });
 
     collide(white,red);
@@ -220,54 +153,49 @@ function update(){
   ctx.font="16px Arial";
   ctx.fillText(`P1: ${score[0]}   P2: ${score[1]}`,20,24);
 
-  if(cushionCount>=3&&hitRed&&hitYellow&&white.vx===0&&white.vy===0){
-    score[currentPlayer-1]++;
-    replaying=true;
-    replayIndex=0;
-    cushionCount=0;hitRed=hitYellow=false;
+  /* CHECK END SHOT */
+  if(shotInProgress && balls.every(b=>!b.moving())){
+    shotInProgress=false;
+    if(cushion>=3 && hitRed && hitYellow){
+      score[player-1]++;
+      replaying=true; rIndex=0;
+    }
+    cushion=0; hitRed=hitYellow=false;
+    player=player===1?2:1;
+    info.textContent=`Player ${player} | SPACE lấy lực`;
   }
 
-  if(slowTimer>0 && --slowTimer===0) TIME_SCALE=1;
   requestAnimationFrame(update);
 }
 
 /* ===== INPUT ===== */
 c.onmousedown=e=>{
-  if(white.vx||white.vy) return;
-  const r=c.getBoundingClientRect();
-  aimX=e.clientX-r.left;
-  aimY=e.clientY-r.top;
+  if(shotInProgress) return;
+  let r=c.getBoundingClientRect();
+  aimX=e.clientX-r.left; aimY=e.clientY-r.top;
   showCue=aiming=true;
 };
 c.onmousemove=e=>{
   if(!aiming) return;
-  const r=c.getBoundingClientRect();
-  aimX=e.clientX-r.left;
-  aimY=e.clientY-r.top;
+  let r=c.getBoundingClientRect();
+  aimX=e.clientX-r.left; aimY=e.clientY-r.top;
 };
-
-window.onkeydown=e=>{
-  if(e.code==="Space") charging=true;
-};
+window.onkeydown=e=>{ if(e.code==="Space") charging=true; };
 window.onkeyup=e=>{
-  if(e.code==="Space"){
+  if(e.code==="Space"&&showCue){
     let dx=aimX-white.x, dy=aimY-white.y;
-    let len=Math.hypot(dx,dy)||1;
-    let force=power*0.38;
-    white.vx=(dx/len)*force;
-    white.vy=(dy/len)*force;
-    power=0;charging=false;showCue=false;aiming=false;
-    currentPlayer=currentPlayer===1?2:1;
-    document.getElementById("info").textContent=
-      `Player ${currentPlayer} | SPACE lấy lực`;
+    let l=Math.hypot(dx,dy)||1;
+    white.vx=(dx/l)*power*0.38;
+    white.vy=(dy/l)*power*0.38;
+    power=0; charging=false; aiming=false; showCue=false;
+    shotInProgress=true; replay=[];
   }
 };
 
-/* ===== POWER BAR ===== */
+/* POWER BAR */
 setInterval(()=>{
   if(charging) power=Math.min(power+4,MAX_POWER);
-  document.getElementById("powerBar").style.height=
-    (power/MAX_POWER*100)+"%";
+  powerBar.style.height=(power/MAX_POWER*100)+"%";
 },30);
 
 update();

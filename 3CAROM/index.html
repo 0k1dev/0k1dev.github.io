@@ -205,8 +205,8 @@ window.addEventListener("keydown",e=>{
 });
 window.addEventListener("keyup",e=>{
   if(e.code==="Space" && showCue){
-    const dx=white.x-aimX;
-    const dy=white.y-aimY;
+    const dx = aimX - white.x
+    const dy = aimY - white.y
     const len=Math.hypot(dx,dy);
     const force=power*0.08;
 

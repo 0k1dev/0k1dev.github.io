@@ -17,16 +17,20 @@ canvas{
   border-radius:12px;
 }
 .info{margin-top:6px;font-size:14px;color:#ccc}
-/* QR BOX */
-#qr-box{
+.table-wrap{
+  position: relative;
+  display: inline-block;
+}
+
+.qr-box{
   position: absolute;
-  top: 10px;
-  right: -160px; /* đẩy ra ngoài bàn */
+  top: 10px;          /* cách mép trên bàn 10px */
+  right: -160px;      /* cách mép phải bàn 10px */
   width: 150px;
   text-align: center;
 }
 
-#qr-box img{
+.qr-box img{
   width: 140px;
   border-radius: 10px;
   background:#fff;
@@ -38,18 +42,19 @@ canvas{
   font-size:13px;
   color:#ccc;
 }
+
 </style>
 </head>
 
 <body>
 <h1>🎱 Carom 3 Băng – Pro Training</h1>
-<canvas id="c" width="900" height="450"></canvas>
-<div class="info" id="info">
-  Click bi trắng → SPACE lấy lực | A/D xoáy | S = không xoáy
-</div>
-<div id="qr-box">
+<div class="table-wrap">
+  <canvas id="c" width="900" height="450"></canvas>
+
+  <div class="qr-box">
     <img id="vietqr" alt="QR Donate">
     <div class="qr-text">Ủng hộ tác giả</div>
+  </div>
 </div>
 <script>
 /* ======== BANK =======*/

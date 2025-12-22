@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Video Deep Learning</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Favicon -->
+<link rel="icon" href="https://cdn.svgrepo.com/download/45055/world-wide-web.svg">
+
+<style>
+:root{
+  --bg:#0b0b0b;
+  --card:#141414;
+  --accent:#00e5ff;
+  --text:#fff;
+  --muted:#aaa;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+
+/* ===== HEADER ===== */
+header{
+  padding:30px;
+  text-align:center;
+  background:#111;
+  border-bottom:2px solid var(--accent);
+}
+
+header h1{
+  margin:0;
+  color:var(--accent);
+}
+
+/* ===== VIDEO LIST ===== */
+main{
+  max-width:1100px;
+  margin:auto;
+  padding:30px 15px;
+}
+
+.video-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+  gap:20px;
+}
+
+.video-card{
+  background:var(--card);
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:0 0 20px rgba(0,0,0,.4);
+}
+
+.video-card iframe{
+  width:100%;
+  height:200px;
+  border:none;
+}
+
+.video-info{
+  padding:15px;
+}
+
+.video-title{
+  font-size:16px;
+  font-weight:bold;
+  margin-bottom:8px;
+}
+
+.video-meta{
+  font-size:14px;
+  color:var(--muted);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.like-btn{
+  cursor:pointer;
+  color:#ff4d4d;
+  user-select:none;
+}
+
+.like-btn.liked{
+  color:#ff0000;
+}
+
+/* ===== DONATE ===== */
+.donate-box{
+  margin-top:50px;
+  padding:25px;
+  background:#111;
+  border-radius:12px;
+  text-align:center;
+}
+
+.donate-box h2{
+  color:var(--accent);
+}
+
+.donate-content{
+  margin-top:20px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:20px;
+  justify-content:center;
+  align-items:center;
+}
+
+.donate-content img{
+  width:220px;
+  border-radius:10px;
+}
+
+.donate-info{
+  max-width:300px;
+  width:100%;
+}
+
+.donate-info input{
+  width:100%;
+  padding:10px;
+  border-radius:8px;
+  border:none;
+  margin-bottom:10px;
+}
+
+.donate-info button{
+  width:100%;
+  padding:10px;
+  background:var(--accent);
+  border:none;
+  border-radius:8px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+/* ===== FOOTER ===== */
+footer{
+  text-align:center;
+  padding:20px;
+  color:#666;
+  margin-top:40px;
+  font-size:14px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>🎬 Video Hài Hước & Deep Learning</h1>
+  <p>Xem vui – Donate tùy tâm ❤️</p>
+</header>
+
+<main>
+
+  <!-- VIDEO LIST -->
+  <div class="video-grid" id="video-list"></div>
+
+  <!-- DONATE -->
+  <section class="donate-box">
+    <h2>☕ Ủng hộ tác giả</h2>
+    <p>Quét QR – tự nhập số tiền khi chuyển khoản</p>
+
+    <div class="donate-content">
+      <img id="vietqr" alt="VietQR Donate">
+
+      <div class="donate-info">
+        <input id="message" type="text" value="Donate video content ❤️">
+        <button onclick="generateQR()">Tạo mã QR</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  © 2025 HKT PROJECTS
+</footer>
+
+<script>
+/* ===== VIDEO DATA ===== */
+const videos = [
+  { title:"Bài 10 ", youtube:"https://www.youtube.com/watch?v=fQdkPxK499w" },
+  { title:"Bài 12", youtube:"https://www.youtube.com/watch?v=ujV46i0BP9U" },
+  { title:"Bài 18", youtube:"https://www.youtube.com/watch?v=xDCNYLzzfdI" },
+  { title:"Bài 3", youtube:"https://www.youtube.com/watch?v=vkMlGeNHrYY" },
+  { title:"Bài 7", youtube:"https://www.youtube.com/watch?v=KjAsJpIVbUU" },
+  { title:"Bài 15", youtube:"https://www.youtube.com/watch?v=ZveDIQqzYYE" },
+  { title:"Bài 11", youtube:"https://www.youtube.com/watch?v=ZNPfVICodRY" },
+  { title:"Bài 2", youtube:"https://www.youtube.com/watch?v=uzufYKv66Ds" },
+  { title:"Bài 6", youtube:"https://www.youtube.com/watch?v=iwrymb5ALhc },
+  { title:"Bài 1", youtube:"https://www.youtube.com/watch?v=AhdRqI2hVqE" },
+  { title:"Bài 14", youtube:" https://www.youtube.com/watch?v=o-BgBNkITBE" }
+];
+
+/* ===== YOUTUBE ID ===== */
+function getYouTubeID(url){
+  const reg = /(?:youtube\.com\/.*v=|youtu\.be\/)([^&?/]+)/;
+  const match = url.match(reg);
+  return match ? match[1] : null;
+}
+
+/* ===== RENDER VIDEOS ===== */
+const container = document.getElementById("video-list");
+
+videos.forEach((v,i)=>{
+  const id = getYouTubeID(v.youtube);
+  if(!id) return;
+
+  const views = Math.floor(Math.random()*90000+1000);
+  const likes = Math.floor(Math.random()*500+10);
+
+  const card = document.createElement("div");
+  card.className="video-card";
+
+  card.innerHTML=`
+    <iframe src="https://www.youtube.com/embed/${id}" allowfullscreen></iframe>
+    <div class="video-info">
+      <div class="video-title">${v.title}</div>
+      <div class="video-meta">
+        <span>${views.toLocaleString()} lượt xem</span>
+        <span class="like-btn" data-like="${likes}">❤️ ${likes}</span>
+      </div>
+    </div>
+  `;
+
+  container.appendChild(card);
+});
+
+/* ===== LIKE BUTTON ===== */
+document.addEventListener("click",e=>{
+  if(e.target.classList.contains("like-btn")){
+    if(e.target.classList.contains("liked")) return;
+    let like = parseInt(e.target.dataset.like);
+    like++;
+    e.target.dataset.like = like;
+    e.target.textContent = "❤️ " + like;
+    e.target.classList.add("liked");
+  }
+});
+
+/* ===== VIETQR DONATE (KHÔNG SỐ TIỀN) ===== */
+const BANK_ID="ACB";
+const ACCOUNT_NO="43146717";
+const ACCOUNT_NAME="DINH TAN HUY";
+
+function generateQR(){
+  const msg=document.getElementById("message").value;
+  document.getElementById("vietqr").src=
+    `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?addInfo=${encodeURIComponent(msg)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
+}
+
+generateQR();
+</script>
+
+</body>
+</html>

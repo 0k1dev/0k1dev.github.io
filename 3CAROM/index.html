@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Carom 3 Băng</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  margin:0;
+  background:#0b0b0b;
+  color:#fff;
+  font-family:Arial,Helvetica,sans-serif;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+h1{color:#00e5ff}
+
+canvas{
+  background:#145214;
+  border:15px solid #5b2c06;
+  border-radius:10px;
+  cursor:crosshair;
+}
+
+.info{
+  margin-top:10px;
+  font-size:16px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🎱 Carom 3 Băng</h1>
+<canvas id="table" width="900" height="450"></canvas>
+
+<div class="info" id="info">
+  Kéo chuột từ bi trắng để đánh
+</div>
+
+<script>
+const canvas = document.getElementById("table");
+const ctx = canvas.getContext("2d");
+
+const R = 10;
+let dragging = false;
+let startX, startY;
+
+let score = 0;
+
+/* ===== BALLS ===== */
+let white = {x:150,y:225,vx:0,vy:0,color:"#fff",bands:0,hit:[]};
+let red   = {x:450,y:180,vx:0,vy:0,color:"red"};
+let yellow= {x:600,y:270,vx:0,vy:0,color:"yellow"};
+
+const balls=[white,red,yellow];
+
+/* ===== DRAW ===== */
+function drawBall(b){
+  ctx.beginPath();
+  ctx.arc(b.x,b.y,R,0,Math.PI*2);
+  ctx.fillStyle=b.color;
+  ctx.fill();
+}
+
+/* ===== PHYSICS ===== */
+function update(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  balls.forEach(b=>{
+    b.x+=b.vx;
+    b.y+=b.vy;
+    b.vx*=0.99;
+    b.vy*=0.99;
+
+    /* WALL */
+    if(b.x<R || b.x>canvas.width-R){
+      b.vx*=-1;
+      if(b===white) white.bands++;
+    }
+    if(b.y<R || b.y>canvas.height-R){
+      b.vy*=-1;
+      if(b===white) white.bands++;
+    }
+
+    drawBall(b);
+  });
+
+  collision(white,red);
+  collision(white,yellow);
+
+  requestAnimationFrame(update);
+}
+
+/* ===== COLLISION ===== */
+function collision(a,b){
+  let dx=b.x-a.x;
+  let dy=b.y-a.y;
+  let dist=Math.sqrt(dx*dx+dy*dy);
+  if(dist<2*R){
+    let angle=Math.atan2(dy,dx);
+    let speed=Math.sqrt(a.vx*a.vx+a.vy*a.vy);
+
+    a.vx=-Math.cos(angle)*speed;
+    a.vy=-Math.sin(angle)*speed;
+
+    if(a===white && !white.hit.includes(b)){
+      white.hit.push(b);
+      checkScore();
+    }
+  }
+}
+
+/* ===== SCORE CHECK ===== */
+function checkScore(){
+  if(white.bands>=3 && white.hit.length>=2){
+    score++;
+    document.getElementById("info").innerText =
+      "🎯 GHI ĐIỂM! Tổng điểm: "+score;
+    resetTurn();
+  }
+}
+
+/* ===== RESET ===== */
+function resetTurn(){
+  white.bands=0;
+  white.hit=[];
+}
+
+/* ===== MOUSE CONTROL ===== */
+canvas.addEventListener("mousedown",e=>{
+  const r=canvas.getBoundingClientRect();
+  const mx=e.clientX-r.left;
+  const my=e.clientY-r.top;
+  if(Math.hypot(mx-white.x,my-white.y)<R+5){
+    dragging=true;
+    startX=mx;
+    startY=my;
+  }
+});
+
+canvas.addEventListener("mouseup",e=>{
+  if(!dragging) return;
+  const r=canvas.getBoundingClientRect();
+  const mx=e.clientX-r.left;
+  const my=e.clientY-r.top;
+
+  white.vx=(startX-mx)/10;
+  white.vy=(startY-my)/10;
+  dragging=false;
+});
+
+/* ===== START ===== */
+update();
+</script>
+
+</body>
+</html>

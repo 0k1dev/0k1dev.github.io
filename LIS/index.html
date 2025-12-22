@@ -131,6 +131,55 @@
         .btn-download i {
             margin-right: 8px;
         }
+        /* ===== DONATE ===== */
+        .donate-box{
+            margin-top:50px;
+            padding:25px;
+            background:#111;
+            border-radius:12px;
+            text-align:center;
+        }
+
+        .donate-box h2{
+          color:var(--accent);
+        }
+
+        .donate-content{
+          margin-top:20px;
+          display:flex;
+          flex-wrap:wrap;
+          gap:20px;
+          justify-content:center;
+          align-items:center;
+        }
+
+        .donate-content img{
+          width:220px;
+          border-radius:10px;
+        }
+
+        .donate-info{
+          max-width:300px;
+          width:100%;
+        }
+
+        .donate-info input{
+          width:100%;
+          padding:10px;
+          border-radius:8px;
+          border:none;
+          margin-bottom:10px;
+        }
+
+        .donate-info button{
+          width:100%;
+          padding:10px;
+          background:var(--accent);
+          border:none;
+          border-radius:8px;
+          font-weight:bold;
+          cursor:pointer;
+        }
     </style>
 </head>
 <body>
@@ -163,6 +212,20 @@
         </a>
     </div>
 </div>
+    <!-- DONATE -->
+  <section class="donate-box">
+    <h2>☕ Ủng hộ tác giả</h2>
+    <p>Quét QR – tự nhập số tiền khi chuyển khoản</p>
+
+    <div class="donate-content">
+      <img id="vietqr" alt="VietQR Donate">
+
+      <div class="donate-info">
+        <input id="message" type="text" value="Donate video content ❤️">
+        <button onclick="generateQR()">Tạo mã QR</button>
+      </div>
+    </div>
+  </section>
 
 <script>
     const wrapper = document.querySelector(".player-container"),
@@ -230,6 +293,17 @@
     document.getElementById("rewind").addEventListener("click", () => {
         mainAudio.currentTime -= 2;
     });
+    /* ===== VIETQR DONATE (KHÔNG SỐ TIỀN) ===== */
+    const BANK_ID="ACB";
+    const ACCOUNT_NO="43146717";
+    const ACCOUNT_NAME="DINH TAN HUY";
+
+    function generateQR(){
+        const msg=document.getElementById("message").value;
+        document.getElementById("vietqr").src=`https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?addInfo=${encodeURIComponent(msg)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
+    }
+    generateQR();
+    
 </script>
 
 </body>

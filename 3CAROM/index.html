@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Carom 3 Băng</title>
+<title>Carom 3 Băng – Training</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -16,39 +16,58 @@ body{
   align-items:center;
 }
 
-h1{color:#00e5ff}
+h1{ color:#00e5ff; margin:10px 0 }
+
+#wrap{
+  position:relative;
+}
 
 canvas{
   background:#145214;
-  border:15px solid #5b2c06;
-  border-radius:10px;
-  cursor:crosshair;
+  border:18px solid #5b2c06;
+  border-radius:12px;
+}
+
+#powerBox{
+  margin-top:10px;
+  width:300px;
+  height:12px;
+  background:#333;
+  border-radius:6px;
+  overflow:hidden;
+}
+#power{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#00ffcc,#ff0044);
 }
 
 .info{
-  margin-top:10px;
-  font-size:16px;
+  margin-top:8px;
+  font-size:15px;
 }
 </style>
 </head>
 
 <body>
 
-<h1>🎱 Carom 3 Băng</h1>
-<canvas id="table" width="900" height="450"></canvas>
+<h1>🎱 Carom 3 Băng – Training</h1>
 
-<div class="info" id="info">
-  Kéo chuột từ bi trắng để đánh
+<div id="wrap">
+<canvas id="table" width="900" height="450"></canvas>
 </div>
+
+<div id="powerBox"><div id="power"></div></div>
+<div class="info" id="info">Click bi trắng → kéo chuột để đặt gậy & lực</div>
 
 <script>
 const canvas = document.getElementById("table");
 const ctx = canvas.getContext("2d");
+const powerBar = document.getElementById("power");
+const info = document.getElementById("info");
 
 const R = 10;
-let dragging = false;
-let aimX = 0, aimY = 0;
-let score = 0;
+const MAX_POWER = 120;
 
 /* ===== BALL ===== */
 function Ball(x,y,color){
@@ -56,16 +75,37 @@ function Ball(x,y,color){
   this.vx=0; this.vy=0;
   this.color=color;
 }
-
-let white = new Ball(150,225,"#fff");
-let red   = new Ball(450,180,"red");
-let yellow= new Ball(600,270,"yellow");
+let white=new Ball(150,225,"#fff");
+let red=new Ball(450,180,"red");
+let yellow=new Ball(600,270,"yellow");
 const balls=[white,red,yellow];
 
 /* ===== STATE ===== */
-let bands = 0;
-let hits = new Set();
-let bandLock = {x:false,y:false};
+let dragging=false;
+let aimX=0, aimY=0;
+let power=0;
+let bands=0;
+let hits=new Set();
+let lock={x:false,y:false};
+
+/* ===== DRAW TABLE ===== */
+function drawTable(){
+  // diamonds
+  ctx.fillStyle="#cfa";
+  const d=canvas.width/8;
+  for(let i=1;i<8;i++){
+    ctx.beginPath();
+    ctx.arc(i*d,8,3,0,Math.PI*2); ctx.fill();
+    ctx.beginPath();
+    ctx.arc(i*d,canvas.height-8,3,0,Math.PI*2); ctx.fill();
+  }
+  for(let i=1;i<4;i++){
+    ctx.beginPath();
+    ctx.arc(8,i*(canvas.height/4),3,0,Math.PI*2); ctx.fill();
+    ctx.beginPath();
+    ctx.arc(canvas.width-8,i*(canvas.height/4),3,0,Math.PI*2); ctx.fill();
+  }
+}
 
 /* ===== DRAW ===== */
 function drawBall(b){
@@ -75,9 +115,10 @@ function drawBall(b){
   ctx.fill();
 }
 
-/* ===== PHYSICS ===== */
+/* ===== UPDATE ===== */
 function update(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawTable();
 
   balls.forEach(b=>{
     b.x+=b.vx;
@@ -88,15 +129,13 @@ function update(){
     if(Math.abs(b.vx)<0.03) b.vx=0;
     if(Math.abs(b.vy)<0.03) b.vy=0;
 
-    /* BANDS – ONLY WHITE */
     if(b===white){
-      if(b.x<R && !bandLock.x){ b.vx*=-1; bands++; bandLock.x=true; }
-      if(b.x>canvas.width-R && !bandLock.x){ b.vx*=-1; bands++; bandLock.x=true; }
-      if(b.y<R && !bandLock.y){ b.vy*=-1; bands++; bandLock.y=true; }
-      if(b.y>canvas.height-R && !bandLock.y){ b.vy*=-1; bands++; bandLock.y=true; }
-
-      if(b.x>R && b.x<canvas.width-R) bandLock.x=false;
-      if(b.y>R && b.y<canvas.height-R) bandLock.y=false;
+      if(b.x<R && !lock.x){b.vx*=-1;bands++;lock.x=true;}
+      if(b.x>canvas.width-R && !lock.x){b.vx*=-1;bands++;lock.x=true;}
+      if(b.y<R && !lock.y){b.vy*=-1;bands++;lock.y=true;}
+      if(b.y>canvas.height-R && !lock.y){b.vy*=-1;bands++;lock.y=true;}
+      if(b.x>R && b.x<canvas.width-R) lock.x=false;
+      if(b.y>R && b.y<canvas.height-R) lock.y=false;
     }else{
       if(b.x<R || b.x>canvas.width-R) b.vx*=-1;
       if(b.y<R || b.y>canvas.height-R) b.vy*=-1;
@@ -109,16 +148,7 @@ function update(){
   collide(white,yellow);
   collide(red,yellow);
 
-  /* AIM */
-  if(dragging){
-    ctx.beginPath();
-    ctx.moveTo(white.x,white.y);
-    ctx.lineTo(aimX,aimY);
-    ctx.setLineDash([6,6]);
-    ctx.strokeStyle="#fff";
-    ctx.stroke();
-    ctx.setLineDash([]);
-  }
+  drawCue();
 
   requestAnimationFrame(update);
 }
@@ -128,43 +158,48 @@ function collide(a,b){
   let dx=b.x-a.x, dy=b.y-a.y;
   let dist=Math.hypot(dx,dy);
   if(dist<2*R){
-    let angle=Math.atan2(dy,dx);
-    let spA=Math.hypot(a.vx,a.vy);
-    let spB=Math.hypot(b.vx,b.vy);
-
-    a.vx=-Math.cos(angle)*spA;
-    a.vy=-Math.sin(angle)*spA;
-    b.vx=Math.cos(angle)*spB;
-    b.vy=Math.sin(angle)*spB;
+    let ang=Math.atan2(dy,dx);
+    let sa=Math.hypot(a.vx,a.vy);
+    let sb=Math.hypot(b.vx,b.vy);
+    a.vx=-Math.cos(ang)*sa;
+    a.vy=-Math.sin(ang)*sa;
+    b.vx=Math.cos(ang)*sb;
+    b.vy=Math.sin(ang)*sb;
 
     if(a===white && bands>=3){
       hits.add(b.color);
-      checkScore();
+      if(hits.size===2){
+        info.innerText="🎯 GHI ĐIỂM CHUẨN 3 BĂNG!";
+        bands=0; hits.clear();
+      }
     }
   }
 }
 
-/* ===== SCORE ===== */
-function checkScore(){
-  if(hits.size===2){
-    score++;
-    info.innerText=`🎯 GHI ĐIỂM! | ${bands} băng | Tổng: ${score}`;
-    resetTurn();
-  }
+/* ===== CUE ===== */
+function drawCue(){
+  if(!dragging) return;
+  let dx=white.x-aimX;
+  let dy=white.y-aimY;
+  let len=Math.min(Math.hypot(dx,dy),MAX_POWER);
+  let ang=Math.atan2(dy,dx);
+
+  ctx.save();
+  ctx.translate(white.x,white.y);
+  ctx.rotate(ang);
+  ctx.fillStyle="#deb887";
+  ctx.fillRect(20, -2, len, 4);
+  ctx.restore();
 }
 
-function resetTurn(){
-  bands=0;
-  hits.clear();
-}
-
-/* ===== CONTROL ===== */
+/* ===== INPUT ===== */
 canvas.addEventListener("mousedown",e=>{
   if(white.vx||white.vy) return;
   let r=canvas.getBoundingClientRect();
-  let mx=e.clientX-r.left;
-  let my=e.clientY-r.top;
-  if(Math.hypot(mx-white.x,my-white.y)<R+5) dragging=true;
+  let x=e.clientX-r.left, y=e.clientY-r.top;
+  if(Math.hypot(x-white.x,y-white.y)<R+5){
+    dragging=true;
+  }
 });
 
 canvas.addEventListener("mousemove",e=>{
@@ -172,23 +207,22 @@ canvas.addEventListener("mousemove",e=>{
   let r=canvas.getBoundingClientRect();
   aimX=e.clientX-r.left;
   aimY=e.clientY-r.top;
+  power=Math.min(Math.hypot(white.x-aimX,white.y-aimY),MAX_POWER);
+  powerBar.style.width=(power/MAX_POWER*100)+"%";
 });
 
-canvas.addEventListener("mouseup",e=>{
+canvas.addEventListener("mouseup",()=>{
   if(!dragging) return;
-  let r=canvas.getBoundingClientRect();
-  let mx=e.clientX-r.left;
-  let my=e.clientY-r.top;
-  white.vx=(white.x-mx)/5;
-  white.vy=(white.y-my)/5;
+  white.vx=(white.x-aimX)/5;
+  white.vy=(white.y-aimY)/5;
   dragging=false;
+  power=0;
+  powerBar.style.width="0%";
 });
 
 /* ===== START ===== */
 update();
 </script>
-
-
 
 </body>
 </html>

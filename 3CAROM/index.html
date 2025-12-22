@@ -50,11 +50,22 @@ let dragging = false;
 let aimX = 0, aimY = 0;
 let score = 0;
 
-/* ===== BALLS ===== */
-let white = {x:150,y:225,vx:0,vy:0,color:"#fff",bands:0,hit:[]};
-let red   = {x:450,y:180,vx:0,vy:0,color:"red"};
-let yellow= {x:600,y:270,vx:0,vy:0,color:"yellow"};
+/* ===== BALL ===== */
+function Ball(x,y,color){
+  this.x=x; this.y=y;
+  this.vx=0; this.vy=0;
+  this.color=color;
+}
+
+let white = new Ball(150,225,"#fff");
+let red   = new Ball(450,180,"red");
+let yellow= new Ball(600,270,"yellow");
 const balls=[white,red,yellow];
+
+/* ===== STATE ===== */
+let bands = 0;
+let hits = new Set();
+let bandLock = {x:false,y:false};
 
 /* ===== DRAW ===== */
 function drawBall(b){
@@ -64,41 +75,47 @@ function drawBall(b){
   ctx.fill();
 }
 
-/* ===== UPDATE ===== */
+/* ===== PHYSICS ===== */
 function update(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
   balls.forEach(b=>{
     b.x+=b.vx;
     b.y+=b.vy;
-    b.vx*=0.98;
-    b.vy*=0.98;
+    b.vx*=0.985;
+    b.vy*=0.985;
 
-    if(Math.abs(b.vx)<0.05) b.vx=0;
-    if(Math.abs(b.vy)<0.05) b.vy=0;
+    if(Math.abs(b.vx)<0.03) b.vx=0;
+    if(Math.abs(b.vy)<0.03) b.vy=0;
 
-    if(b.x<R || b.x>canvas.width-R){
-      b.vx*=-1;
-      if(b===white) white.bands++;
-    }
-    if(b.y<R || b.y>canvas.height-R){
-      b.vy*=-1;
-      if(b===white) white.bands++;
+    /* BANDS – ONLY WHITE */
+    if(b===white){
+      if(b.x<R && !bandLock.x){ b.vx*=-1; bands++; bandLock.x=true; }
+      if(b.x>canvas.width-R && !bandLock.x){ b.vx*=-1; bands++; bandLock.x=true; }
+      if(b.y<R && !bandLock.y){ b.vy*=-1; bands++; bandLock.y=true; }
+      if(b.y>canvas.height-R && !bandLock.y){ b.vy*=-1; bands++; bandLock.y=true; }
+
+      if(b.x>R && b.x<canvas.width-R) bandLock.x=false;
+      if(b.y>R && b.y<canvas.height-R) bandLock.y=false;
+    }else{
+      if(b.x<R || b.x>canvas.width-R) b.vx*=-1;
+      if(b.y<R || b.y>canvas.height-R) b.vy*=-1;
     }
 
     drawBall(b);
   });
 
-  collision(white,red);
-  collision(white,yellow);
+  collide(white,red);
+  collide(white,yellow);
+  collide(red,yellow);
 
-  /* AIM LINE */
+  /* AIM */
   if(dragging){
     ctx.beginPath();
     ctx.moveTo(white.x,white.y);
     ctx.lineTo(aimX,aimY);
+    ctx.setLineDash([6,6]);
     ctx.strokeStyle="#fff";
-    ctx.setLineDash([5,5]);
     ctx.stroke();
     ctx.setLineDash([]);
   }
@@ -107,18 +124,21 @@ function update(){
 }
 
 /* ===== COLLISION ===== */
-function collision(a,b){
-  let dx=b.x-a.x;
-  let dy=b.y-a.y;
+function collide(a,b){
+  let dx=b.x-a.x, dy=b.y-a.y;
   let dist=Math.hypot(dx,dy);
   if(dist<2*R){
     let angle=Math.atan2(dy,dx);
-    let speed=Math.hypot(a.vx,a.vy);
-    a.vx=-Math.cos(angle)*speed;
-    a.vy=-Math.sin(angle)*speed;
+    let spA=Math.hypot(a.vx,a.vy);
+    let spB=Math.hypot(b.vx,b.vy);
 
-    if(a===white && !white.hit.includes(b)){
-      white.hit.push(b);
+    a.vx=-Math.cos(angle)*spA;
+    a.vy=-Math.sin(angle)*spA;
+    b.vx=Math.cos(angle)*spB;
+    b.vy=Math.sin(angle)*spB;
+
+    if(a===white && bands>=3){
+      hits.add(b.color);
       checkScore();
     }
   }
@@ -126,46 +146,48 @@ function collision(a,b){
 
 /* ===== SCORE ===== */
 function checkScore(){
-  if(white.bands>=3 && white.hit.length>=2){
+  if(hits.size===2){
     score++;
-    info.innerText="🎯 GHI ĐIỂM! Tổng điểm: "+score;
-    white.bands=0;
-    white.hit=[];
+    info.innerText=`🎯 GHI ĐIỂM! | ${bands} băng | Tổng: ${score}`;
+    resetTurn();
   }
 }
 
-/* ===== MOUSE ===== */
+function resetTurn(){
+  bands=0;
+  hits.clear();
+}
+
+/* ===== CONTROL ===== */
 canvas.addEventListener("mousedown",e=>{
-  if(white.vx!==0 || white.vy!==0) return; // bi chưa dừng thì không cho đánh
-  const r=canvas.getBoundingClientRect();
-  const mx=e.clientX-r.left;
-  const my=e.clientY-r.top;
-  if(Math.hypot(mx-white.x,my-white.y)<R+5){
-    dragging=true;
-  }
+  if(white.vx||white.vy) return;
+  let r=canvas.getBoundingClientRect();
+  let mx=e.clientX-r.left;
+  let my=e.clientY-r.top;
+  if(Math.hypot(mx-white.x,my-white.y)<R+5) dragging=true;
 });
 
 canvas.addEventListener("mousemove",e=>{
   if(!dragging) return;
-  const r=canvas.getBoundingClientRect();
+  let r=canvas.getBoundingClientRect();
   aimX=e.clientX-r.left;
   aimY=e.clientY-r.top;
 });
 
 canvas.addEventListener("mouseup",e=>{
   if(!dragging) return;
-  const r=canvas.getBoundingClientRect();
-  const mx=e.clientX-r.left;
-  const my=e.clientY-r.top;
-
-  white.vx=(white.x-mx)/6;
-  white.vy=(white.y-my)/6;
+  let r=canvas.getBoundingClientRect();
+  let mx=e.clientX-r.left;
+  let my=e.clientY-r.top;
+  white.vx=(white.x-mx)/5;
+  white.vy=(white.y-my)/5;
   dragging=false;
 });
 
 /* ===== START ===== */
 update();
 </script>
+
 
 
 </body>
